@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -7,9 +7,9 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   const { data: profile } = await supabase
-    .from('users')
-    .select('*, businesses(*)')
-    .eq('id', user?.id)
+    .from("users")
+    .select("*, businesses(*)")
+    .eq("id", user?.id)
     .single();
 
   return (
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
         </p>
         {profile?.businesses && (
           <p className="text-gray-600">
-            Business Status:{' '}
+            Business Status:{" "}
             <span className="font-semibold capitalize text-green-600">
               {profile.businesses.status}
             </span>
