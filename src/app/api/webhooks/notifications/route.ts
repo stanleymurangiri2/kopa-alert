@@ -15,13 +15,21 @@ function AlertEmailTemplate({ userName, title, message, actionUrl }: { userName:
   `;
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend: Resend | null = null;
+function getResendClient() {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 // Use service role for backend operations bypassing RLS on insert
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Insert in-app notification record
-    const { error: dbError } = await supabaseAdmin
+    const { error: dbError } = await getSupabaseAdmin()
       .from('notifications')
       .insert([
         {
@@ -49,7 +57,7 @@ export async function POST(request: Request) {
 
     // 2. Dispatch email notification if user email is provided
     if (userEmail) {
-      await resend.emails.send({
+      await getResendClient().emails.send({
         from: 'Notifications <notifications@yourdomain.com>',
         to: [userEmail],
         subject: title,

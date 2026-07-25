@@ -6,6 +6,15 @@ export type NotificationChannel = 'sms' | 'whatsapp';
 export type QueueStatus = 'pending' | 'sent' | 'failed' | 'cancelled';
 export type ReminderType = 'upcoming' | 'due_today' | 'overdue';
 
+export interface Business {
+  id: string;
+  business_name: string;
+  phone: string;
+  email: string;
+  status: BusinessStatus;
+  created_at: string;
+}
+
 export interface BusinessSettings {
   id: string;
   business_id: string;
