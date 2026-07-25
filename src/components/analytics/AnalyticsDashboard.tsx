@@ -1,4 +1,4 @@
-// Location: components/analytics/AnalyticsDashboard.tsx
+// Location: src/components/analytics/AnalyticsDashboard.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

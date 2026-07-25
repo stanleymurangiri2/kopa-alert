@@ -1,4 +1,4 @@
-// Location: components/notifications/NotificationBell.tsx
+// Location: src/components/notifications/NotificationBell.tsx
 'use client';
 
 import { useState, useEffect } from 'react';

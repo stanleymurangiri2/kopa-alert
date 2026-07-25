@@ -1,5 +1,5 @@
 // Location: app/(dashboard)/analytics/page.tsx
-import AnalyticsDashboard from '../../../components/analytics/AnalyticsDashboard';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
 
 export default async function AnalyticsPage() {
   // Fetch active session or tenant context from server cookies/headers
