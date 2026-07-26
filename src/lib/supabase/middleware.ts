@@ -1,8 +1,18 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<
+    typeof NextResponse.prototype.cookies.set
+  >[2];
+};
+
+export async function updateSession(
+  request: NextRequest
+) {
+  let response = NextResponse.next({
     request,
   });
 
@@ -11,31 +21,31 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-  getAll() {
-    return request.cookies.getAll();
-  },
+        getAll() {
+          return request.cookies.getAll();
+        },
 
-  setAll(
-    cookiesToSet: {
-      name: string;
-      value: string;
-      options?: Parameters<typeof supabaseResponse.cookies.set>[2];
-    }[]
-  ) {
-    cookiesToSet.forEach(({ name, value }) => {
-      request.cookies.set(name, value);
-    });
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(
+            ({ name, value }: CookieToSet) => {
+              request.cookies.set(name, value);
+            }
+          );
 
-    supabaseResponse = NextResponse.next({
-      request,
-    });
+          response = NextResponse.next({
+            request,
+          });
 
-    cookiesToSet.forEach(({ name, value, options }) => {
-      supabaseResponse.cookies.set(name, value, options);
-    });
-  },
-
-
+          cookiesToSet.forEach(
+            ({ name, value, options }: CookieToSet) => {
+              response.cookies.set(
+                name,
+                value,
+                options
+              );
+            }
+          );
+        },
       },
     }
   );
@@ -44,15 +54,36 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/api/auth')
-  ) {
+  const pathname = request.nextUrl.pathname;
+
+  const publicRoutes = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ];
+
+  const isPublicRoute =
+    publicRoutes.some((route) =>
+      pathname.startsWith(route)
+    ) || pathname.startsWith("/api/auth");
+
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  if (
+    user &&
+    publicRoutes.some((route) =>
+      pathname.startsWith(route)
+    )
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  return response;
 }

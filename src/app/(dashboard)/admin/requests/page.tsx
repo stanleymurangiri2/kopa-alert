@@ -1,180 +1,245 @@
-import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function SuperAdminRequestsPage() {
-  const supabase = await createClient();
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+interface BusinessRequest {
+  id: string;
+  business_name: string;
+  owner_name: string;
+  phone: string;
+  email: string;
+  status: string;
+  created_at: string;
+}
 
-  if (!user) redirect('/login');
+export default function AdminRequestsPage() {
+  const supabase = createClient();
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  const [requests, setRequests] = useState<BusinessRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState<string | null>(null);
 
-  if (profile?.role !== 'super_admin') {
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
+  async function loadRequests() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from('business_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setRequests(data);
+    }
+
+    setLoading(false);
+  }
+
+  async function approveRequest(requestId: string) {
+    const password = window.prompt(
+      'Enter a temporary password for the Business Admin:'
+    );
+
+    if (!password) return;
+
+    setProcessing(requestId);
+
+    const response = await fetch('/api/admin/approve', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requestId,
+        password,
+      }),
+    });
+
+    const result = await response.json();
+
+    setProcessing(null);
+
+    if (!response.ok) {
+      alert(result.error || 'Approval failed.');
+      return;
+    }
+
+    alert('Business approved successfully.');
+
+    loadRequests();
+  }
+
+  async function rejectRequest(requestId: string) {
+    if (!confirm('Reject this registration request?')) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from('business_requests')
+      .update({
+        status: 'rejected',
+      })
+      .eq('id', requestId);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    loadRequests();
+  }
+
+  if (loading) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 text-red-700 rounded-md">
-        Access Denied: Super Admin permissions required.
+      <div className="p-6">
+        Loading business requests...
       </div>
     );
   }
 
-  const { data: requests } = await supabase
-    .from('business_requests')
-    .select('*')
-    .order('created_at', { ascending: false });
-
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Business Onboarding Requests</h1>
-          <p className="text-sm text-gray-500">Manage business access, approvals, and suspensions</p>
-        </div>
+    <div className="max-w-7xl p-6 space-y-6">
+
+      <div>
+
+        <h1 className="text-3xl font-bold">
+          Business Registration Requests
+        </h1>
+
+        <p className="text-gray-500">
+          Review and approve new business registrations.
+        </p>
+
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto rounded-lg border bg-white">
+
+        <table className="min-w-full">
+
+          <thead className="bg-gray-100">
+
             <tr>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">Business</th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">Owner</th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">Contact</th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">Requested Date</th>
-              <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase">Actions</th>
+
+              <th className="px-4 py-3 text-left">Business</th>
+
+              <th className="px-4 py-3 text-left">Owner</th>
+
+              <th className="px-4 py-3 text-left">Email</th>
+
+              <th className="px-4 py-3 text-left">Phone</th>
+
+              <th className="px-4 py-3 text-left">Status</th>
+
+              <th className="px-4 py-3 text-left">Date</th>
+
+              <th className="px-4 py-3 text-center">Actions</th>
+
             </tr>
+
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {requests && requests.length > 0 ? (
-              requests.map((req) => (
-                <tr key={req.id}>
-                  <td className="px-6 py-4 font-semibold text-gray-900">{req.business_name}</td>
-                  <td className="px-6 py-4 text-gray-700">{req.owner_name}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    <div>{req.phone}</div>
-                    <div className="text-xs text-gray-400">{req.email}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        req.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : req.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : req.status === 'suspended'
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {req.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {new Date(req.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <form action="/api/admin/requests" method="POST" className="inline-block">
-                      <input type="hidden" name="requestId" value={req.id} />
-                      {req.status === 'pending' && (
-                        <>
-                          <button
-                            formAction={async () => {
-                              'use server';
-                              const { createClient } = await import('@/lib/supabase/server');
-                              const supabase = await createClient();
-                              await supabase.from('businesses').insert([
-                                {
-                                  business_name: req.business_name,
-                                  phone: req.phone,
-                                  email: req.email,
-                                  status: 'approved',
-                                },
-                              ]);
-                              await supabase
-                                .from('business_requests')
-                                .update({ status: 'approved' })
-                                .eq('id', req.id);
-                            }}
-                            className="text-xs bg-green-600 hover:bg-green-700 text-white font-medium py-1 px-3 rounded"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            formAction={async () => {
-                              'use server';
-                              const { createClient } = await import('@/lib/supabase/server');
-                              const supabase = await createClient();
-                              await supabase
-                                .from('business_requests')
-                                .update({ status: 'rejected' })
-                                .eq('id', req.id);
-                            }}
-                            className="text-xs bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-3 rounded ml-1"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {req.status === 'approved' && (
-                        <button
-                          formAction={async () => {
-                            'use server';
-                            const { createClient } = await import('@/lib/supabase/server');
-                            const supabase = await createClient();
-                            await supabase
-                              .from('business_requests')
-                              .update({ status: 'suspended' })
-                              .eq('id', req.id);
-                            await supabase
-                              .from('businesses')
-                              .update({ status: 'suspended' })
-                              .eq('email', req.email);
-                          }}
-                          className="text-xs bg-orange-600 hover:bg-orange-700 text-white font-medium py-1 px-3 rounded"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                      {req.status === 'suspended' && (
-                        <button
-                          formAction={async () => {
-                            'use server';
-                            const { createClient } = await import('@/lib/supabase/server');
-                            const supabase = await createClient();
-                            await supabase
-                              .from('business_requests')
-                              .update({ status: 'approved' })
-                              .eq('id', req.id);
-                            await supabase
-                              .from('businesses')
-                              .update({ status: 'approved' })
-                              .eq('email', req.email);
-                          }}
-                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-3 rounded"
-                        >
-                          Activate
-                        </button>
-                      )}
-                    </form>
-                  </td>
-                </tr>
-              ))
-            ) : (
+
+          <tbody>
+
+            {requests.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                  No registration requests found.
+                <td
+                  colSpan={7}
+                  className="py-8 text-center text-gray-500"
+                >
+                  No business requests found.
                 </td>
               </tr>
             )}
+
+            {requests.map((request) => (
+              <tr
+                key={request.id}
+                className="border-t"
+              >
+                <td className="px-4 py-3">
+                  {request.business_name}
+                </td>
+
+                <td className="px-4 py-3">
+                  {request.owner_name}
+                </td>
+
+                <td className="px-4 py-3">
+                  {request.email}
+                </td>
+
+                <td className="px-4 py-3">
+                  {request.phone}
+                </td>
+
+                <td className="px-4 py-3">
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      request.status === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : request.status === 'rejected'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}
+                  >
+                    {request.status}
+                  </span>
+
+                </td>
+
+                <td className="px-4 py-3">
+                  {new Date(request.created_at).toLocaleDateString()}
+                </td>
+
+                <td className="px-4 py-3">
+
+                  {request.status === 'pending' ? (
+
+                    <div className="flex gap-2">
+
+                      <button
+                        onClick={() => approveRequest(request.id)}
+                        disabled={processing === request.id}
+                        className="rounded bg-green-600 px-3 py-2 text-white hover:bg-green-700"
+                      >
+                        {processing === request.id
+                          ? 'Approving...'
+                          : 'Approve'}
+                      </button>
+
+                      <button
+                        onClick={() => rejectRequest(request.id)}
+                        className="rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                      >
+                        Reject
+                      </button>
+
+                    </div>
+
+                  ) : (
+
+                    <span className="text-gray-500">
+                      Processed
+                    </span>
+
+                  )}
+
+                </td>
+
+              </tr>
+            ))}
+
           </tbody>
+
         </table>
+
       </div>
+
     </div>
   );
 }

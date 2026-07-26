@@ -1,103 +1,215 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-export default function ProfileSettingsPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+type UserProfile = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
 
+export default function ProfilePage() {
   const supabase = createClient();
 
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const [password, setPassword] = useState('');
+
+  const [loading, setLoading] = useState(true);
+
+  const [saving, setSaving] = useState(false);
+
+  const [message, setMessage] = useState('');
+
   useEffect(() => {
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setEmail(user.email || '');
-        const { data } = await supabase
-          .from('user_profiles')
-          .select('name')
-          .eq('id', user.id)
-          .single();
-        
-        if (data) setName(data.name || '');
-      }
-      setLoading(false);
-    }
     loadProfile();
   }, []);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage(null);
+  async function loadProfile() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({ name })
-      .eq('id', user.id);
+      const { data } = await supabase
+        .from('users')
+        .select('id, name, email, role')
+        .eq('id', user.id)
+        .single();
 
-    setSaving(false);
-
-    if (error) {
-      setMessage({ type: 'error', text: error.message });
-    } else {
-      setMessage({ type: 'success', text: 'Profile details updated successfully.' });
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage('Failed to load profile.');
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  if (loading) return <div className="p-6 text-gray-500">Loading profile...</div>;
+  async function handleSave(e: FormEvent) {
+    e.preventDefault();
+
+    if (!profile) return;
+
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: profile.name,
+        })
+        .eq('id', profile.id);
+
+      if (error) {
+        setMessage(error.message);
+        setSaving(false);
+        return;
+      }
+
+      if (password.trim() !== '') {
+        const { error: passwordError } =
+          await supabase.auth.updateUser({
+            password,
+          });
+
+        if (passwordError) {
+          setMessage(passwordError.message);
+          setSaving(false);
+          return;
+        }
+
+        setPassword('');
+      }
+
+      setMessage('Profile updated successfully.');
+    } catch (error) {
+      console.error(error);
+      setMessage('Something went wrong.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        Loading profile...
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="p-6">
+        Profile not found.
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Personal Profile</h1>
-        <p className="text-sm text-gray-500">Manage your account credentials and personal information</p>
+    <div className="max-w-3xl p-6">
+
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">
+          My Profile
+        </h1>
+
+        <p className="text-gray-500">
+          Manage your account information.
+        </p>
       </div>
 
       {message && (
-        <div className={`p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message.text}
+        <div className="mb-6 rounded-md border bg-gray-50 p-3 text-sm">
+          {message}
         </div>
       )}
 
-      <form onSubmit={handleUpdateProfile} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">Email Address (Read Only)</label>
-          <input
-            type="email"
-            value={email}
-            disabled
-            className="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-500 cursor-not-allowed"
-          />
-        </div>
+      <form
+        onSubmit={handleSave}
+        className="space-y-6 rounded-lg border bg-white p-6 shadow-sm"
+      >
 
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">Full Name</label>
+          <label className="block text-sm font-medium">
+            Full Name
+          </label>
+
           <input
             type="text"
+            value={profile.name}
+            onChange={(e) =>
+              setProfile({
+                ...profile,
+                name: e.target.value,
+              })
+            }
+            className="mt-1 w-full rounded-md border px-3 py-2"
             required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
-        <div className="flex justify-end pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-md shadow-sm disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
+        <div>
+          <label className="block text-sm font-medium">
+            Email Address
+          </label>
+
+          <input
+            type="email"
+            value={profile.email}
+            readOnly
+            className="mt-1 w-full rounded-md border bg-gray-100 px-3 py-2"
+          />
         </div>
+
+        <div>
+          <label className="block text-sm font-medium">
+            Role
+          </label>
+
+          <input
+            type="text"
+            value={profile.role}
+            readOnly
+            className="mt-1 w-full rounded-md border bg-gray-100 px-3 py-2 capitalize"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">
+            New Password
+          </label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+            placeholder="Leave blank to keep current password"
+            className="mt-1 w-full rounded-md border px-3 py-2"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full rounded-md bg-blue-600 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+
       </form>
     </div>
   );

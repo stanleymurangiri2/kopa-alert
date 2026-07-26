@@ -1,130 +1,478 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { createClient } from '@/lib/supabase/client';
-import { BusinessSettings } from '@/types/database.types';
+
+
+
+type GatewaySettings = {
+  id?: string;
+  sms_provider: string;
+  api_username: string;
+  api_key: string;
+  sender_id: string;
+  default_currency: string;
+};
+
+
 
 export default function GatewaySettingsPage() {
-  const [settings, setSettings] = useState<Partial<BusinessSettings>>({
-    sms_provider: 'africastalking',
-    api_key: '',
-    api_username: '',
-    sender_id: '',
-  });
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const supabase = createClient();
 
+
+  const [settings, setSettings] =
+    useState<GatewaySettings>({
+      sms_provider: 'africastalking',
+      api_username: '',
+      api_key: '',
+      sender_id: '',
+      default_currency: 'KES',
+    });
+
+
+  const [businessId, setBusinessId] =
+    useState<string | null>(null);
+
+
+  const [loading, setLoading] =
+    useState(true);
+
+
+  const [saving, setSaving] =
+    useState(false);
+
+
+  const [message, setMessage] =
+    useState('');
+
+
+
   useEffect(() => {
-    async function loadSettings() {
-      const { data } = await supabase.from('business_settings').select('*').single();
-      if (data) {
-        setSettings(data);
-      }
-      setLoading(false);
-    }
+
     loadSettings();
+
   }, []);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage(null);
 
-    const { error } = await supabase
+
+  async function loadSettings() {
+
+    try {
+
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
+
+
+
+      if (!user) return;
+
+
+
+      const {
+        data: profile
+      } = await supabase
+        .from('users')
+        .select('business_id')
+        .eq(
+          'id',
+          user.id
+        )
+        .single();
+
+
+
+      if (!profile?.business_id)
+        return;
+
+
+
+      setBusinessId(
+        profile.business_id
+      );
+
+
+
+      const {
+        data,
+        error
+      } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq(
+          'business_id',
+          profile.business_id
+        )
+        .single();
+
+
+
+      if (!error && data) {
+
+        setSettings({
+
+          id: data.id,
+
+          sms_provider:
+            data.sms_provider || 'africastalking',
+
+          api_username:
+            data.api_username || '',
+
+          api_key:
+            data.api_key || '',
+
+          sender_id:
+            data.sender_id || '',
+
+          default_currency:
+            data.default_currency || 'KES',
+
+        });
+
+      }
+
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+    finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+
+
+  async function saveSettings(
+    e: React.FormEvent
+  ) {
+
+    e.preventDefault();
+
+
+    if (!businessId)
+      return;
+
+
+
+    setSaving(true);
+    setMessage('');
+
+
+
+    const {
+      error
+    } = await supabase
       .from('business_settings')
-      .update({
-        sms_provider: settings.sms_provider,
-        api_key: settings.api_key,
-        api_username: settings.api_username,
-        sender_id: settings.sender_id,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', settings.id!);
+      .upsert({
+
+        business_id:
+          businessId,
+
+        sms_provider:
+          settings.sms_provider,
+
+        api_username:
+          settings.api_username,
+
+        api_key:
+          settings.api_key,
+
+        sender_id:
+          settings.sender_id,
+
+        default_currency:
+          settings.default_currency,
+
+      },
+      {
+        onConflict:
+          'business_id'
+      });
+
+
+
+    if (error) {
+
+      setMessage(
+        error.message
+      );
+
+      setSaving(false);
+
+      return;
+
+    }
+
+
+
+    setMessage(
+      'Gateway settings saved successfully.'
+    );
+
 
     setSaving(false);
 
-    if (error) {
-      setMessage({ type: 'error', text: error.message });
-    } else {
-      setMessage({ type: 'success', text: 'Gateway credentials saved successfully!' });
-    }
-  };
+  }
 
-  if (loading) return <div className="p-6 text-gray-500">Loading settings...</div>;
 
-  return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">SMS Gateway Credentials</h1>
-        <p className="text-sm text-gray-500">Configure your Africa's Talking API keys for automated dispatch</p>
+
+  if (loading) {
+
+    return (
+
+      <div className="p-6">
+
+        Loading gateway settings...
+
       </div>
 
+    );
+
+  }
+
+
+
+  return (
+
+    <div className="max-w-2xl p-6">
+
+
+      <div className="mb-6">
+
+        <h1 className="text-2xl font-bold">
+          SMS Gateway Settings
+        </h1>
+
+        <p className="text-sm text-gray-500">
+          Configure KopaAlert notification provider
+        </p>
+
+      </div>
+
+
+
       {message && (
-        <div className={`p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-          {message.text}
+
+        <div className="
+          mb-5
+          rounded-md
+          border
+          bg-gray-50
+          p-3
+          text-sm
+        ">
+
+          {message}
+
         </div>
+
       )}
 
-      <form onSubmit={handleSave} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
+
+
+      <form
+        onSubmit={saveSettings}
+        className="
+          space-y-5
+          rounded-lg
+          border
+          bg-white
+          p-6
+          shadow-sm
+        "
+      >
+
+
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">Provider</label>
+
+          <label className="block text-sm font-medium">
+            SMS Provider
+          </label>
+
+
           <select
+
             value={settings.sms_provider}
-            onChange={(e) => setSettings({ ...settings, sms_provider: e.target.value })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                sms_provider:
+                  e.target.value,
+              })
+            }
+
+            className="mt-1 w-full rounded-md border px-3 py-2"
+
           >
-            <option value="africastalking">Africa's Talking</option>
-            <option value="twilio">Twilio (Coming Soon)</option>
+
+            <option value="africastalking">
+              Africa's Talking
+            </option>
+
+
           </select>
+
         </div>
 
+
+
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">API Username</label>
+
+          <label className="block text-sm font-medium">
+            API Username
+          </label>
+
+
           <input
-            type="text"
-            required
-            placeholder="e.g. sandbox or mycompany"
-            value={settings.api_username || ''}
-            onChange={(e) => setSettings({ ...settings, api_username: e.target.value })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:ring-blue-500 focus:border-blue-500"
+
+            value={settings.api_username}
+
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                api_username:
+                  e.target.value,
+              })
+            }
+
+            className="mt-1 w-full rounded-md border px-3 py-2"
+
+            placeholder="sandbox"
+
           />
+
         </div>
 
+
+
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">API Key</label>
+
+          <label className="block text-sm font-medium">
+            API Key
+          </label>
+
+
           <input
+
             type="password"
-            required
-            value={settings.api_key || ''}
-            onChange={(e) => setSettings({ ...settings, api_key: e.target.value })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm font-mono focus:ring-blue-500 focus:border-blue-500"
+
+            value={settings.api_key}
+
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                api_key:
+                  e.target.value,
+              })
+            }
+
+            className="mt-1 w-full rounded-md border px-3 py-2"
+
+            placeholder="Africa's Talking API key"
+
           />
+
         </div>
+
+
 
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase">Sender ID (Optional)</label>
+
+          <label className="block text-sm font-medium">
+            Sender ID
+          </label>
+
+
           <input
-            type="text"
-            placeholder="e.g. KOPAALERT"
-            value={settings.sender_id || ''}
-            onChange={(e) => setSettings({ ...settings, sender_id: e.target.value })}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+
+            value={settings.sender_id}
+
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                sender_id:
+                  e.target.value,
+              })
+            }
+
+            className="mt-1 w-full rounded-md border px-3 py-2"
+
+            placeholder="KopaAlert"
+
           />
+
         </div>
 
-        <div className="flex justify-end pt-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-md shadow-sm disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Configuration'}
-          </button>
+
+
+        <div>
+
+          <label className="block text-sm font-medium">
+            Currency
+          </label>
+
+
+          <input
+
+            value={settings.default_currency}
+
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                default_currency:
+                  e.target.value,
+              })
+            }
+
+            className="mt-1 w-full rounded-md border px-3 py-2"
+
+          />
+
         </div>
+
+
+
+        <button
+
+          disabled={saving}
+
+          className="
+            w-full
+            rounded-md
+            bg-blue-600
+            py-2.5
+            text-white
+            hover:bg-blue-700
+            disabled:opacity-50
+          "
+
+        >
+
+          {saving
+            ? 'Saving...'
+            : 'Save Gateway Settings'
+          }
+
+        </button>
+
+
+
       </form>
+
+
     </div>
+
   );
+
 }
