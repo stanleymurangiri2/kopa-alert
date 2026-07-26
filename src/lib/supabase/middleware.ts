@@ -66,7 +66,7 @@ export async function updateSession(
   const isPublicRoute =
     publicRoutes.some((route) =>
       pathname.startsWith(route)
-    ) || pathname.startsWith("/api/auth");
+    ) || pathname.startsWith("/admin/login");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
