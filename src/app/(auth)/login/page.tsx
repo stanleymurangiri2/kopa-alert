@@ -22,7 +22,19 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        router.replace("/dashboard");
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile?.role === "super_admin") {
+          router.push("/admin");
+        } else if (profile?.role === "business_admin") {
+          router.push("/business");
+        } else {
+          router.push("/dashboard");
+        }
       }
     };
 
@@ -46,8 +58,8 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
       password,
     });
 
@@ -69,7 +81,31 @@ export default function LoginPage() {
       return;
     }
 
-    router.replace("/dashboard");
+    if (!data.user) {
+      setError("Unable to load your account.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      setError("Your account profile could not be found.");
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    if (profile.role === "super_admin") {
+      router.replace("/admin");
+    } else {
+      router.replace("/dashboard");
+    }
+
     router.refresh();
   };
 
@@ -139,8 +175,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          
-
           <button
             type="submit"
             disabled={loading}
@@ -150,7 +184,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-right">
+        <div className="text-right mt-4">
           <Link
             href="/forgot-password"
             className="text-sm text-blue-600 hover:underline"
