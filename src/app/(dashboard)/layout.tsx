@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import DashboardSidebar from '@/components/layout/DashboardSidebar';
+import MobileMenuButton from '@/components/layout/MobileMenuButton';
+import { SidebarProvider } from '@/components/layout/sidebar-context';
 
 export default async function DashboardLayout({
   children,
@@ -21,28 +24,40 @@ export default async function DashboardLayout({
     .eq('id', user.id)
     .single();
 
+  const businessName = profile?.businesses?.business_name || 'System Admin';
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">KopaAlert</h2>
-          <p className="text-xs text-gray-500">
-            {profile?.businesses?.business_name || 'System Admin'}
-          </p>
+    <SidebarProvider>
+      <div className="flex min-h-screen bg-gray-100">
+        <DashboardSidebar businessName={businessName} />
+
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-2">
+              <MobileMenuButton />
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">KopaAlert</h2>
+                <p className="text-xs text-gray-500">{businessName}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="hidden text-sm font-medium text-gray-700 sm:inline">
+                {profile?.name}
+              </span>
+              <form action="/api/signout" method="post">
+                <button
+                  type="submit"
+                  className="text-xs font-medium text-red-600 hover:underline"
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
+          </header>
+
+          <main className="w-full flex-1 p-4 sm:p-6">{children}</main>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">{profile?.name}</span>
-          <form action="/api/auth/signout" method="post">
-            <button
-              type="submit"
-              className="text-xs text-red-600 hover:underline font-medium"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
-      </header>
-      <main className="flex-1 p-6 max-w-7xl w-full mx-auto">{children}</main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
