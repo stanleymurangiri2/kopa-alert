@@ -4,16 +4,17 @@ import { notFound } from "next/navigation";
 export default async function UserPage({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const { data: user } = await supabase
     .from("users")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!user) {

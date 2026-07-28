@@ -1,15 +1,19 @@
 import AfricasTalking from "africastalking";
 
-const username = process.env.AT_USERNAME ?? "";
-const apiKey = process.env.AT_API_KEY ?? "";
 const senderId = process.env.AT_SENDER_ID ?? "";
 
-const africastalking = AfricasTalking({
-  username,
-  apiKey,
-});
+function getSmsClient() {
+  const username = process.env.AT_USERNAME;
+  const apiKey = process.env.AT_API_KEY;
 
-const sms = africastalking.SMS;
+  if (!username || !apiKey) {
+    throw new Error(
+      "Africa's Talking credentials (AT_USERNAME, AT_API_KEY) are not configured"
+    );
+  }
+
+  return AfricasTalking({ username, apiKey }).SMS;
+}
 
 export interface SendSMSResult {
   success: boolean;
@@ -30,6 +34,8 @@ export async function sendSMS(
       to: [phone],
       message,
     };
+
+    const sms = getSmsClient();
 
     // Do not send "from" if it isn't configured.
     // Africa's Talking sandbox works without it.
@@ -69,6 +75,8 @@ export async function sendBulkSMS(
       to: phones,
       message,
     };
+
+    const sms = getSmsClient();
 
     if (senderId.trim() !== "") {
       payload.from = senderId;

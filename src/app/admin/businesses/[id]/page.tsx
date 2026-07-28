@@ -5,16 +5,17 @@ import Actions from "./Actions";
 export default async function BusinessPage({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const { data: business } = await supabase
     .from("businesses")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!business) {

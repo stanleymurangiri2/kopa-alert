@@ -6,10 +6,11 @@ import Actions from "./Actions";
 export default async function BusinessRequestDetails({
   params,
 }: {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
 
   const { data: request, error } = await supabase
@@ -23,7 +24,7 @@ export default async function BusinessRequestDetails({
       status,
       created_at
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !request) {
