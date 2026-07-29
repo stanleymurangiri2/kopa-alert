@@ -1,15 +1,20 @@
 import AfricasTalking from "africastalking";
 
-const username = process.env.AT_USERNAME ?? "";
-const apiKey = process.env.AT_API_KEY ?? "";
-const senderId = process.env.AT_SENDER_ID ?? "";
+function getSMSClient() {
+  const username = (process.env.AT_USERNAME || "sandbox").trim();
+  const apiKey = (process.env.AT_API_KEY || "sandbox_key").trim();
 
-const africastalking = AfricasTalking({
-  username,
-  apiKey,
-});
-
-const sms = africastalking.SMS;
+  try {
+    const client = AfricasTalking({
+      username: username || "sandbox",
+      apiKey: apiKey || "dummy_key",
+    });
+    return client.SMS;
+  } catch (err) {
+    console.warn("AfricasTalking initialization warning:", err);
+    return null;
+  }
+}
 
 export interface SendSMSResult {
   success: boolean;
@@ -22,6 +27,15 @@ export async function sendSMS(
   message: string
 ): Promise<SendSMSResult> {
   try {
+    const sms = getSMSClient();
+    if (!sms) {
+      return {
+        success: false,
+        error: "SMS gateway client is not configured.",
+      };
+    }
+
+    const senderId = (process.env.AT_SENDER_ID || "").trim();
     const payload: {
       to: string[];
       message: string;
@@ -31,9 +45,7 @@ export async function sendSMS(
       message,
     };
 
-    // Do not send "from" if it isn't configured.
-    // Africa's Talking sandbox works without it.
-    if (senderId.trim() !== "") {
+    if (senderId !== "") {
       payload.from = senderId;
     }
 
@@ -61,6 +73,15 @@ export async function sendBulkSMS(
   message: string
 ): Promise<SendSMSResult> {
   try {
+    const sms = getSMSClient();
+    if (!sms) {
+      return {
+        success: false,
+        error: "SMS gateway client is not configured.",
+      };
+    }
+
+    const senderId = (process.env.AT_SENDER_ID || "").trim();
     const payload: {
       to: string[];
       message: string;
@@ -70,7 +91,7 @@ export async function sendBulkSMS(
       message,
     };
 
-    if (senderId.trim() !== "") {
+    if (senderId !== "") {
       payload.from = senderId;
     }
 

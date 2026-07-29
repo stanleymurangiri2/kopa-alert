@@ -2,19 +2,23 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
 
+interface BusinessPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
 export default async function BusinessPage({
   params,
-}: {
-  params: {
-    id: string;
-  };
-}) {
+}: BusinessPageProps) {
+  const { id } = await params;
+
   const supabase = await createClient();
 
   const { data: business } = await supabase
     .from("businesses")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!business) {
@@ -23,48 +27,22 @@ export default async function BusinessPage({
 
   return (
     <main className="max-w-4xl mx-auto p-8">
-
       <div className="rounded-xl bg-white p-8 shadow">
-
         <h1 className="text-3xl font-bold mb-8">
           {business.business_name}
         </h1>
 
         <div className="grid gap-6">
-
-          <Info
-            label="Business Code"
-            value={business.business_code}
-          />
-
-          <Info
-            label="Email"
-            value={business.email}
-          />
-
-          <Info
-            label="Phone"
-            value={business.phone}
-          />
-
-          <Info
-            label="Status"
-            value={business.status}
-          />
-
+          <Info label="Business Code" value={business.business_code} />
+          <Info label="Email" value={business.email} />
+          <Info label="Phone" value={business.phone} />
+          <Info label="Status" value={business.status} />
         </div>
 
         <div className="mt-10">
-
-          <Actions
-            id={business.id}
-            status={business.status}
-          />
-
+          <Actions id={business.id} status={business.status} />
         </div>
-
       </div>
-
     </main>
   );
 }

@@ -18,12 +18,20 @@ interface OverviewResponse {
 
 async function getOverview(): Promise<OverviewResponse> {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/reports/overview`,
-      {
-        cache: "no-store",
-      }
-    );
+    const { createClient } = await import("@/lib/supabase/server");
+
+    const supabase = await createClient();
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const response = await fetch("/api/reports/overview", {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${session?.access_token ?? ""}`,
+      },
+    });
 
     if (!response.ok) {
       return {
@@ -33,12 +41,8 @@ async function getOverview(): Promise<OverviewResponse> {
     }
 
     return await response.json();
-
   } catch (error) {
-    console.error(
-      "Dashboard fetch error:",
-      error
-    );
+    console.error("Dashboard fetch error:", error);
 
     return {
       success: false,
@@ -46,7 +50,6 @@ async function getOverview(): Promise<OverviewResponse> {
     };
   }
 }
-
 
 export default async function DashboardPage() {
 

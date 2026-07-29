@@ -39,6 +39,7 @@ export default function NewDebtPage() {
       }
       setLoadingCustomers(false);
     }
+    
 
     fetchCustomers();
   }, [supabase]);

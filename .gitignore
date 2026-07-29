@@ -27,3 +27,6 @@ yarn-error.log*
 # OS / Editor files
 .DS_Store
 Thumbs.db
+.aider*
+
+tests/*.mp4

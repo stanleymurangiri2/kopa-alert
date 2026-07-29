@@ -1,150 +1,90 @@
 import { NextResponse } from 'next/server';
-
-import { sendSMS } from '@/lib/sms/africastalking';
-
 import {
+  generateDailyReminders,
   getPendingNotifications,
   markNotificationSent,
   markNotificationFailed,
   incrementNotificationAttempt,
 } from '@/lib/supabase/notifications';
+import { sendSMS } from '@/lib/sms/africastalking';
 
+export const dynamic = "force-dynamic";
 
-
-export async function POST() {
-
+export async function GET(request: Request) {
   try {
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
 
-    const {
-      data: notifications,
-      error,
-    } = await getPendingNotifications();
-
-
-    if (error) {
-      throw error;
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
+    const generated = await generateDailyReminders();
+    const { data: notifications, error } = await getPendingNotifications();
 
-    if (!notifications || notifications.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No pending notifications',
-        processed: 0,
-      });
-    }
-
-
+    if (error) throw error;
 
     let sent = 0;
     let failed = 0;
 
-
-
-    for (const notification of notifications) {
-
+    for (const notification of notifications || []) {
       try {
-
-
         const result = await sendSMS(
           notification.recipient_phone,
           notification.message_body
         );
 
-
-
         if (!result.success) {
-
           await incrementNotificationAttempt(
             notification.id,
             notification.attempts
           );
-
 
           await markNotificationFailed(
             notification.id,
             result.error || 'SMS sending failed'
           );
 
-
           failed++;
-
           continue;
         }
 
-
-
-        await markNotificationSent(
-          notification.id
-        );
-
-
+        await markNotificationSent(notification.id);
         sent++;
-
-
-
-      } catch (smsError: any) {
-
-
+      } catch (error: any) {
         await incrementNotificationAttempt(
           notification.id,
           notification.attempts
         );
 
-
         await markNotificationFailed(
           notification.id,
-          smsError.message || 'Unknown SMS error'
+          error.message || 'Unexpected SMS error'
         );
 
-
         failed++;
-
       }
-
     }
 
-
-
     return NextResponse.json({
-
       success: true,
-
-      message:
-        'Notification processing completed',
-
-      processed:
-        notifications.length,
-
+      message: 'Notification cron completed',
+      generated,
+      processed: notifications?.length || 0,
       sent,
-
       failed,
-
     });
-
-
-
   } catch (error: any) {
-
-
-    console.error(
-      'Notification API Error:',
-      error
-    );
-
-
+    console.error('Notification Cron Error:', error);
     return NextResponse.json(
       {
         success: false,
-        error:
-          error.message ||
-          'Server error',
+        error: error.message || 'Cron execution failed',
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
-
   }
-
 }

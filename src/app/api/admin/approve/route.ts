@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
-import { sendBusinessInvitation } from "@/lib/notifications/send-business-invitation";
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json(
+      {
+        error: "Supabase environment variables are missing.",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   try {
     const { requestId, password } = await request.json();
@@ -75,7 +85,6 @@ export async function POST(request: NextRequest) {
         email: registration.email,
         password,
         email_confirm: true,
-
         user_metadata: {
           full_name: registration.owner_name,
         },
@@ -99,7 +108,7 @@ export async function POST(request: NextRequest) {
     const activationToken = randomUUID();
 
     //--------------------------------------------------------
-    // Approve business using PostgreSQL RPC
+    // Approve business
     //--------------------------------------------------------
 
     const { data, error } = await supabase.rpc("approve_business_request", {
@@ -121,9 +130,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //--------------------------------------------------------
-    // Send Email + SMS Invitation
-    //--------------------------------------------------------
     const approvedBusiness = data?.[0];
 
     if (!approvedBusiness) {
@@ -137,24 +143,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await sendBusinessInvitation({
-      email: registration.email,
-
-      phone: registration.phone,
-
-      businessName: registration.business_name,
-
-      businessCode: approvedBusiness.business_code,
-
-      password,
-    });
-
     //--------------------------------------------------------
-    // Success
+    // Audit Log
     //--------------------------------------------------------
 
     await supabase.from("audit_logs").insert({
-      admin_id: null, // we'll replace this with the logged-in admin ID later
+      admin_id: null,
       action: "APPROVE_BUSINESS",
       target_type: "business_request",
       target_id: requestId,
@@ -163,11 +157,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-
       message: "Business approved successfully.",
-
       activationToken,
-
       business: approvedBusiness,
     });
   } catch (error) {

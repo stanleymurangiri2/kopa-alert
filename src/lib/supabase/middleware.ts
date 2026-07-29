@@ -56,6 +56,11 @@ export async function updateSession(
 
   const pathname = request.nextUrl.pathname;
 
+  // Skip authentication redirects for API routes
+  if (pathname.startsWith("/api")) {
+    return response;
+  }
+
   const publicRoutes = [
     "/login",
     "/register",

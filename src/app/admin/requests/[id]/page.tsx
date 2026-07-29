@@ -3,13 +3,17 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
 
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
 export default async function BusinessRequestDetails({
   params,
-}: {
-  params: {
-    id: string;
-  };
-}) {
+}: PageProps) {
+  const { id } = await params;
+
   const supabase = await createClient();
 
   const { data: request, error } = await supabase
@@ -23,7 +27,7 @@ export default async function BusinessRequestDetails({
       status,
       created_at
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !request) {
@@ -32,7 +36,6 @@ export default async function BusinessRequestDetails({
 
   return (
     <main className="max-w-4xl mx-auto p-8">
-
       <Link
         href="/admin/requests"
         className="text-blue-600 hover:underline"
@@ -41,13 +44,11 @@ export default async function BusinessRequestDetails({
       </Link>
 
       <div className="mt-6 rounded-xl border bg-white p-8 shadow">
-
         <h1 className="text-3xl font-bold mb-8">
           Business Registration Review
         </h1>
 
         <div className="grid gap-6">
-
           <div>
             <p className="text-sm text-gray-500">Business Name</p>
             <p className="font-semibold">{request.business_name}</p>
@@ -83,15 +84,12 @@ export default async function BusinessRequestDetails({
               {new Date(request.created_at).toLocaleString()}
             </p>
           </div>
-
         </div>
 
         <div className="mt-10">
           <Actions requestId={request.id} />
         </div>
-
       </div>
-
     </main>
   );
 }
