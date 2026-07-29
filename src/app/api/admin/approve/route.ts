@@ -1,32 +1,9 @@
+import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { sendBusinessInvitation } from "@/lib/notifications/send-business-invitation";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export async function POST(request: NextRequest) {
-
-export async function POST(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json(
-      {
-        error: "Supabase environment variables are missing.",
-      },
-      {
-        status: 500,
-      },
-    );
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-
-=======
-import { sendBusinessInvitation } from "@/lib/notifications/send-business-invitation";
-import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
-
-export async function POST(request: NextRequest) {
-  
->>>>>>> origin/devin/1785274236-fix-build
   try {
     const { requestId, password } = await request.json();
 
