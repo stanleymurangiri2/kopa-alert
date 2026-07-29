@@ -11,7 +11,6 @@ export default async function UserPage({
   params,
 }: PageProps) {
   const { id } = await params;
-
   const supabase = await createClient();
 
   const { data: user } = await supabase

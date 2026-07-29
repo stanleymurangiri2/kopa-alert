@@ -12,7 +12,6 @@ export default async function BusinessPage({
   params,
 }: BusinessPageProps) {
   const { id } = await params;
-
   const supabase = await createClient();
 
   const { data: business } = await supabase

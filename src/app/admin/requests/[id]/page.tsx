@@ -13,7 +13,6 @@ export default async function BusinessRequestDetails({
   params,
 }: PageProps) {
   const { id } = await params;
-
   const supabase = await createClient();
 
   const { data: request, error } = await supabase

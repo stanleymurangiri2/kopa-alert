@@ -4,15 +4,24 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-describe('Phase 10: Multi-Tenant RLS Security Checks', () => {
+const hasSupabaseCredentials = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+const clientUrl = hasSupabaseCredentials
+  ? SUPABASE_URL
+  : 'https://placeholder.supabase.co';
+const clientKey = hasSupabaseCredentials ? SUPABASE_ANON_KEY : 'placeholder';
+
+const describeIfConfigured = hasSupabaseCredentials ? describe : describe.skip;
+
+describeIfConfigured('Phase 10: Multi-Tenant RLS Security Checks', () => {
   const tenantA_JWT = process.env.TEST_TENANT_A_JWT || '';
   const tenantB_JWT = process.env.TEST_TENANT_B_JWT || '';
 
-  const clientA = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  const clientA = createClient(clientUrl, clientKey, {
     global: { headers: { Authorization: `Bearer ${tenantA_JWT}` } },
   });
 
-  const clientB = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  const clientB = createClient(clientUrl, clientKey, {
     global: { headers: { Authorization: `Bearer ${tenantB_JWT}` } },
   });
 

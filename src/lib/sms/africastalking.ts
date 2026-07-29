@@ -3,7 +3,6 @@ import AfricasTalking from "africastalking";
 function getSMSClient() {
   const username = (process.env.AT_USERNAME || "sandbox").trim();
   const apiKey = (process.env.AT_API_KEY || "sandbox_key").trim();
-
   try {
     const client = AfricasTalking({
       username: username || "sandbox",
@@ -34,7 +33,6 @@ export async function sendSMS(
         error: "SMS gateway client is not configured.",
       };
     }
-
     const senderId = (process.env.AT_SENDER_ID || "").trim();
     const payload: {
       to: string[];
@@ -44,20 +42,16 @@ export async function sendSMS(
       to: [phone],
       message,
     };
-
     if (senderId !== "") {
       payload.from = senderId;
     }
-
     const response = await sms.send(payload);
-
     return {
       success: true,
       data: response,
     };
   } catch (error) {
     console.error("Africa's Talking SMS Error:", error);
-
     return {
       success: false,
       error:
@@ -80,7 +74,6 @@ export async function sendBulkSMS(
         error: "SMS gateway client is not configured.",
       };
     }
-
     const senderId = (process.env.AT_SENDER_ID || "").trim();
     const payload: {
       to: string[];
@@ -90,20 +83,16 @@ export async function sendBulkSMS(
       to: phones,
       message,
     };
-
     if (senderId !== "") {
       payload.from = senderId;
     }
-
     const response = await sms.send(payload);
-
     return {
       success: true,
       data: response,
     };
   } catch (error) {
     console.error("Africa's Talking Bulk SMS Error:", error);
-
     return {
       success: false,
       error:

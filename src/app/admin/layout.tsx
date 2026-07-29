@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
+import { Sidebar, SidebarProvider, SidebarToggle } from "@/components/Sidebar";
 export default async function AdminLayout({
   children,
 }: {
@@ -45,8 +45,17 @@ export default async function AdminLayout({
   //----------------------------------------------------
 
   return (
-    <main className="flex-1 overflow-auto bg-gray-100">
-      {children}
-    </main>
+<SidebarProvider>
+      <div className="flex min-h-screen bg-gray-100">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+            <SidebarToggle />
+            <span className="font-bold text-gray-800">KopaAlert</span>
+          </header>
+          <main className="flex-1 overflow-auto">{children}</main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
