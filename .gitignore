@@ -30,3 +30,5 @@ Thumbs.db
 .aider*
 
 tests/*.mp4
+.vercel
+.env*

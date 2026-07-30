@@ -53,7 +53,7 @@ export async function POST(
         business_name: requestData.business_name,
         reason,
         support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254700000000",
+        support_phone: "+254740305253",
         to_email: requestData.email,
       },
     });
