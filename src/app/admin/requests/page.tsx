@@ -78,17 +78,22 @@ export default function AdminRequestsPage() {
       return;
     }
 
-    const { error } = await supabase
-      .from('business_requests')
-      .update({
-        status: 'rejected',
-      })
-      .eq('id', requestId);
+    const response = await fetch(`/api/admin/requests/${requestId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
 
-    if (error) {
-      alert(error.message);
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || 'Rejection failed.');
       return;
     }
+
+    alert('Business request rejected.');
 
     loadRequests();
   }
