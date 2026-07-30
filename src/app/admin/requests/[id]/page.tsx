@@ -86,7 +86,13 @@ export default async function BusinessRequestDetails({
         </div>
 
         <div className="mt-10">
-          <Actions requestId={request.id} />
+          {request.status === "pending" ? (
+            <Actions requestId={request.id} />
+          ) : (
+            <p className="text-gray-500">
+              This request has already been {request.status}.
+            </p>
+          )}
         </div>
       </div>
     </main>
