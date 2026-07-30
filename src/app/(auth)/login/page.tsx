@@ -29,7 +29,7 @@ export default function LoginPage() {
           .single();
 
         if (profile?.role === "super_admin") {
-          router.push("/admin");
+          await supabase.auth.signOut();
         } else if (profile?.role === "business_admin") {
           router.push("/business");
         } else {
@@ -101,11 +101,13 @@ export default function LoginPage() {
     }
 
     if (profile.role === "super_admin") {
-      router.replace("/admin");
-    } else {
-      router.replace("/dashboard");
+      await supabase.auth.signOut();
+      setError("Super admins must sign in at /admin/login.");
+      setLoading(false);
+      return;
     }
 
+    router.replace("/dashboard");
     router.refresh();
   };
 
