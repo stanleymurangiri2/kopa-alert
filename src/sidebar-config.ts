@@ -5,6 +5,10 @@ export const sidebarMenus = {
       href: "/admin",
     },
     {
+      name: "Settings",
+      href: "/admin/settings",
+    },
+    {
       name: "Pending Requests",
       href: "/admin/requests",
     },

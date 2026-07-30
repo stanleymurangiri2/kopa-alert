@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar, SidebarProvider, SidebarToggle } from "@/components/Sidebar";
-import { sidebarMenus } from "@/sidebar-config";
+import { sidebarMenus } from "@/sidebar-config"
 
 export default async function AdminLayout({
   children,
@@ -55,9 +55,19 @@ export default async function AdminLayout({
           menu={sidebarMenus.super_admin}
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center gap-2 border-b border-gray-200 bg-white px-4 py-3 md:hidden">
-            <SidebarToggle />
-            <span className="font-bold text-gray-800">KopaAlert</span>
+        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3">
+            <div className="flex items-center gap-2">
+              <SidebarToggle />
+              <span className="font-bold text-gray-800 lg:hidden">KopaAlert</span>
+            </div>
+            <form action="/api/signout" method="post">
+              <button
+                type="submit"
+                className="text-xs font-medium text-red-600 hover:underline"
+              >
+                Sign out
+              </button>
+            </form>
           </header>
           <main className="flex-1 overflow-auto">{children}</main>
         </div>

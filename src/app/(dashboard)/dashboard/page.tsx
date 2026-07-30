@@ -19,6 +19,7 @@ interface OverviewResponse {
 async function getOverview(): Promise<OverviewResponse> {
   try {
     const { createClient } = await import("@/lib/supabase/server");
+    const { headers } = await import("next/headers");
 
     const supabase = await createClient();
 
@@ -26,7 +27,12 @@ async function getOverview(): Promise<OverviewResponse> {
       data: { session },
     } = await supabase.auth.getSession();
 
-    const response = await fetch("/api/reports/overview", {
+    const headersList = await headers();
+    const host = headersList.get("host");
+    const protocol = process.env.NODE_ENV === "development" ? "http" : "https";
+    const baseUrl = `${protocol}://${host}`;
+
+    const response = await fetch(`${baseUrl}/api/reports/overview`, {
       cache: "no-store",
       headers: {
         Authorization: `Bearer ${session?.access_token ?? ""}`,
