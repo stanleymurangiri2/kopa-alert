@@ -3,12 +3,20 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar, SidebarProvider, SidebarToggle } from "@/components/Sidebar";
 import { sidebarMenus } from "@/sidebar-config"
+import { headers } from "next/headers";
 
 export default async function AdminLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") ?? headersList.get("next-url") ?? "";
+
+  if (pathname.includes("/admin/login")) {
+    return <>{children}</>;
+  }
+
   const supabase = await createClient();
 
   //----------------------------------------------------
