@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
         business_code: approvedBusiness.business_code,
         login_url: "https://kopa-alert.vercel.app/login",
         support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254700000000",
+        support_phone: "+254740305253",
         to_email: registration.email,
       },
     });

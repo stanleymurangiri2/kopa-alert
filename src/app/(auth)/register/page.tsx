@@ -44,17 +44,12 @@ export default function BusinessRegisterPage() {
     setLoading(true);
     setMessage(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabase.from("business_requests").insert({
+      business_name: formData.business_name,
+      owner_name: formData.owner_name,
+      phone: formData.phone,
       email: formData.email.trim().toLowerCase(),
-      password: "TEMP_PASSWORD",
-      options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-        data: {
-          business_name: formData.business_name,
-          owner_name: formData.owner_name,
-          phone: formData.phone,
-        },
-      },
+      status: "pending",
     });
 
     setLoading(false);
@@ -63,7 +58,8 @@ export default function BusinessRegisterPage() {
       if (error.code === "23505") {
         setMessage({
           type: "error",
-          text: "⚠️ Registration already exists.\n\nA business registration using this email address or phone number has already been submitted.\n\nIf your account is awaiting approval, please wait for an administrator to review it.\n\nIf you believe this is a mistake, please contact the system administrator.",
+          text:
+            "⚠️ Registration already exists.\n\nA business registration using this email address or phone number has already been submitted.\n\nIf your account is awaiting approval, please wait for an administrator to review it.\n\nIf you believe this is a mistake, please contact the system administrator.",
         });
       } else {
         setMessage({
@@ -76,7 +72,8 @@ export default function BusinessRegisterPage() {
 
     setMessage({
       type: "success",
-      text: "Registration submitted successfully. Your account will be reviewed before activation.",
+      text:
+        "Registration submitted successfully. Your account will be reviewed before activation.",
     });
 
     setFormData({
@@ -135,7 +132,9 @@ export default function BusinessRegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Owner Name</label>
+            <label className="block text-sm font-medium mb-1">
+              Owner Name
+            </label>
 
             <input
               name="owner_name"
