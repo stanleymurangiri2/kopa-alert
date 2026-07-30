@@ -57,7 +57,7 @@ export default function Actions({
     setLoading(true);
 
     const response = await fetch(
-      "/api/admin/business/reject",
+      `/api/admin/requests/${requestId}/reject`,
       {
         method: "POST",
         headers: {
