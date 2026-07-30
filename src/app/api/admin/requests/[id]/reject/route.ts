@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
+
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const reason =
-      body?.reason ?? "Registration did not meet our requirements.";
+    const reason = body?.reason ?? "Registration did not meet our requirements.";
 
     // Check request exists
     const { data: requestData, error: requestError } = await supabase
@@ -21,14 +21,14 @@ export async function POST(
     if (requestError || !requestData) {
       return NextResponse.json(
         { error: "Business request not found." },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     if (requestData.status !== "pending") {
       return NextResponse.json(
         { error: "This request has already been processed." },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -41,21 +41,25 @@ export async function POST(
       .eq("id", id);
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return NextResponse.json(
+        { error: updateError.message },
+        { status: 500 }
+      );
     }
 
-    const { sendEmailJS } = await import("@/lib/notifications/emailjs");
+    const { sendMail } = await import("@/lib/notifications/mailer");
+    const { rejectionEmail } = await import("@/lib/notifications/email-templates");
 
-    await sendEmailJS({
-      templateId: "rejection",
-      params: {
+    await sendMail({
+      to: requestData.email,
+      subject: "Update on Your KopaAlert Business Registration",
+      html: rejectionEmail({
         owner_name: requestData.owner_name,
         business_name: requestData.business_name,
         reason,
         support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254740305253",
-        to_email: requestData.email,
-      },
+        support_phone: "+254700000000",
+      }),
     });
 
     return NextResponse.json({
@@ -71,7 +75,7 @@ export async function POST(
       },
       {
         status: 500,
-      },
+      }
     );
   }
 }

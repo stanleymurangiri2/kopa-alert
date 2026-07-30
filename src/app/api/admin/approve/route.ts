@@ -127,23 +127,25 @@ export async function POST(request: NextRequest) {
         },
       );
     }
-//--------------------------------------------------------
+
+    //--------------------------------------------------------
     // Send approval email
     //--------------------------------------------------------
 
-    const { sendEmailJS } = await import("@/lib/notifications/emailjs");
+    const { sendMail } = await import("@/lib/notifications/mailer");
+    const { approvalEmail } = await import("@/lib/notifications/email-templates");
 
-    await sendEmailJS({
-      templateId: "Account_Approved",
-      params: {
+    await sendMail({
+      to: registration.email,
+      subject: "Your KopaAlert Business Account is Approved!",
+      html: approvalEmail({
         owner_name: registration.owner_name,
         business_name: registration.business_name,
         business_code: approvedBusiness.business_code,
         login_url: "https://kopa-alert.vercel.app/login",
         support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254740305253",
-        to_email: registration.email,
-      },
+        support_phone: "+254700000000",
+      }),
     });
 
     //--------------------------------------------------------
