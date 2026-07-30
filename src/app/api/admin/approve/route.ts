@@ -132,10 +132,11 @@ export async function POST(request: NextRequest) {
     // Send approval email
     //--------------------------------------------------------
 
-    const { sendMail } = await import("@/lib/notifications/mailer");
-    const { approvalEmail } = await import("@/lib/notifications/email-templates");
+    try {
+      const { sendMail } = await import("@/lib/notifications/mailer");
+      const { approvalEmail } = await import("@/lib/notifications/email-templates");
 
-    await sendMail({
+      await sendMail({
       to: registration.email,
       subject: "Your KopaAlert Business Account is Approved!",
       html: approvalEmail({
@@ -147,6 +148,10 @@ export async function POST(request: NextRequest) {
         support_phone: "+254700000000",
       }),
     });
+
+} catch (emailError) {
+      console.error("Approval email failed (non-blocking):", emailError);
+    }
 
     //--------------------------------------------------------
     // Audit Log

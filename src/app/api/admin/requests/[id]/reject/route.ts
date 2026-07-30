@@ -47,20 +47,24 @@ export async function POST(
       );
     }
 
-    const { sendMail } = await import("@/lib/notifications/mailer");
-    const { rejectionEmail } = await import("@/lib/notifications/email-templates");
+    try {
+      const { sendMail } = await import("@/lib/notifications/mailer");
+      const { rejectionEmail } = await import("@/lib/notifications/email-templates");
 
-    await sendMail({
-      to: requestData.email,
-      subject: "Update on Your KopaAlert Business Registration",
-      html: rejectionEmail({
-        owner_name: requestData.owner_name,
-        business_name: requestData.business_name,
-        reason,
-        support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254700000000",
-      }),
-    });
+      await sendMail({
+        to: requestData.email,
+        subject: "Update on Your KopaAlert Business Registration",
+        html: rejectionEmail({
+          owner_name: requestData.owner_name,
+          business_name: requestData.business_name,
+          reason,
+          support_email: "solutiontechcampany@gmail.com",
+          support_phone: "+254700000000",
+        }),
+      });
+    } catch (emailError) {
+      console.error("Rejection email failed (non-blocking):", emailError);
+    }
 
     return NextResponse.json({
       success: true,
