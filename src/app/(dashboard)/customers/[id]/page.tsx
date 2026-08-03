@@ -1,305 +1,419 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  getDebtById,
-  updateDebt,
-  deleteDebt,
-} from '@/lib/supabase/debts';
+import { getCustomerById } from '@/lib/supabase/customers';
+import { getDebts, addToDebt } from '@/lib/supabase/debts';
+
+type Customer = {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  is_blacklisted?: boolean | null;
+};
 
 type Debt = {
   id: string;
-  business_id: string;
   customer_id: string;
   amount: number;
   amount_paid: number;
- description: string;
-  payment_instructions: string | null;
+  description: string;
   due_date: string;
-  status: 'pending' | 'partially_paid' | 'fully_paid' | 'overdue';
-  customers?: {
-    id: string;
-    full_name: string;
-    phone: string;
-    email?: string | null;
-  };
+  status: string;
 };
 
-export default function DebtDetailsPage() {
+function badgeColor(status: string) {
+  switch (status) {
+    case 'fully_paid':
+      return 'bg-green-100 text-green-700';
+    case 'partially_paid':
+      return 'bg-yellow-100 text-yellow-700';
+    case 'overdue':
+      return 'bg-red-100 text-red-700';
+    default:
+      return 'bg-blue-100 text-blue-700';
+  }
+}
+
+export default function CustomerDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const customerId = params.id as string;
 
-  const debtId = params.id as string;
-
-  const [debt, setDebt] = useState<Debt | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+
+  // Top-up form state
+  const [topUpDebtId, setTopUpDebtId] = useState<string | null>(null);
+  const [topUpAmount, setTopUpAmount] = useState('');
+  const [topUpDueDate, setTopUpDueDate] = useState('');
+  const [topUpSaving, setTopUpSaving] = useState(false);
+  const [topUpError, setTopUpError] = useState('');
 
   useEffect(() => {
-    loadDebt();
-  }, []);
+    loadData();
+  }, [customerId]);
 
-  async function loadDebt() {
+  async function loadData() {
     setLoading(true);
-
-    const { data, error } = await getDebtById(debtId);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setDebt(data as Debt);
-    }
-
-    setLoading(false);
-  }
-
-  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    if (!debt) return;
-
-    setSaving(true);
     setError('');
 
-    const { error } = await updateDebt(debt.id, {
-      amount: Number(debt.amount),
-      description: debt.description,
-      payment_instructions: debt.payment_instructions,
-      due_date: debt.due_date,
-    });
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
 
-    if (error) {
-      setError(error.message);
-    } else {
-      alert('Debt updated successfully.');
-      await loadDebt();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      setRole(profile?.role ?? null);
     }
 
-    setSaving(false);
-  }
+    const { data: customerData, error: customerError } =
+      await getCustomerById(customerId);
 
-  async function handleDelete() {
-    if (!debt) return;
-
-    const confirmed = confirm(
-      'Delete this debt record? This action cannot be undone.'
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await deleteDebt(debt.id);
-
-    if (error) {
-      alert(error.message);
+    if (customerError || !customerData) {
+      setError('Customer not found.');
+      setLoading(false);
       return;
     }
 
-    router.push('/debts');
-    router.refresh();
+    setCustomer(customerData as Customer);
+
+    const { data: allDebts } = await getDebts();
+
+    const customerDebts = ((allDebts ?? []) as any[]).filter(
+      (d) => d.customer_id === customerId
+    );
+
+    setDebts(customerDebts as Debt[]);
+    setLoading(false);
+  }
+
+  async function toggleBlacklist() {
+    if (!customer) return;
+
+    setUpdating(true);
+
+    const {
+      data: { session },
+    } = await (await import('@/lib/supabase/client')).createClient().auth.getSession();
+
+    const response = await fetch('/api/customers/blacklist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token ?? ''}`,
+      },
+      body: JSON.stringify({
+        customerId: customer.id,
+        blacklist: !customer.is_blacklisted,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      setCustomer({
+        ...customer,
+        is_blacklisted: !customer.is_blacklisted,
+      });
+    } else {
+      alert(result.message || 'Failed to update blacklist status.');
+    }
+
+    setUpdating(false);
+  }
+
+  function openTopUp(debtId: string) {
+    setTopUpDebtId(debtId);
+    setTopUpAmount('');
+    setTopUpDueDate('');
+    setTopUpError('');
+  }
+
+  function closeTopUp() {
+    setTopUpDebtId(null);
+    setTopUpError('');
+  }
+
+  async function handleTopUp(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    if (!topUpDebtId) return;
+
+    const amount = Number(topUpAmount);
+
+    if (!amount || amount <= 0) {
+      setTopUpError('Enter a valid amount greater than zero.');
+      return;
+    }
+
+    if (!topUpDueDate) {
+      setTopUpError('Select a new due date.');
+      return;
+    }
+
+    setTopUpSaving(true);
+    setTopUpError('');
+
+    const { error } = await addToDebt(topUpDebtId, amount, topUpDueDate);
+
+    if (error) {
+      setTopUpError(error.message ?? 'Failed to add to debt.');
+      setTopUpSaving(false);
+      return;
+    }
+
+    setTopUpSaving(false);
+    closeTopUp();
+    loadData();
   }
 
   if (loading) {
+    return <div className="p-6 text-gray-500">Loading customer...</div>;
+  }
+
+  if (error || !customer) {
     return (
       <div className="p-6">
-        Loading debt...
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-600">
+          {error || 'Customer not found.'}
+        </div>
+        <Link
+          href="/customers"
+          className="mt-4 inline-block text-blue-600 hover:underline"
+        >
+          Back to customers
+        </Link>
       </div>
     );
   }
 
-  if (!debt) {
-    return (
-      <div className="p-6">
-        Debt not found.
-      </div>
-    );
-  }
-
-  const balance = Number(debt.amount) - Number(debt.amount_paid);
+  const totalOwed = debts.reduce(
+    (sum, d) => sum + (d.amount - d.amount_paid),
+    0
+  );
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
-            Debt Details
-          </h1>
-          <p className="text-sm text-gray-500">
-            Manage customer debt.
+          <h1 className="text-2xl font-bold">{customer.full_name}</h1>
+          <p className="text-gray-500">
+            {customer.phone}
+            {customer.email ? ` · ${customer.email}` : ''}
           </p>
         </div>
 
         <Link
-          href="/debts"
+          href="/customers"
           className="rounded-md border px-4 py-2 hover:bg-gray-100"
         >
           Back
         </Link>
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </div>
-      )}
-
-      <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold mb-4">
-          Customer Information
-        </h2>
-
-        <div className="grid gap-3 md:grid-cols-2">
+      <div className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-gray-500">Customer</p>
-            <p className="font-medium">
-              {debt.customers?.full_name}
-            </p>
+            <div className="text-sm text-gray-500">Status</div>
+            <div className="mt-1">
+              {customer.is_blacklisted ? (
+                <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700">
+                  Blacklisted
+                </span>
+              ) : (
+                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                  Active
+                </span>
+              )}
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Phone</p>
-            <p>{debt.customers?.phone}</p>
+          <div className="text-right">
+            <div className="text-sm text-gray-500">Total Outstanding</div>
+            <div className="text-xl font-bold">
+              KES {totalOwed.toLocaleString()}
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">Amount</p>
-            <p className="font-semibold">
-              KES {Number(debt.amount).toLocaleString()}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-500">Paid</p>
-            <p className="text-green-600 font-semibold">
-              KES {Number(debt.amount_paid).toLocaleString()}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-500">Balance</p>
-            <p className="text-red-600 font-semibold">
-              KES {balance.toLocaleString()}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-gray-500">Status</p>
-            <p className="font-medium capitalize">
-              {debt.status.replace('_', ' ')}
-            </p>
-          </div>
+          {(role === 'business_admin' || role === 'super_admin') && (
+            <button
+              onClick={toggleBlacklist}
+              disabled={updating}
+              className={`rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
+                customer.is_blacklisted
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+            >
+              {updating
+                ? 'Updating...'
+                : customer.is_blacklisted
+                ? 'Remove from Blacklist'
+                : 'Blacklist Customer'}
+            </button>
+          )}
         </div>
       </div>
 
-      <form
-        onSubmit={handleSave}
-        className="rounded-lg border bg-white p-6 shadow-sm space-y-5"
-      >
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Amount (KES)
-          </label>
-
-          <input
-            type="number"
-            min="1"
-            step="0.01"
-            value={debt.amount}
-            onChange={(e) =>
-              setDebt({
-                ...debt,
-                amount: Number(e.target.value),
-              })
-            }
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Description
-          </label>
-
-          <textarea
-            rows={3}
-            value={debt.description}
-            onChange={(e) =>
-              setDebt({
-                ...debt,
-                description: e.target.value,
-              })
-            }
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Payment Instructions
-          </label>
-
-          <textarea
-            rows={2}
-            value={debt.payment_instructions ?? ''}
-            onChange={(e) =>
-              setDebt({
-                ...debt,
-                payment_instructions: e.target.value,
-              })
-            }
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Due Date
-          </label>
-
-          <input
-            type="date"
-            value={debt.due_date}
-            onChange={(e) =>
-              setDebt({
-                ...debt,
-                due_date: e.target.value,
-              })
-            }
-            className="w-full rounded-md border px-3 py-2"
-          />
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
-
+      <div className="rounded-lg border bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b p-4">
+          <h2 className="font-semibold">Debts</h2>
           <Link
-            href={`/debts/${debt.id}/pay`}
-            className="rounded-md bg-green-600 px-5 py-2 text-white hover:bg-green-700"
+            href="/debts/new"
+            className="text-sm text-blue-600 hover:underline"
           >
-            Record Payment
+            + New Debt
           </Link>
-
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="rounded-md bg-red-600 px-5 py-2 text-white hover:bg-red-700"
-          >
-            Delete Debt
-          </button>
-
         </div>
-      </form>
 
+        {debts.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            No debts for this customer.
+          </div>
+        ) : (
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">Amount</th>
+                <th className="px-4 py-3 text-left">Balance</th>
+                <th className="px-4 py-3 text-left">Due Date</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {debts.map((debt) => (
+                <>
+                  <tr key={debt.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3">{debt.description}</td>
+
+                    <td className="px-4 py-3">
+                      KES {Number(debt.amount).toLocaleString()}
+                    </td>
+
+                    <td className="px-4 py-3 font-medium">
+                      KES{' '}
+                      {Number(
+                        debt.amount - debt.amount_paid
+                      ).toLocaleString()}
+                    </td>
+
+                    <td className="px-4 py-3">{debt.due_date}</td>
+
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${badgeColor(
+                          debt.status
+                        )}`}
+                      >
+                        {debt.status.replace('_', ' ')}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3 text-center space-x-3">
+                      <Link
+                        href={`/debts/${debt.id}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        View
+                      </Link>
+
+                      {debt.status !== 'fully_paid' && (
+                        <button
+                          onClick={() => openTopUp(debt.id)}
+                          className="text-green-600 hover:underline"
+                        >
+                          Add to Debt
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+
+                  {topUpDebtId === debt.id && (
+                    <tr className="border-t bg-gray-50">
+                      <td colSpan={6} className="px-4 py-4">
+                        <form
+                          onSubmit={handleTopUp}
+                          className="flex flex-wrap items-end gap-3"
+                        >
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              Additional Amount (KES)
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              step="0.01"
+                              value={topUpAmount}
+                              onChange={(e) =>
+                                setTopUpAmount(e.target.value)
+                              }
+                              className="w-40 rounded-md border px-3 py-2"
+                              placeholder="500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              New Due Date
+                            </label>
+                            <input
+                              type="date"
+                              value={topUpDueDate}
+                              onChange={(e) =>
+                                setTopUpDueDate(e.target.value)
+                              }
+                              className="rounded-md border px-3 py-2"
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={topUpSaving}
+                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                          >
+                            {topUpSaving ? 'Saving...' : 'Confirm'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={closeTopUp}
+                            className="rounded-md border px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Cancel
+                          </button>
+
+                          {topUpError && (
+                            <p className="w-full text-sm text-red-600">
+                              {topUpError}
+                            </p>
+                          )}
+                        </form>
+                      </td>
+                    </tr>
+                  )}
+                </>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }

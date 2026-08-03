@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     if (
       profile.role !== "business_admin" &&
-      profile.role !== "employee"
+      profile.role !== "super-admin"
     ) {
       return NextResponse.json(
         {

@@ -29,7 +29,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-gray-100">
-        <DashboardSidebar businessName={businessName} />
+       <DashboardSidebar businessName={businessName} role={profile?.role} />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6">

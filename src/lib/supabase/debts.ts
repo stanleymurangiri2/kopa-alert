@@ -1,7 +1,3 @@
-import { createClient } from '@/lib/supabase/client';
-
-const supabase = createClient();
-
 export type Debt = {
   id: string;
   business_id: string;
@@ -125,4 +121,72 @@ export async function recordPayment(
     .single();
 
   return { data, error };
+}
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
+
+export async function addToDebt(
+  debtId: string,
+  additionalAmount: number,
+  newDueDate: string
+) {
+  const { data: current, error: fetchError } = await supabase
+    .from('debts')
+    .select('amount, amount_paid, business_id, customer_id, description')
+    .eq('id', debtId)
+    .single();
+
+  if (fetchError || !current) {
+    return { data: null, error: fetchError };
+  }
+
+  const newAmount = Number(current.amount) + additionalAmount;
+  const newStatus =
+    Number(current.amount_paid) >= newAmount ? 'fully_paid' : 'partially_paid';
+
+  const { data, error } = await supabase
+    .from('debts')
+    .update({
+      amount: newAmount,
+      due_date: newDueDate,
+      status: newStatus,
+    })
+    .eq('id', debtId)
+    .select()
+    .single();
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  // Notify customer of the top-up
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('full_name, phone')
+    .eq('id', current.customer_id)
+    .single();
+
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('business_name')
+    .eq('id', current.business_id)
+    .single();
+
+  if (customer && business) {
+    const balance = newAmount - Number(current.amount_paid);
+
+    await supabase.from('notification_queue').insert({
+      business_id: current.business_id,
+      debt_id: debtId,
+      customer_id: current.customer_id,
+      channel: 'sms',
+      recipient_phone: customer.phone,
+      message_body: `Dear ${customer.full_name}, KES ${additionalAmount} has been added to your debt with ${business.business_name}. New balance: KES ${balance}. New due date: ${newDueDate}.`,
+      scheduled_for: new Date().toISOString(),
+      status: 'pending',
+    });
+  }
+
+  return { data, error: null };
 }

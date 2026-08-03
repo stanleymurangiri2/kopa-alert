@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const allowedRoles = [
       "super_admin",
       "business_admin",
-      "employee",
+      
     ];
 
     if (!allowedRoles.includes(profile.role)) {
