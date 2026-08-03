@@ -2,6 +2,7 @@ export function approvalEmail(params: {
   owner_name: string;
   business_name: string;
   business_code: string;
+  temporary_password: string;
   login_url: string;
   support_email: string;
   support_phone: string;
@@ -12,6 +13,8 @@ export function approvalEmail(params: {
       <p>Hi ${params.owner_name},</p>
       <p>Great news! Your business "<strong>${params.business_name}</strong>" has been approved on KopaAlert.</p>
       <p><strong>Business Code:</strong> ${params.business_code}</p>
+      <p><strong>Temporary Password:</strong> <code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">${params.temporary_password}</code></p>
+      <p style="color:#b91c1c; font-size: 14px;">For your security, please log in and change this password immediately.</p>
       <p><a href="${params.login_url}" style="color: #2563eb;">Log in here</a></p>
       <p>You can now log in and start managing customers, debts, and payments.</p>
       <hr />

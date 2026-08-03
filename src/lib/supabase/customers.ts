@@ -1,160 +1,60 @@
 import { createClient } from '@/lib/supabase/client';
 
-export interface Customer {
+const supabase = createClient();
+
+export type Customer = {
   id: string;
   business_id: string;
   full_name: string;
   phone: string;
   email: string | null;
-  address: string | null;
-  national_id: string | null;
-  notes: string | null;
-  created_at: string;
-}
+  is_blacklisted?: boolean | null;
+  blacklisted_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
 
-export interface CustomerFormData {
-  full_name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  national_id?: string;
-  notes?: string;
-}
-
-const supabase = createClient();
-
-/**
- * Get all customers for the logged-in business
- */
-export async function getCustomers(): Promise<Customer[]> {
+export async function getCustomers() {
   const { data, error } = await supabase
     .from('customers')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('full_name', { ascending: true });
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as Customer[];
+  return { data, error };
 }
 
-/**
- * Get a single customer
- */
-export async function getCustomer(id: string): Promise<Customer | null> {
+export async function getCustomerById(id: string) {
   const { data, error } = await supabase
     .from('customers')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null;
-    }
-
-    throw new Error(error.message);
-  }
-
-  return data as Customer;
+  return { data, error };
 }
 
-/**
- * Create customer
- */
 export async function createCustomer(
-  customer: CustomerFormData
-): Promise<Customer> {
-  const payload = {
-    full_name: customer.full_name.trim(),
-    phone: customer.phone.trim(),
-    email: customer.email?.trim().toLowerCase() || null,
-    address: customer.address?.trim() || null,
-    national_id: customer.national_id?.trim() || null,
-    notes: customer.notes?.trim() || null,
-  };
-
+  customer: Omit<
+    Customer,
+    'id' | 'is_blacklisted' | 'blacklisted_at' | 'created_at' | 'updated_at'
+  >
+) {
   const { data, error } = await supabase
     .from('customers')
-    .insert(payload)
+    .insert(customer)
     .select()
     .single();
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data as Customer;
+  return { data, error };
 }
 
-/**
- * Update customer
- */
-export async function updateCustomer(
-  id: string,
-  customer: CustomerFormData
-): Promise<Customer> {
-  const payload = {
-    full_name: customer.full_name.trim(),
-    phone: customer.phone.trim(),
-    email: customer.email?.trim().toLowerCase() || null,
-    address: customer.address?.trim() || null,
-    national_id: customer.national_id?.trim() || null,
-    notes: customer.notes?.trim() || null,
-  };
-
+export async function updateCustomer(id: string, updates: Partial<Customer>) {
   const { data, error } = await supabase
     .from('customers')
-    .update(payload)
+    .update(updates)
     .eq('id', id)
     .select()
     .single();
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data as Customer;
-}
-
-/**
- * Delete customer
- */
-export async function deleteCustomer(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('customers')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-}
-
-/**
- * Search customers
- */
-export async function searchCustomers(
-  keyword: string
-): Promise<Customer[]> {
-  const query = keyword.trim();
-
-  if (!query) {
-    return getCustomers();
-  }
-
-  const { data, error } = await supabase
-    .from('customers')
-    .select('*')
-    .or(
-      `full_name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`
-    )
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as Customer[];
+  return { data, error };
 }

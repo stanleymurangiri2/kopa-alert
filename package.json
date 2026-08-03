@@ -20,7 +20,6 @@
     "test:e2e:webkit": "playwright test --project=webkit"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.110.8",
@@ -34,7 +33,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "recharts": "^3.10.0",
-    "resend": "^6.18.0",
+    "resend": "^6.18.1",
     "tailwind-merge": "^3.6.0",
     "xlsx": "^0.18.5"
   },

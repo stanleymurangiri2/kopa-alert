@@ -1,40 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createDebt, getCustomersForDebt } from '@/lib/supabase/debts';
+import { createCustomer } from '@/lib/supabase/customers';
 import { createClient } from '@/lib/supabase/client';
 
-type Customer = {
-  id: string;
-  full_name: string;
-};
-
-export default function NewDebtPage() {
+export default function NewCustomerPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [form, setForm] = useState({
-    customer_id: '',
-    amount: '',
-    description: '',
-    payment_instructions: '',
-    due_date: '',
+    full_name: '',
+    phone: '',
+    email: '',
   });
-
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  async function loadCustomers() {
-    const { data } = await getCustomersForDebt();
-    setCustomers((data ?? []) as Customer[]);
-  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -65,13 +48,11 @@ export default function NewDebtPage() {
         return;
       }
 
-      const { error: createError } = await createDebt({
+      const { error: createError } = await createCustomer({
         business_id: profile.business_id,
-        customer_id: form.customer_id,
-        amount: Number(form.amount),
-        description: form.description.trim(),
-        payment_instructions: form.payment_instructions.trim(),
-        due_date: form.due_date,
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || null,
       });
 
       if (createError) {
@@ -80,7 +61,7 @@ export default function NewDebtPage() {
         return;
       }
 
-      router.push('/debts');
+      router.push('/customers');
       router.refresh();
     } catch {
       setError('Something went wrong.');
@@ -92,14 +73,12 @@ export default function NewDebtPage() {
     <div className="max-w-3xl mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">New Debt</h1>
-          <p className="text-sm text-gray-500">
-            Create a new customer debt.
-          </p>
+          <h1 className="text-2xl font-bold">New Customer</h1>
+          <p className="text-sm text-gray-500">Add a new customer.</p>
         </div>
 
         <Link
-          href="/debts"
+          href="/customers"
           className="rounded-md border px-4 py-2 hover:bg-gray-100"
         >
           Back
@@ -115,108 +94,41 @@ export default function NewDebtPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium">
-              Customer
-            </label>
-
-            <select
-              required
-              value={form.customer_id}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  customer_id: e.target.value,
-                })
-              }
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">Select Customer</option>
-
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Amount (KES)
-            </label>
-
+            <label className="mb-1 block text-sm font-medium">Full Name</label>
             <input
-              type="number"
+              type="text"
               required
-              min="1"
-              step="0.01"
-              value={form.amount}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  amount: e.target.value,
-                })
-              }
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               className="w-full rounded-md border px-3 py-2"
-              placeholder="1000"
+              placeholder="Jane Wanjiru"
             />
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium">
-              Description
+              Phone Number
             </label>
-
-            <textarea
-              required
-              rows={3}
-              value={form.description}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  description: e.target.value,
-                })
-              }
-              className="w-full rounded-md border px-3 py-2"
-              placeholder="Products supplied on credit"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Payment Instructions
-            </label>
-
-            <textarea
-              rows={2}
-              value={form.payment_instructions}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  payment_instructions: e.target.value,
-                })
-              }
-              className="w-full rounded-md border px-3 py-2"
-              placeholder="Pay via M-Pesa Paybill 123456"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Due Date
-            </label>
-
             <input
-              type="date"
+              type="tel"
               required
-              value={form.due_date}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  due_date: e.target.value,
-                })
-              }
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="w-full rounded-md border px-3 py-2"
+              placeholder="+254700000000"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Email (optional)
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full rounded-md border px-3 py-2"
+              placeholder="jane@example.com"
             />
           </div>
 
@@ -225,7 +137,7 @@ export default function NewDebtPage() {
             disabled={loading}
             className="w-full rounded-md bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? 'Saving...' : 'Create Debt'}
+            {loading ? 'Saving...' : 'Add Customer'}
           </button>
         </form>
       </div>

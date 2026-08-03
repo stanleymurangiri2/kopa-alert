@@ -44,18 +44,19 @@ export async function POST(
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    const { sendEmailJS } = await import("@/lib/notifications/emailjs");
+    const { sendEmail } = await import("@/lib/notifications/resend");
+    const { rejectionEmail } = await import("@/lib/notifications/email-templates");
 
-    await sendEmailJS({
-      templateId: "rejection",
-      params: {
+    await sendEmail({
+      to: requestData.email,
+      subject: "Update on Your KopaAlert Business Registration",
+      html: rejectionEmail({
         owner_name: requestData.owner_name,
         business_name: requestData.business_name,
         reason,
         support_email: "solutiontechcampany@gmail.com",
         support_phone: "+254740305253",
-        to_email: requestData.email,
-      },
+      }),
     });
 
     return NextResponse.json({

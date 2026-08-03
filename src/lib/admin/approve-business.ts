@@ -1,4 +1,5 @@
 import { supabaseAdmin as supabase } from '@/lib/supabase/admin';
+import crypto from 'crypto';
 
 // Types
 type BusinessRequest = {
@@ -21,11 +22,14 @@ export interface ApproveBusinessResult {
   businessId?: string;
   userId?: string;
   temporaryPassword?: string;
+  emailSent?: boolean;
 }
 
 // Generate a temporary password if none is provided
 function generateTemporaryPassword() {
-  return `Kopa@${Math.random().toString(36).slice(-8)}A1`;
+  // crypto.randomBytes instead of Math.random — not predictable
+  const randomPart = crypto.randomBytes(6).toString('base64url'); // 8 chars, URL-safe
+  return `Kopa@${randomPart}A1`;
 }
 
 export async function approveBusiness({
@@ -33,22 +37,11 @@ export async function approveBusiness({
   temporaryPassword,
 }: ApproveBusinessInput): Promise<ApproveBusinessResult> {
   try {
-    // ------------------------------------------------------------------
-    // Validate input
-    // ------------------------------------------------------------------
-
     if (!requestId) {
-      return {
-        success: false,
-        message: 'Request ID is required.',
-      };
+      return { success: false, message: 'Request ID is required.' };
     }
 
     const password = temporaryPassword || generateTemporaryPassword();
-
-    // ------------------------------------------------------------------
-    // Get pending registration request
-    // ------------------------------------------------------------------
 
     const { data: request, error: requestError } = await supabase
       .from('business_requests')
@@ -57,29 +50,14 @@ export async function approveBusiness({
       .maybeSingle<BusinessRequest>();
 
     if (requestError) {
-      return {
-        success: false,
-        message: requestError.message,
-      };
+      return { success: false, message: requestError.message };
     }
-
     if (!request) {
-      return {
-        success: false,
-        message: 'Business request not found.',
-      };
+      return { success: false, message: 'Business request not found.' };
     }
-
     if (request.status !== 'pending') {
-      return {
-        success: false,
-        message: 'Business request has already been processed.',
-      };
+      return { success: false, message: 'Business request has already been processed.' };
     }
-
-    // ------------------------------------------------------------------
-    // Create Business first
-    // ------------------------------------------------------------------
 
     const { data: business, error: businessError } = await supabase
       .from('businesses')
@@ -99,10 +77,6 @@ export async function approveBusiness({
       };
     }
 
-    // ------------------------------------------------------------------
-    // Create Supabase Auth user
-    // ------------------------------------------------------------------
-
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email: request.email,
@@ -115,9 +89,7 @@ export async function approveBusiness({
       });
 
     if (authError || !authData.user) {
-      // Rollback business
       await supabase.from('businesses').delete().eq('id', business.id);
-
       return {
         success: false,
         message: authError?.message || 'Unable to create authentication user.',
@@ -125,10 +97,6 @@ export async function approveBusiness({
     }
 
     const authUserId = authData.user.id;
-
-    // ------------------------------------------------------------------
-    // Create public.users profile
-    // ------------------------------------------------------------------
 
     const { error: userError } = await supabase.from('users').insert({
       id: authUserId,
@@ -139,39 +107,50 @@ export async function approveBusiness({
     });
 
     if (userError) {
-      // Rollback everything
       await supabase.from('businesses').delete().eq('id', business.id);
       await supabase.auth.admin.deleteUser(authUserId);
-
-      return {
-        success: false,
-        message: userError.message,
-      };
+      return { success: false, message: userError.message };
     }
-
-    // ------------------------------------------------------------------
-    // Mark request approved
-    // ------------------------------------------------------------------
 
     const { error: updateError } = await supabase
       .from('business_requests')
-      .update({
-        status: 'approved',
-      })
+      .update({ status: 'approved' })
       .eq('id', requestId);
 
     if (updateError) {
-      return {
-        success: false,
-        message: updateError.message,
-      };
+      return { success: false, message: updateError.message };
     }
 
     // ------------------------------------------------------------------
-    // Future integrations
+    // Send approval email via Resend — failure here does NOT roll back
+    // the approval. Business is live either way; email is best-effort.
     // ------------------------------------------------------------------
-    // await sendWelcomeEmail(request.email, request.owner_name, password);
-    // await sendWelcomeSMS(request.phone, password);
+
+    let emailSent = false;
+    try {
+      const { sendEmail } = await import('@/lib/notifications/resend');
+      const { approvalEmail } = await import('@/lib/notifications/email-templates');
+
+      await sendEmail({
+        to: request.email,
+        subject: 'Your KopaAlert Business Account is Approved!',
+        html: approvalEmail({
+          owner_name: request.owner_name,
+          business_name: request.business_name,
+          business_code: business.business_code, // adjust field name if different
+          temporary_password: password,
+          login_url: 'https://kopa-alert.vercel.app/login',
+          support_email: 'solutiontechcampany@gmail.com',
+          support_phone: '+254740305253',
+        }),
+      });
+
+      emailSent = true;
+    } catch (emailErr) {
+      const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
+      console.error(`[approveBusiness] Email failed for ${request.email}: ${msg}`);
+      // deliberately not re-thrown — approval already succeeded
+    }
 
     return {
       success: true,
@@ -179,16 +158,13 @@ export async function approveBusiness({
       businessId: business.id,
       userId: authUserId,
       temporaryPassword: password,
+      emailSent,
     };
   } catch (error) {
     console.error('approveBusiness error:', error);
-
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : 'Unexpected server error.',
+      message: error instanceof Error ? error.message : 'Unexpected server error.',
     };
   }
 }
