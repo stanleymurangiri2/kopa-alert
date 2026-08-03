@@ -1,4 +1,5 @@
 import { createClient } from "./client";
+import { supabaseAdmin } from "./admin";
 
 export type NotificationQueueItem = {
   id: string;
@@ -17,7 +18,7 @@ export type NotificationQueueItem = {
 };
 
 /**
- * Create notification queue item
+ * Create notification queue item (used from client/dashboard)
  */
 export async function createNotification(notification: {
   business_id: string;
@@ -29,7 +30,6 @@ export async function createNotification(notification: {
   scheduled_for?: string;
 }) {
   const supabase = createClient();
-
   return supabase
     .from("notification_queue")
     .insert({
@@ -49,12 +49,11 @@ export async function createNotification(notification: {
 }
 
 /**
- * Get pending notifications
+ * Get pending notifications — CRON ONLY, uses admin client to bypass RLS
+ * (no authenticated user session exists when the cron route calls this)
  */
 export async function getPendingNotifications() {
-  const supabase = createClient();
-
-  return supabase
+  return supabaseAdmin
     .from("notification_queue")
     .select("*")
     .eq("status", "pending")
@@ -65,12 +64,10 @@ export async function getPendingNotifications() {
 }
 
 /**
- * Mark notification as sent
+ * Mark notification as sent — CRON ONLY, admin client
  */
 export async function markNotificationSent(id: string) {
-  const supabase = createClient();
-
-  return supabase
+  return supabaseAdmin
     .from("notification_queue")
     .update({
       status: "sent",
@@ -81,15 +78,13 @@ export async function markNotificationSent(id: string) {
 }
 
 /**
- * Mark notification as failed
+ * Mark notification as failed — CRON ONLY, admin client
  */
 export async function markNotificationFailed(
   id: string,
   errorMessage: string
 ) {
-  const supabase = createClient();
-
-  return supabase
+  return supabaseAdmin
     .from("notification_queue")
     .update({
       status: "failed",
@@ -99,15 +94,13 @@ export async function markNotificationFailed(
 }
 
 /**
- * Increment retry attempts
+ * Increment retry attempts — CRON ONLY, admin client
  */
 export async function incrementNotificationAttempt(
   id: string,
   currentAttempts: number
 ) {
-  const supabase = createClient();
-
-  return supabase
+  return supabaseAdmin
     .from("notification_queue")
     .update({
       attempts: currentAttempts + 1,
@@ -116,11 +109,10 @@ export async function incrementNotificationAttempt(
 }
 
 /**
- * Cancel notification
+ * Cancel notification (used from client/dashboard)
  */
 export async function cancelNotification(id: string) {
   const supabase = createClient();
-
   return supabase
     .from("notification_queue")
     .update({
@@ -130,13 +122,12 @@ export async function cancelNotification(id: string) {
 }
 
 /**
- * Get notifications for a business
+ * Get notifications for a business (used from client/dashboard)
  */
 export async function getBusinessNotifications(
   businessId: string
 ) {
   const supabase = createClient();
-
   return supabase
     .from("notification_queue")
     .select(`
@@ -153,18 +144,15 @@ export async function getBusinessNotifications(
 }
 
 /**
- * Generate daily reminders
+ * Generate daily reminders — SECURITY DEFINER rpc, safe on either client
  */
 export async function generateDailyReminders() {
   const supabase = createClient();
-
   const { data, error } = await supabase.rpc(
     "generate_daily_reminders"
   );
-
   if (error) {
     throw error;
   }
-
   return data ?? 0;
 }
