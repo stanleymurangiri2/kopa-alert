@@ -42,8 +42,8 @@ export default async function DashboardLayout({
             </div>
             <div className="flex items-center gap-4">
               <span className="hidden text-sm font-medium text-gray-700 sm:inline">
-                {profile?.name}
-              </span>
+  {profile?.name} <span className="text-xs text-gray-400">({profile?.role?.replace('_', ' ')})</span>
+</span>
               <form action="/api/signout" method="post">
                 <button
                   type="submit"

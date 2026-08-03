@@ -1,3 +1,31 @@
+export function invitationEmail(params: {
+  name: string;
+  business_name: string;
+  role: string;
+  login_email: string;
+  temporary_password: string;
+  login_url: string;
+  support_email: string;
+  support_phone: string;
+}) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #2563eb;">You've been added to ${params.business_name} on KopaAlert</h2>
+      <p>Hi ${params.name},</p>
+      <p>You've been added as a <strong>${params.role.replace('_', ' ')}</strong> for "<strong>${params.business_name}</strong>" on KopaAlert.</p>
+      <p><strong>Login Email:</strong> ${params.login_email}</p>
+      <p><strong>Temporary Password:</strong> <code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">${params.temporary_password}</code></p>
+      <p style="color:#b91c1c; font-size: 14px;">For your security, please log in and change this password immediately.</p>
+      <p><a href="${params.login_url}" style="color: #2563eb;">Log in here</a></p>
+      <hr />
+      <p>Need help? Contact support:<br/>
+      Email: ${params.support_email}<br/>
+      Phone: ${params.support_phone}</p>
+      <p>— The KopaAlert Team</p>
+    </div>
+  `;
+}
+
 export function approvalEmail(params: {
   owner_name: string;
   business_name: string;

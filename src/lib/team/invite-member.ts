@@ -1,4 +1,3 @@
-
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export interface InviteMemberInput {
@@ -13,6 +12,7 @@ export interface InviteMemberResult {
   success: boolean;
   message: string;
   userId?: string;
+  emailSent?: boolean;
 }
 
 export async function inviteMember({
@@ -22,26 +22,15 @@ export async function inviteMember({
   role,
   temporaryPassword,
 }: InviteMemberInput): Promise<InviteMemberResult> {
-  // ----------------------------------------------------
-  // Validate business exists
-  // ----------------------------------------------------
-
   const { data: business, error: businessError } = await supabase
     .from('businesses')
-    .select('id')
+    .select('id, business_name')
     .eq('id', businessId)
     .single();
 
   if (businessError || !business) {
-    return {
-      success: false,
-      message: 'Business not found.',
-    };
+    return { success: false, message: 'Business not found.' };
   }
-
-  // ----------------------------------------------------
-  // Prevent duplicate users
-  // ----------------------------------------------------
 
   const { data: existingUser } = await supabase
     .from('users')
@@ -50,69 +39,72 @@ export async function inviteMember({
     .maybeSingle();
 
   if (existingUser) {
-    return {
-      success: false,
-      message: 'A user with this email already exists.',
-    };
+    return { success: false, message: 'A user with this email already exists.' };
   }
-
-  // ----------------------------------------------------
-  // Create Auth account
-  // ----------------------------------------------------
 
   const { data: authData, error: authError } =
     await supabase.auth.admin.createUser({
       email,
       password: temporaryPassword,
       email_confirm: true,
-      user_metadata: {
-        full_name: name,
-      },
+      user_metadata: { full_name: name },
     });
 
   if (authError || !authData.user) {
     return {
       success: false,
-      message:
-        authError?.message ?? 'Failed to create authentication account.',
+      message: authError?.message ?? 'Failed to create authentication account.',
     };
   }
 
-  // ----------------------------------------------------
-  // Create public.users record
-  // ----------------------------------------------------
-
-  const { error: profileError } = await supabase
-    .from('users')
-    .insert({
-      id: authData.user.id,
-      business_id: businessId,
-      name,
-      email,
-      role,
-    });
+  const { error: profileError } = await supabase.from('users').insert({
+    id: authData.user.id,
+    business_id: businessId,
+    name,
+    email,
+    role,
+  });
 
   if (profileError) {
-    // Roll back Auth user
     await supabase.auth.admin.deleteUser(authData.user.id);
-
-    return {
-      success: false,
-      message: profileError.message,
-    };
+    return { success: false, message: profileError.message };
   }
 
   // ----------------------------------------------------
-  // Future integrations
+  // Send invitation email — failure here does NOT roll back
+  // the account. Account is live either way; email is best-effort.
   // ----------------------------------------------------
-  // await sendInvitationEmail(...)
-  // await sendInvitationSMS(...)
-  // await createAuditLog(...)
-  // ----------------------------------------------------
+
+  let emailSent = false;
+  try {
+    const { sendEmail } = await import('@/lib/notifications/resend');
+    const { invitationEmail } = await import('@/lib/notifications/email-templates');
+
+    await sendEmail({
+      to: email,
+      subject: `You've been added to ${business.business_name} on KopaAlert`,
+      html: invitationEmail({
+        name,
+        business_name: business.business_name,
+        role,
+        login_email: email,
+        temporary_password: temporaryPassword,
+        login_url: 'https://kopa-alert.vercel.app/login',
+        support_email: 'solutiontechcampany@gmail.com',
+        support_phone: '+254740305253',
+      }),
+    });
+
+    emailSent = true;
+  } catch (emailErr) {
+    const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
+    console.error(`[inviteMember] Email failed for ${email}: ${msg}`);
+  }
 
   return {
     success: true,
     message: 'Team member invited successfully.',
     userId: authData.user.id,
+    emailSent,
   };
 }
