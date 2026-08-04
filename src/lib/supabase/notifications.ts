@@ -14,6 +14,7 @@ export type NotificationQueueItem = {
   attempts: number;
   error_message?: string | null;
   sent_at?: string | null;
+  provider_message_id?: string | null;
   created_at: string;
 };
 
@@ -49,8 +50,7 @@ export async function createNotification(notification: {
 }
 
 /**
- * Get pending notifications — CRON ONLY, uses admin client to bypass RLS
- * (no authenticated user session exists when the cron route calls this)
+ * Get pending notifications — CRON ONLY, admin client bypasses RLS
  */
 export async function getPendingNotifications() {
   return supabaseAdmin
@@ -64,15 +64,30 @@ export async function getPendingNotifications() {
 }
 
 /**
+ * Get failed notifications still under the retry limit — CRON ONLY
+ */
+export async function getRetryableNotifications(maxAttempts: number) {
+  return supabaseAdmin
+    .from("notification_queue")
+    .select("*")
+    .eq("status", "failed")
+    .lt("attempts", maxAttempts)
+    .order("created_at", {
+      ascending: true,
+    });
+}
+
+/**
  * Mark notification as sent — CRON ONLY, admin client
  */
-export async function markNotificationSent(id: string) {
+export async function markNotificationSent(id: string, messageId?: string) {
   return supabaseAdmin
     .from("notification_queue")
     .update({
       status: "sent",
       sent_at: new Date().toISOString(),
       error_message: null,
+      provider_message_id: messageId ?? null,
     })
     .eq("id", id);
 }
