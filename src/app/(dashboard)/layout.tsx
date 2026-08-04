@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import DashboardSidebar from '@/components/layout/DashboardSidebar';
 import MobileMenuButton from '@/components/layout/MobileMenuButton';
 import { SidebarProvider } from '@/components/layout/sidebar-context';
+import IdleTimeout from '@/components/auth/IdleTimeout';
 
 export default async function DashboardLayout({
   children,
@@ -33,6 +34,8 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <div className="flex min-h-screen bg-gray-100">
        <DashboardSidebar businessName={businessName} role={profile?.role} />
+       
+  <IdleTimeout />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6">

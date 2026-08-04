@@ -24,24 +24,28 @@ export async function updateSession(
         getAll() {
           return request.cookies.getAll();
         },
-
         setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(
             ({ name, value }: CookieToSet) => {
               request.cookies.set(name, value);
             }
           );
-
           response = NextResponse.next({
             request,
           });
-
           cookiesToSet.forEach(
             ({ name, value, options }: CookieToSet) => {
+              // Strip maxAge/expires so the cookie becomes a true
+              // browser-session cookie — dies when the browser fully
+              // closes, not on a fixed persistent expiry. Required
+              // for businesses sharing devices with employees.
+              const { maxAge, expires, ...sessionOnlyOptions } =
+                options ?? {};
+
               response.cookies.set(
                 name,
                 value,
-                options
+                sessionOnlyOptions
               );
             }
           );
@@ -56,7 +60,6 @@ export async function updateSession(
 
   const pathname = request.nextUrl.pathname;
 
-  // Skip authentication redirects for API routes
   if (pathname.startsWith("/api")) {
     return response;
   }
