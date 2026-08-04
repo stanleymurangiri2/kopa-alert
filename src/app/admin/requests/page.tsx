@@ -40,12 +40,6 @@ export default function AdminRequestsPage() {
   }
 
   async function approveRequest(requestId: string) {
-    const password = window.prompt(
-      'Enter a temporary password for the Business Admin:'
-    );
-
-    if (!password) return;
-
     setProcessing(requestId);
 
     const response = await fetch('/api/admin/approve', {
@@ -55,7 +49,6 @@ export default function AdminRequestsPage() {
       },
       body: JSON.stringify({
         requestId,
-        password,
       }),
     });
 
@@ -68,7 +61,7 @@ export default function AdminRequestsPage() {
       return;
     }
 
-    alert('Business approved successfully.');
+    alert('Business approved successfully. Login credentials have been emailed to the owner.');
 
     loadRequests();
   }
@@ -83,7 +76,7 @@ export default function AdminRequestsPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ requestId }),
     });
 
     const result = await response.json();
@@ -108,9 +101,7 @@ export default function AdminRequestsPage() {
 
   return (
     <div className="max-w-7xl p-6 space-y-6">
-
       <div>
-
         <h1 className="text-3xl font-bold">
           Business Registration Requests
         </h1>
@@ -118,71 +109,39 @@ export default function AdminRequestsPage() {
         <p className="text-gray-500">
           Review and approve new business registrations.
         </p>
-
       </div>
 
       <div className="overflow-x-auto rounded-lg border bg-white">
-
         <table className="min-w-full">
-
           <thead className="bg-gray-100">
-
             <tr>
-
               <th className="px-4 py-3 text-left">Business</th>
-
               <th className="px-4 py-3 text-left">Owner</th>
-
               <th className="px-4 py-3 text-left">Email</th>
-
               <th className="px-4 py-3 text-left">Phone</th>
-
               <th className="px-4 py-3 text-left">Status</th>
-
               <th className="px-4 py-3 text-left">Date</th>
-
               <th className="px-4 py-3 text-center">Actions</th>
-
             </tr>
-
           </thead>
 
           <tbody>
-
             {requests.length === 0 && (
               <tr>
-                <td
-                  colSpan={7}
-                  className="py-8 text-center text-gray-500"
-                >
+                <td colSpan={7} className="py-8 text-center text-gray-500">
                   No business requests found.
                 </td>
               </tr>
             )}
 
             {requests.map((request) => (
-              <tr
-                key={request.id}
-                className="border-t"
-              >
-                <td className="px-4 py-3">
-                  {request.business_name}
-                </td>
+              <tr key={request.id} className="border-t">
+                <td className="px-4 py-3">{request.business_name}</td>
+                <td className="px-4 py-3">{request.owner_name}</td>
+                <td className="px-4 py-3">{request.email}</td>
+                <td className="px-4 py-3">{request.phone}</td>
 
                 <td className="px-4 py-3">
-                  {request.owner_name}
-                </td>
-
-                <td className="px-4 py-3">
-                  {request.email}
-                </td>
-
-                <td className="px-4 py-3">
-                  {request.phone}
-                </td>
-
-                <td className="px-4 py-3">
-
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
                       request.status === 'approved'
@@ -194,7 +153,6 @@ export default function AdminRequestsPage() {
                   >
                     {request.status}
                   </span>
-
                 </td>
 
                 <td className="px-4 py-3">
@@ -202,19 +160,14 @@ export default function AdminRequestsPage() {
                 </td>
 
                 <td className="px-4 py-3">
-
                   {request.status === 'pending' ? (
-
                     <div className="flex gap-2">
-
                       <button
                         onClick={() => approveRequest(request.id)}
                         disabled={processing === request.id}
                         className="rounded bg-green-600 px-3 py-2 text-white hover:bg-green-700"
                       >
-                        {processing === request.id
-                          ? 'Approving...'
-                          : 'Approve'}
+                        {processing === request.id ? 'Approving...' : 'Approve'}
                       </button>
 
                       <button
@@ -223,28 +176,16 @@ export default function AdminRequestsPage() {
                       >
                         Reject
                       </button>
-
                     </div>
-
                   ) : (
-
-                    <span className="text-gray-500">
-                      Processed
-                    </span>
-
+                    <span className="text-gray-500">Processed</span>
                   )}
-
                 </td>
-
               </tr>
             ))}
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   );
 }
