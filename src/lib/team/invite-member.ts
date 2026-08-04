@@ -1,11 +1,11 @@
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 
 export interface InviteMemberInput {
   businessId: string;
   name: string;
   email: string;
   role: 'business_admin' | 'employee';
-  temporaryPassword: string;
 }
 
 export interface InviteMemberResult {
@@ -20,8 +20,9 @@ export async function inviteMember({
   name,
   email,
   role,
-  temporaryPassword,
 }: InviteMemberInput): Promise<InviteMemberResult> {
+  const temporaryPassword = generateTemporaryPassword();
+
   const { data: business, error: businessError } = await supabase
     .from('businesses')
     .select('id, business_name')
@@ -63,6 +64,7 @@ export async function inviteMember({
     name,
     email,
     role,
+    must_change_password: true,
   });
 
   if (profileError) {

@@ -25,6 +25,9 @@ export default async function DashboardLayout({
     .single();
 
   const businessName = profile?.businesses?.business_name || 'System Admin';
+  if (profile?.must_change_password) {
+    redirect('/change-password');
+  }
 
   return (
     <SidebarProvider>

@@ -1,33 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { sendBusinessInvitation } from "@/lib/notifications/send-business-invitation";
+import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export async function POST(request: NextRequest) {
   try {
-    const { requestId, password } = await request.json();
+    const { requestId } = await request.json();
 
     if (!requestId) {
       return NextResponse.json(
-        {
-          error: "Missing requestId.",
-        },
-        {
-          status: 400,
-        },
+        { error: "Missing requestId." },
+        { status: 400 }
       );
     }
 
-    if (!password) {
-      return NextResponse.json(
-        {
-          error: "Temporary password is required.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
+    const password = generateTemporaryPassword();
 
     //--------------------------------------------------------
     // Load registration request
@@ -41,23 +28,15 @@ export async function POST(request: NextRequest) {
 
     if (requestError || !registration) {
       return NextResponse.json(
-        {
-          error: "Registration request not found.",
-        },
-        {
-          status: 404,
-        },
+        { error: "Registration request not found." },
+        { status: 404 }
       );
     }
 
     if (registration.status !== "pending") {
       return NextResponse.json(
-        {
-          error: "This request has already been processed.",
-        },
-        {
-          status: 400,
-        },
+        { error: "This request has already been processed." },
+        { status: 400 }
       );
     }
 
@@ -77,13 +56,8 @@ export async function POST(request: NextRequest) {
 
     if (authError || !authUser.user) {
       return NextResponse.json(
-        {
-          error: authError?.message ?? "Failed to create authentication user.",
-        },
-        {
-          status: 500,
-        },
-      
+        { error: authError?.message ?? "Failed to create authentication user." },
+        { status: 500 }
       );
     }
 
@@ -105,30 +79,28 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       await supabase.auth.admin.deleteUser(authUser.user.id);
-
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 500,
-        },
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     const approvedBusiness = data?.[0];
 
     if (!approvedBusiness) {
       return NextResponse.json(
-        {
-          error: "Business approval completed but no business data returned.",
-        },
-        {
-          status: 500,
-        },
+        { error: "Business approval completed but no business data returned." },
+        { status: 500 }
       );
     }
-//--------------------------------------------------------
+
+    //--------------------------------------------------------
+    // Set must_change_password flag
+    //--------------------------------------------------------
+
+    await supabase
+      .from("users")
+      .update({ must_change_password: true })
+      .eq("id", authUser.user.id);
+
+    //--------------------------------------------------------
     // Send approval email
     //--------------------------------------------------------
 
@@ -142,6 +114,7 @@ export async function POST(request: NextRequest) {
         owner_name: registration.owner_name,
         business_name: registration.business_name,
         business_code: approvedBusiness.business_code,
+        temporary_password: password,
         login_url: "https://kopa-alert.vercel.app/login",
         support_email: "solutiontechcampany@gmail.com",
         support_phone: "+254740305253",
@@ -168,14 +141,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Approve business error:", error);
-
     return NextResponse.json(
-      {
-        error: "Internal server error.",
-      },
-      {
-        status: 500,
-      },
+      { error: "Internal server error." },
+      { status: 500 }
     );
   }
 }

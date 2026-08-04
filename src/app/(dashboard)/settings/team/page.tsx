@@ -80,7 +80,6 @@ export default function TeamPage() {
 
     setInviting(true);
 
-    const temporaryPassword = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     const token = await getToken();
 
     const response = await fetch('/api/team/invite', {
@@ -93,7 +92,6 @@ export default function TeamPage() {
         name: form.name,
         email: form.email,
         role: form.role,
-        temporaryPassword,
       }),
     });
 

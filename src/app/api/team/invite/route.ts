@@ -4,9 +4,9 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, role, temporaryPassword } = await request.json();
+    const { name, email, role } = await request.json();
 
-    if (!name || !email || !role || !temporaryPassword) {
+    if (!name || !email || !role) {
       return NextResponse.json(
         { success: false, message: 'Missing required fields.' },
         { status: 400 }
@@ -65,7 +65,6 @@ export async function POST(request: NextRequest) {
       name,
       email,
       role,
-      temporaryPassword,
     });
 
     if (!result.success) {
