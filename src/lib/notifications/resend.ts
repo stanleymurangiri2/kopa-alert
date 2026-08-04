@@ -26,7 +26,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams) {
 
   try {
     const { error } = await resend.emails.send({
-      from: "KopaAlert <onboarding@resend.dev>",
+      from: "KopaAlert <noreply@kopaalert.shop>",
       to,
       subject,
       html,
