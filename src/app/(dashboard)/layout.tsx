@@ -4,6 +4,7 @@ import DashboardSidebar from '@/components/layout/DashboardSidebar';
 import MobileMenuButton from '@/components/layout/MobileMenuButton';
 import { SidebarProvider } from '@/components/layout/sidebar-context';
 import IdleTimeout from '@/components/auth/IdleTimeout';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <span className="hidden text-sm font-medium text-gray-700 sm:inline">
   {profile?.name} <span className="text-xs text-gray-400">({profile?.role?.replace('_', ' ')})</span>
 </span>
@@ -67,4 +69,5 @@ export default async function DashboardLayout({
     </SidebarProvider>
   );
 }
+
 

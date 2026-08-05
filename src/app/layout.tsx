@@ -1,6 +1,7 @@
-// Ignore TypeScript error for side-effect CSS import (no type declarations)
+﻿// Ignore TypeScript error for side-effect CSS import (no type declarations)
 // @ts-ignore
 import './globals.css';
+import { ThemeProvider } from 'next-themes';
 
 export const metadata = {
   title: 'KopaAlert - Business Debt Reminder',
@@ -13,9 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
