@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+﻿import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import DashboardSidebar from '@/components/layout/DashboardSidebar';
 import MobileMenuButton from '@/components/layout/MobileMenuButton';
@@ -67,3 +67,4 @@ export default async function DashboardLayout({
     </SidebarProvider>
   );
 }
+
