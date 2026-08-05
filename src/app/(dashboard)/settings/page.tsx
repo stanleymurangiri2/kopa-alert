@@ -1,7 +1,5 @@
-"use client";
-
+﻿"use client";
 import Link from "next/link";
-
 export default function SettingsHubPage() {
   const settingOptions = [
     {
@@ -9,12 +7,6 @@ export default function SettingsHubPage() {
       description: "Manage business identity, contact information, and default currency.",
       href: "/dashboard/settings/business",
       icon: "🏢"
-    },
-    {
-      title: "SMS Gateway",
-      description: "Configure Africa's Talking API keys, Sender IDs, and SMS credentials.",
-      href: "/dashboard/settings/gateway",
-      icon: "⚙️"
     },
     {
       title: "Notification Templates",
@@ -35,14 +27,12 @@ export default function SettingsHubPage() {
       icon: "👤"
     }
   ];
-
   return (
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-500 mt-1">Configure your business account, team members, integrations, and automated alerts.</p>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {settingOptions.map((opt) => (
           <Link
