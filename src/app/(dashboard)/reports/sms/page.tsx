@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -345,14 +345,14 @@ export default function SmsReportsPage() {
 
             <div
               key={trend.date}
-              className="flex items-center justify-between rounded border p-3"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded border p-3"
             >
 
               <span>
                 {trend.date}
               </span>
 
-              <div className="flex gap-6 text-sm">
+              <div className="flex flex-wrap gap-4 text-sm">
 
                 <span>
                   Total:
@@ -388,7 +388,7 @@ export default function SmsReportsPage() {
 
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
 
         <table className="min-w-full">
 
@@ -566,3 +566,4 @@ function SummaryCard({
     </div>
   );
 }
+
