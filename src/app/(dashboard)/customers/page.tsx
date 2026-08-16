@@ -45,7 +45,7 @@ export default function CustomersPage() {
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
         {loading ? (
           <div className="p-6 text-center">Loading customers...</div>
         ) : customers.length === 0 ? (
