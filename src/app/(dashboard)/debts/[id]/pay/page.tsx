@@ -17,6 +17,8 @@ export default function RecordPaymentPage({
     notes: '',
   });
 
+  const [paymentType, setPaymentType] = useState<'full' | 'partial'>('full');
+
   const [debtDetails, setDebtDetails] = useState<{
     customerName: string;
     amount: number;
@@ -59,6 +61,18 @@ export default function RecordPaymentPage({
 
     loadDebt();
   }, [debtId, supabase]);
+
+  function selectFull() {
+    if (!debtDetails) return;
+    const remaining = debtDetails.amount - debtDetails.amountPaid;
+    setPaymentType('full');
+    setPaymentData((prev) => ({ ...prev, amount_paid: remaining.toString() }));
+  }
+
+  function selectPartial() {
+    setPaymentType('partial');
+    setPaymentData((prev) => ({ ...prev, amount_paid: '' }));
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,14 +195,51 @@ export default function RecordPaymentPage({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Amount Paid (KES)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={selectFull}
+                  className={`py-2.5 px-4 rounded-md text-sm font-medium border transition-colors ${
+                    paymentType === 'full'
+                      ? 'bg-green-600 text-white border-green-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Pay in Full
+                </button>
+                <button
+                  type="button"
+                  onClick={selectPartial}
+                  className={`py-2.5 px-4 rounded-md text-sm font-medium border transition-colors ${
+                    paymentType === 'partial'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Partial Payment
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Amount Paid (KES)
+                {paymentType === 'full' && (
+                  <span className="ml-2 text-xs font-normal text-gray-400">Full balance — locked</span>
+                )}
+              </label>
               <input
                 type="number"
                 step="0.01"
                 required
+                readOnly={paymentType === 'full'}
                 value={paymentData.amount_paid}
                 onChange={(e) => setPaymentData({ ...paymentData, amount_paid: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder={paymentType === 'partial' ? 'Enter amount paid' : undefined}
+                className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  paymentType === 'full' ? 'bg-gray-50 text-gray-600' : ''
+                }`}
               />
             </div>
 
