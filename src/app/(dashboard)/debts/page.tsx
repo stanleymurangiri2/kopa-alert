@@ -66,7 +66,7 @@ export default function DebtsPage() {
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
 
         {loading ? (
           <div className="p-6 text-center">
@@ -87,64 +87,76 @@ export default function DebtsPage() {
                 <th className="px-4 py-3 text-left">Balance</th>
                 <th className="px-4 py-3 text-left">Due Date</th>
                 <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-center">Action</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody>
-              {debts.map((debt) => (
-                <tr
-                  key={debt.id}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium">
-                      {debt.customers?.full_name}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {debt.customers?.phone}
-                    </div>
-                  </td>
+              {debts.map((debt) => {
+                const balance = Number(debt.amount) - Number(debt.amount_paid);
+                const isSettled = balance <= 0;
 
-                  <td className="px-4 py-3">
-                    KES {Number(debt.amount).toLocaleString()}
-                  </td>
+                return (
+                  <tr
+                    key={debt.id}
+                    className="border-t hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-medium">
+                        {debt.customers?.full_name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {debt.customers?.phone}
+                      </div>
+                    </td>
 
-                  <td className="px-4 py-3 text-green-700">
-                    KES {Number(debt.amount_paid).toLocaleString()}
-                  </td>
+                    <td className="px-4 py-3">
+                      KES {Number(debt.amount).toLocaleString()}
+                    </td>
 
-                  <td className="px-4 py-3 font-medium">
-                    KES{' '}
-                    {Number(
-                      debt.amount - debt.amount_paid
-                    ).toLocaleString()}
-                  </td>
+                    <td className="px-4 py-3 text-green-700">
+                      KES {Number(debt.amount_paid).toLocaleString()}
+                    </td>
 
-                  <td className="px-4 py-3">
-                    {debt.due_date}
-                  </td>
+                    <td className="px-4 py-3 font-medium">
+                      KES {balance.toLocaleString()}
+                    </td>
 
-                  <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${badgeColor(
-                        debt.status
-                      )}`}
-                    >
-                      {debt.status.replace('_', ' ')}
-                    </span>
-                  </td>
+                    <td className="px-4 py-3">
+                      {debt.due_date}
+                    </td>
 
-                  <td className="px-4 py-3 text-center">
-                    <Link
-                      href={`/debts/${debt.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${badgeColor(
+                          debt.status
+                        )}`}
+                      >
+                        {debt.status.replace('_', ' ')}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-3">
+                        {!isSettled && (
+                          <Link
+                            href={`/debts/${debt.id}/pay`}
+                            className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
+                          >
+                            Record Payment
+                          </Link>
+                        )}
+                        <Link
+                          href={`/debts/${debt.id}`}
+                          className="text-blue-600 hover:underline text-xs font-medium"
+                        >
+                          Edit
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
 
           </table>
