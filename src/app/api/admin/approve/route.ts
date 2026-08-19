@@ -2,9 +2,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
+    // --------------------------------------------------------
+    // Authenticate and authorize the caller
+    // --------------------------------------------------------
+
+    const sessionClient = await createClient();
+
+    const {
+      data: { user: adminUser },
+      error: adminAuthError,
+    } = await sessionClient.auth.getUser();
+
+    if (adminAuthError || !adminUser) {
+      return NextResponse.json(
+        { error: "Unauthorized." },
+        { status: 401 }
+      );
+    }
+
+    const { data: adminProfile, error: adminProfileError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", adminUser.id)
+      .single();
+
+    if (adminProfileError || adminProfile?.role !== "super_admin") {
+      return NextResponse.json(
+        { error: "Access denied." },
+        { status: 403 }
+      );
+    }
+
     const { requestId } = await request.json();
 
     if (!requestId) {
@@ -15,10 +47,6 @@ export async function POST(request: NextRequest) {
     }
 
     const password = generateTemporaryPassword();
-
-    //--------------------------------------------------------
-    // Load registration request
-    //--------------------------------------------------------
 
     const { data: registration, error: requestError } = await supabase
       .from("business_requests")
@@ -40,10 +68,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //--------------------------------------------------------
-    // Create Auth User
-    //--------------------------------------------------------
-
     const { data: authUser, error: authError } =
       await supabase.auth.admin.createUser({
         email: registration.email,
@@ -61,15 +85,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //--------------------------------------------------------
-    // Generate activation token
-    //--------------------------------------------------------
-
     const activationToken = randomUUID();
-
-    //--------------------------------------------------------
-    // Approve business
-    //--------------------------------------------------------
 
     const { data, error } = await supabase.rpc("approve_business_request", {
       p_request_id: requestId,
@@ -91,47 +107,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //--------------------------------------------------------
-    // Set must_change_password flag
-    //--------------------------------------------------------
-
     await supabase
       .from("users")
       .update({ must_change_password: true })
       .eq("id", authUser.user.id);
 
-    //--------------------------------------------------------
-    // Send approval email
-    //--------------------------------------------------------
+    let emailSent = false;
+    try {
+      const { sendEmail } = await import("@/lib/notifications/resend");
+      const { approvalEmail } = await import("@/lib/notifications/email-templates");
 
-    const { sendEmail } = await import("@/lib/notifications/resend");
-    const { approvalEmail } = await import("@/lib/notifications/email-templates");
+      await sendEmail({
+        to: registration.email,
+        subject: "Your KopaAlert Business Account is Approved!",
+        html: approvalEmail({
+          owner_name: registration.owner_name,
+          business_name: registration.business_name,
+          business_code: approvedBusiness.business_code,
+          temporary_password: password,
+          login_url: "https://kopa-alert.vercel.app/login",
+          support_email: "solutiontechcampany@gmail.com",
+          support_phone: "+254740305253",
+        }),
+      });
 
-    await sendEmail({
-      to: registration.email,
-      subject: "Your KopaAlert Business Account is Approved!",
-      html: approvalEmail({
-        owner_name: registration.owner_name,
-        business_name: registration.business_name,
-        business_code: approvedBusiness.business_code,
-        temporary_password: password,
-        login_url: "https://kopa-alert.vercel.app/login",
-        support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254740305253",
-      }),
-    });
+      emailSent = true;
+    } catch (emailErr) {
+      console.error("Approval email failed:", emailErr);
+    }
 
-    //--------------------------------------------------------
-    // Audit Log
-    //--------------------------------------------------------
-
-    await supabase.from("audit_logs").insert({
-      admin_id: null,
+    const { error: auditError } = await supabase.from("audit_logs").insert({
+      business_id: approvedBusiness.id,
+      user_id: adminUser.id,
       action: "APPROVE_BUSINESS",
       target_type: "business_request",
-      target_id: requestId,
       description: `Approved ${registration.business_name}`,
+      details: { request_id: requestId, email_sent: emailSent },
     });
+
+    if (auditError) {
+      console.error("Audit log insert failed:", auditError);
+    }
 
     return NextResponse.json({
       success: true,
