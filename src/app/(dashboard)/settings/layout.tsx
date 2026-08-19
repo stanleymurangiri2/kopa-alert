@@ -7,7 +7,7 @@ const tabs = [
   { name: 'Profile', href: '/settings/profile' },
   { name: 'Business', href: '/settings/business' },
   { name: 'Team', href: '/settings/team' },
-  { name: 'Payment Gateway', href: '/settings/gateway' },
+
   { name: 'Notification Templates', href: '/settings/templates' },
 ];
 
