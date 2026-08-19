@@ -102,7 +102,7 @@ export default function AlertsPage() {
                 <tr key={item.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{item.customers?.full_name || "N/A"}</td>
                   <td className="px-6 py-4">{item.recipient_phone}</td>
-                  <td className="px-6 py-4 max-w-md truncate">{item.message_body}</td>
+                  <td className="px-6 py-4 max-w-md whitespace-normal break-words">{item.message_body}</td>
                   <td className="px-6 py-4 uppercase text-xs font-semibold tracking-wider text-slate-500">{item.channel}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
