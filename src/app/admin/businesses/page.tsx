@@ -23,7 +23,7 @@ export default async function BusinessesPage() {
         Business Management
       </h1>
 
-      <div className="overflow-hidden rounded-xl bg-white shadow">
+      <div className="overflow-x-auto rounded-xl bg-white shadow">
 
         <table className="w-full">
 

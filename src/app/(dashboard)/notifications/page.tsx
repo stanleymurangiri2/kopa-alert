@@ -143,7 +143,7 @@ export default function NotificationsPage() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead className="border-b bg-gray-50">
             <tr>
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
                 <td className="px-4 py-3">{notification.recipient_phone}</td>
 
                 <td className="max-w-md px-4 py-3">
-                  <p className="truncate">{notification.message_body}</p>
+                  <p className="whitespace-normal break-words">{notification.message_body}</p>
 
                   {notification.error_message && (
                     <p className="mt-1 text-xs text-red-600">
@@ -205,3 +205,7 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+
+
+

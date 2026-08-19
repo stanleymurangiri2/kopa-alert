@@ -85,7 +85,7 @@ export default function AlertsPage() {
           No alert notifications currently queued.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-sm">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
               <tr>
@@ -124,3 +124,4 @@ export default function AlertsPage() {
     </div>
   );
 }
+

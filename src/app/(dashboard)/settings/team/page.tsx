@@ -228,7 +228,7 @@ export default function TeamPage() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="min-w-full">
           <thead className="bg-gray-100">
             <tr>

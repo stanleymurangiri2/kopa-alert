@@ -310,7 +310,7 @@ export default function PaymentReportsPage() {
 
       )}
 
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
 
         <table className="min-w-full">
 

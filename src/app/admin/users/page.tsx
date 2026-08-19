@@ -36,7 +36,7 @@ export default async function UsersPage() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl bg-white shadow">
+      <div className="overflow-x-auto rounded-xl bg-white shadow">
         <table className="w-full">
           <thead className="bg-gray-100">
             <tr>
@@ -83,3 +83,4 @@ export default async function UsersPage() {
     </main>
   );
 }
+

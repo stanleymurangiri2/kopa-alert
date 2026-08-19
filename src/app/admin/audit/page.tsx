@@ -28,7 +28,7 @@ export default async function AuditLogsPage() {
         Platform activity history.
       </p>
 
-      <div className="mt-8 overflow-hidden rounded-xl bg-white shadow">
+      <div className="mt-8 overflow-x-auto rounded-xl bg-white shadow">
 
         <table className="w-full">
 

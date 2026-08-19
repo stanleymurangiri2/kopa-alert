@@ -1,129 +1,108 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDebtReports } from "@/lib/reports/debts";
-import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { createClient } from "@supabase/supabase-js";
 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export async function GET(request: NextRequest) {
+export interface OverviewMetrics {
+  totalCustomers: number;
+  totalDebts: number;
+  totalDebtAmount: number;
+  totalPaidAmount: number;
+  outstandingBalance: number;
+  overdueDebts: number;
+  totalPayments: number;
+  smsSent: number;
+  smsFailed: number;
+}
+
+export interface OverviewResult {
+  success: boolean;
+  data?: OverviewMetrics;
+  message?: string;
+}
+
+export async function getOverviewMetrics(
+  businessId: string
+): Promise<OverviewResult> {
   try {
-    // -------------------------------------------------------
-    // Authenticate user
-    // -------------------------------------------------------
-
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid authentication token.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    // -------------------------------------------------------
-    // Load user's business
-    // -------------------------------------------------------
-
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("business_id, role")
-      .eq("id", user.id)
+    const { data: business, error: businessError } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("id", businessId)
       .single();
 
-    if (profileError || !profile) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "User profile not found.",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    // -------------------------------------------------------
-    // Authorization
-    // -------------------------------------------------------
-
-    if (
-      profile.role !== "business_admin" &&
-      profile.role !== "super_admin"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Access denied.",
-        },
-        {
-          status: 403,
-        }
-      );
-    }
-
-    // -------------------------------------------------------
-    // Date filters
-    // -------------------------------------------------------
-
-    const { searchParams } = new URL(request.url);
-
-    const startDate =
-      searchParams.get("startDate") ?? undefined;
-
-    const endDate =
-      searchParams.get("endDate") ?? undefined;
-
-    // -------------------------------------------------------
-    // Generate report
-    // -------------------------------------------------------
-
-    const result = await getDebtReports(
-      profile.business_id,
-      startDate,
-      endDate
-    );
-
-    if (!result.success) {
-      return NextResponse.json(result, {
-        status: 400,
-      });
-    }
-
-    return NextResponse.json(result);
-
-  } catch (error) {
-    console.error("Debt reports API error:", error);
-
-    return NextResponse.json(
-      {
+    if (businessError || !business) {
+      return {
         success: false,
-        message: "Internal server error.",
-      },
-      {
-        status: 500,
+        message: "Business not found.",
+      };
+    }
+
+    const { count: totalCustomers } = await supabase
+      .from("customers")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", businessId);
+
+    const { data: debts } = await supabase
+      .from("debts")
+      .select(`amount, amount_paid, status`)
+      .eq("business_id", businessId);
+
+    let totalDebtAmount = 0;
+    let totalPaidAmount = 0;
+    let overdueDebts = 0;
+
+    debts?.forEach((debt) => {
+      totalDebtAmount += Number(debt.amount);
+      totalPaidAmount += Number(debt.amount_paid);
+      if (debt.status === "overdue") {
+        overdueDebts++;
       }
-    );
+    });
+
+    const { count: totalPayments } = await supabase
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("business_id", businessId);
+
+    const { data: notifications } = await supabase
+      .from("notification_queue")
+      .select("status")
+      .eq("business_id", businessId);
+
+    let smsSent = 0;
+    let smsFailed = 0;
+
+    notifications?.forEach((notification) => {
+      if (notification.status === "sent") {
+        smsSent++;
+      }
+      if (notification.status === "failed") {
+        smsFailed++;
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        totalCustomers: totalCustomers ?? 0,
+        totalDebts: debts?.length ?? 0,
+        totalDebtAmount,
+        totalPaidAmount,
+        outstandingBalance: totalDebtAmount - totalPaidAmount,
+        overdueDebts,
+        totalPayments: totalPayments ?? 0,
+        smsSent,
+        smsFailed,
+      },
+    };
+  } catch (error) {
+    console.error("Overview metrics error:", error);
+    return {
+      success: false,
+      message: "Failed to load overview metrics.",
+    };
   }
 }
