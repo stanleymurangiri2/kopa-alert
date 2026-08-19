@@ -6,7 +6,12 @@
  * ============================================================================
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export interface OverviewReport {
   totalCustomers: number;
@@ -30,8 +35,6 @@ export async function getOverviewMetrics(
   businessId: string
 ): Promise<OverviewResult> {
   try {
-    const supabase = await createClient();
-
     const [
       customersResult,
       debtsResult,
