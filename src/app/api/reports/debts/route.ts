@@ -1,108 +1,60 @@
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getDebtReports } from "@/lib/reports/debts";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export interface OverviewMetrics {
-  totalCustomers: number;
-  totalDebts: number;
-  totalDebtAmount: number;
-  totalPaidAmount: number;
-  outstandingBalance: number;
-  overdueDebts: number;
-  totalPayments: number;
-  smsSent: number;
-  smsFailed: number;
-}
-
-export interface OverviewResult {
-  success: boolean;
-  data?: OverviewMetrics;
-  message?: string;
-}
-
-export async function getOverviewMetrics(
-  businessId: string
-): Promise<OverviewResult> {
+export async function GET(request: Request) {
   try {
-    const { data: business, error: businessError } = await supabase
-      .from("businesses")
-      .select("id")
-      .eq("id", businessId)
-      .single();
+    const supabase = await createClient();
 
-    if (businessError || !business) {
-      return {
-        success: false,
-        message: "Business not found.",
-      };
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized." },
+        { status: 401 }
+      );
     }
 
-    const { count: totalCustomers } = await supabase
-      .from("customers")
-      .select("*", { count: "exact", head: true })
-      .eq("business_id", businessId);
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("users")
+      .select("business_id, role")
+      .eq("id", user.id)
+      .single();
 
-    const { data: debts } = await supabase
-      .from("debts")
-      .select(`amount, amount_paid, status`)
-      .eq("business_id", businessId);
+    if (profileError || !profile?.business_id) {
+      return NextResponse.json(
+        { success: false, message: "Business profile not found." },
+        { status: 404 }
+      );
+    }
 
-    let totalDebtAmount = 0;
-    let totalPaidAmount = 0;
-    let overdueDebts = 0;
+    if (profile.role !== "business_admin" && profile.role !== "super_admin") {
+      return NextResponse.json(
+        { success: false, message: "Access denied." },
+        { status: 403 }
+      );
+    }
 
-    debts?.forEach((debt) => {
-      totalDebtAmount += Number(debt.amount);
-      totalPaidAmount += Number(debt.amount_paid);
-      if (debt.status === "overdue") {
-        overdueDebts++;
-      }
-    });
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get("startDate") ?? undefined;
+    const endDate = searchParams.get("endDate") ?? undefined;
 
-    const { count: totalPayments } = await supabase
-      .from("payments")
-      .select("*", { count: "exact", head: true })
-      .eq("business_id", businessId);
+    const result = await getDebtReports(profile.business_id, startDate, endDate);
 
-    const { data: notifications } = await supabase
-      .from("notification_queue")
-      .select("status")
-      .eq("business_id", businessId);
+    if (!result.success) {
+      return NextResponse.json(result, { status: 400 });
+    }
 
-    let smsSent = 0;
-    let smsFailed = 0;
-
-    notifications?.forEach((notification) => {
-      if (notification.status === "sent") {
-        smsSent++;
-      }
-      if (notification.status === "failed") {
-        smsFailed++;
-      }
-    });
-
-    return {
-      success: true,
-      data: {
-        totalCustomers: totalCustomers ?? 0,
-        totalDebts: debts?.length ?? 0,
-        totalDebtAmount,
-        totalPaidAmount,
-        outstandingBalance: totalDebtAmount - totalPaidAmount,
-        overdueDebts,
-        totalPayments: totalPayments ?? 0,
-        smsSent,
-        smsFailed,
-      },
-    };
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Overview metrics error:", error);
-    return {
-      success: false,
-      message: "Failed to load overview metrics.",
-    };
+    console.error("Reports debts API error:", error);
+    return NextResponse.json(
+      { success: false, message: "Internal server error." },
+      { status: 500 }
+    );
   }
 }

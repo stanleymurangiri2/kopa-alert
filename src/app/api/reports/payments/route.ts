@@ -1,38 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getPaymentReports } from "@/lib/reports/payment";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get("authorization");
+    const supabase = await createClient();
 
-    if (!authHeader?.startsWith("Bearer ")) {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
         { success: false, message: "Unauthorized." },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7);
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { success: false, message: "Invalid authentication." },
-        { status: 401 }
-      );
-    }
-
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("users")
       .select("business_id, role")
       .eq("id", user.id)
@@ -56,11 +43,7 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate") ?? undefined;
     const endDate = searchParams.get("endDate") ?? undefined;
 
-    const result = await getPaymentReports(
-      profile.business_id,
-      startDate,
-      endDate
-    );
+    const result = await getPaymentReports(profile.business_id, startDate, endDate);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });
