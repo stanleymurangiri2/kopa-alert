@@ -5,10 +5,6 @@ export const sidebarMenus = {
       href: "/admin",
     },
     {
-      name: "Settings",
-      href: "/admin/settings",
-    },
-    {
       name: "Pending Requests",
       href: "/admin/requests",
     },
@@ -28,8 +24,11 @@ export const sidebarMenus = {
       name: "Audit Logs",
       href: "/admin/audit",
     },
+    {
+      name: "Settings",
+      href: "/admin/settings",
+    },
   ],
-
   business: [
     {
       name: "Dashboard",
@@ -60,7 +59,6 @@ export const sidebarMenus = {
       href: "/dashboard/settings",
     },
   ],
-
   employee: [
     {
       name: "Dashboard",
