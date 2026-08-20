@@ -1,12 +1,9 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
-
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
@@ -22,31 +19,39 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setMessage(null);
 
-    const redirectUrl =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/reset-password`
-        : '';
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: redirectUrl,
-    });
+      const result = await response.json();
 
-    setLoading(false);
+      if (!response.ok) {
+        setMessage({
+          type: 'error',
+          text: result.error ?? 'Unable to send reset link.',
+        });
+        return;
+      }
 
-    if (error) {
+      setMessage({
+        type: 'success',
+        text: 'If an account exists for that email, a reset link has been sent.',
+      });
+
+      setEmail('');
+    } catch (err) {
       setMessage({
         type: 'error',
-        text: error.message,
+        text: 'Something went wrong. Please try again.',
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setMessage({
-      type: 'success',
-      text: 'Password reset link sent. Check your email.',
-    });
-
-    setEmail('');
   };
 
   return (
@@ -108,7 +113,7 @@ export default function ForgotPasswordPage() {
             href="/login"
             className="text-blue-600 font-semibold hover:underline"
           >
-            ← Back to Login
+            Back to Login
           </Link>
         </div>
       </div>

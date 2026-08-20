@@ -77,3 +77,25 @@ export function rejectionEmail(params: {
     </div>
   `;
 }
+export function passwordResetEmail(params: {
+  name: string;
+  reset_url: string;
+  support_email: string;
+  support_phone: string;
+}) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #2563eb;">Reset your KopaAlert password</h2>
+      <p>Hi ${params.name},</p>
+      <p>We received a request to reset your KopaAlert account password. Click the button below to choose a new password.</p>
+      <p><a href="${params.reset_url}" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:6px; text-decoration:none;">Reset password</a></p>
+      <p style="color:#64748b; font-size: 13px;">If you didn't request this, you can safely ignore this email - your password will remain unchanged.</p>
+      <p style="color:#64748b; font-size: 13px;">This link expires shortly for your security.</p>
+      <hr />
+      <p>Need help? Contact support:<br/>
+      Email: ${params.support_email}<br/>
+      Phone: ${params.support_phone}</p>
+      <p>- The KopaAlert Team</p>
+    </div>
+  `;
+}
