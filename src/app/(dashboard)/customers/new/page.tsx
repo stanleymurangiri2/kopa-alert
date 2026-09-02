@@ -1,10 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createCustomer } from '@/lib/supabase/customers';
 import { createClient } from '@/lib/supabase/client';
+import { normalizeKenyanPhone } from '@/lib/utils/phone';
 
 export default function NewCustomerPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function NewCustomerPage() {
       const { error: createError } = await createCustomer({
         business_id: profile.business_id,
         full_name: form.full_name.trim(),
-        phone: form.phone.trim(),
+        phone: normalizeKenyanPhone(form.phone),
         email: form.email.trim() || null,
       });
 
@@ -115,7 +116,7 @@ export default function NewCustomerPage() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="w-full rounded-md border px-3 py-2"
-              placeholder="+254700000000"
+              placeholder="0712345678 or +254712345678"
             />
           </div>
 
