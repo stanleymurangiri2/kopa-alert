@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, use } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -29,6 +29,7 @@ export default function RecordPaymentPage({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditNote, setCreditNote] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -78,21 +79,13 @@ export default function RecordPaymentPage({
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setCreditNote(null);
 
     const payAmount = parseFloat(paymentData.amount_paid);
     if (isNaN(payAmount) || payAmount <= 0) {
       setError('Enter a valid payment amount greater than 0.');
       setSubmitting(false);
       return;
-    }
-
-    if (debtDetails) {
-      const currentBalance = debtDetails.amount - debtDetails.amountPaid;
-      if (payAmount > currentBalance) {
-        setError(`Payment amount cannot exceed remaining balance of KES ${currentBalance.toLocaleString()}`);
-        setSubmitting(false);
-        return;
-      }
     }
 
     const {
@@ -105,32 +98,32 @@ export default function RecordPaymentPage({
       return;
     }
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('business_id')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.business_id) {
-      setError('Missing business credentials.');
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: insertError } = await supabase.from('payments').insert([
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'record_customer_payment',
       {
-        business_id: profile.business_id,
-        debt_id: debtId,
-        amount_paid: payAmount,
-        payment_method: paymentData.payment_method,
-        notes: paymentData.notes.trim() || null,
-      },
-    ]);
+        p_debt_id: debtId,
+        p_amount: payAmount,
+        p_method: paymentData.payment_method,
+        p_notes: paymentData.notes.trim() || null,
+        p_created_by: user.id,
+      }
+    );
 
     setSubmitting(false);
 
-    if (insertError) {
-      setError(insertError.message);
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
+
+    if (result?.excess > 0) {
+      setCreditNote(
+        `KES ${Number(result.excess).toLocaleString()} was added to this customer's available credit.`
+      );
+      setTimeout(() => {
+        router.push('/payments');
+        router.refresh();
+      }, 1800);
       return;
     }
 
@@ -147,7 +140,7 @@ export default function RecordPaymentPage({
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Record Payment</h1>
         <Link href="/debts" className="text-sm text-gray-500 hover:underline">
-          ← Cancel
+          Cancel
         </Link>
       </div>
 
@@ -180,6 +173,12 @@ export default function RecordPaymentPage({
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
             {error}
+          </div>
+        )}
+
+        {creditNote && (
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-md">
+            {creditNote}
           </div>
         )}
 
@@ -226,21 +225,21 @@ export default function RecordPaymentPage({
               <label className="block text-sm font-medium text-gray-700">
                 Amount Paid (KES)
                 {paymentType === 'full' && (
-                  <span className="ml-2 text-xs font-normal text-gray-400">Full balance — locked</span>
+                  <span className="ml-2 text-xs font-normal text-gray-400">Full balance</span>
                 )}
               </label>
               <input
                 type="number"
                 step="0.01"
                 required
-                readOnly={paymentType === 'full'}
                 value={paymentData.amount_paid}
                 onChange={(e) => setPaymentData({ ...paymentData, amount_paid: e.target.value })}
                 placeholder={paymentType === 'partial' ? 'Enter amount paid' : undefined}
-                className={`mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 ${
-                  paymentType === 'full' ? 'bg-gray-50 text-gray-600' : ''
-                }`}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
               />
+              <p className="mt-1 text-xs text-gray-400">
+                Paying more than the balance adds the extra amount to the customer's available credit.
+              </p>
             </div>
 
             <div>

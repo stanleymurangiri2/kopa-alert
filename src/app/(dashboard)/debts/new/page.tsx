@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -6,18 +6,22 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Customer } from '@/types/database.types';
 
+type CustomerWithCredit = Customer & { available_credit?: number };
+
 export default function NewDebtPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithCredit[]>([]);
   const [formData, setFormData] = useState({
     customer_id: '',
     amount: '',
     description: '',
     payment_instructions: '',
     due_date: '',
+    apply_credit: false,
   });
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [creditNote, setCreditNote] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -39,15 +43,18 @@ export default function NewDebtPage() {
       }
       setLoadingCustomers(false);
     }
-    
 
     fetchCustomers();
   }, [supabase]);
+
+  const selectedCustomer = customers.find((c) => c.id === formData.customer_id);
+  const availableCredit = Number(selectedCustomer?.available_credit ?? 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setCreditNote(null);
 
     const numericAmount = parseFloat(formData.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
@@ -78,23 +85,35 @@ export default function NewDebtPage() {
       return;
     }
 
-    const { error: insertError } = await supabase.from('debts').insert([
+    const { data: result, error: rpcError } = await supabase.rpc(
+      'create_debt_with_credit',
       {
-        business_id: profile.business_id,
-        customer_id: formData.customer_id,
-        amount: numericAmount,
-        amount_paid: 0.0,
-        description: formData.description.trim(),
-        payment_instructions: formData.payment_instructions.trim() || null,
-        due_date: formData.due_date,
-        status: 'pending',
-      },
-    ]);
+        p_business_id: profile.business_id,
+        p_customer_id: formData.customer_id,
+        p_amount: numericAmount,
+        p_due_date: formData.due_date,
+        p_description: formData.description.trim(),
+        p_apply_credit: formData.apply_credit,
+        p_payment_instructions: formData.payment_instructions.trim() || null,
+        p_created_by: user.id,
+      }
+    );
 
     setSubmitting(false);
 
-    if (insertError) {
-      setError(insertError.message);
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
+
+    if (result?.credit_applied > 0) {
+      setCreditNote(
+        `KES ${Number(result.credit_applied).toLocaleString()} of available credit was applied to this loan.`
+      );
+      setTimeout(() => {
+        router.push('/debts');
+        router.refresh();
+      }, 1500);
       return;
     }
 
@@ -111,7 +130,7 @@ export default function NewDebtPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Record New Debt</h1>
         <Link href="/debts" className="text-sm text-gray-500 hover:underline">
-          ← Cancel
+          Cancel
         </Link>
       </div>
 
@@ -119,6 +138,12 @@ export default function NewDebtPage() {
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
             {error}
+          </div>
+        )}
+
+        {creditNote && (
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-md">
+            {creditNote}
           </div>
         )}
 
@@ -141,7 +166,9 @@ export default function NewDebtPage() {
               <select
                 required
                 value={formData.customer_id}
-                onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, customer_id: e.target.value, apply_credit: false })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
               >
                 {customers.map((c) => (
@@ -151,6 +178,21 @@ export default function NewDebtPage() {
                 ))}
               </select>
             </div>
+
+            {availableCredit > 0 && (
+              <div className="rounded-md border border-green-200 bg-green-50 p-3">
+                <label className="flex items-center gap-2 text-sm text-green-800">
+                  <input
+                    type="checkbox"
+                    checked={formData.apply_credit}
+                    onChange={(e) =>
+                      setFormData({ ...formData, apply_credit: e.target.checked })
+                    }
+                  />
+                  Apply available credit (KES {availableCredit.toLocaleString()}) to this loan
+                </label>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Debt Amount (KES)</label>
