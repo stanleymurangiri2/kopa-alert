@@ -1,7 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
+import ResendActions from "./ResendActions";
 
 interface PageProps {
   params: Promise<{
@@ -24,7 +25,8 @@ export default async function BusinessRequestDetails({
       email,
       phone,
       status,
-      created_at
+      created_at,
+      resend_count
     `)
     .eq("id", id)
     .single();
@@ -39,7 +41,7 @@ export default async function BusinessRequestDetails({
         href="/admin/requests"
         className="text-blue-600 hover:underline"
       >
-        ← Back to Requests
+        Back to Requests
       </Link>
 
       <div className="mt-6 rounded-xl border bg-white p-8 shadow">
@@ -70,7 +72,6 @@ export default async function BusinessRequestDetails({
 
           <div>
             <p className="text-sm text-gray-500">Status</p>
-
             <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700">
               {request.status}
             </span>
@@ -78,7 +79,6 @@ export default async function BusinessRequestDetails({
 
           <div>
             <p className="text-sm text-gray-500">Submitted</p>
-
             <p>
               {new Date(request.created_at).toLocaleString()}
             </p>
@@ -88,6 +88,11 @@ export default async function BusinessRequestDetails({
         <div className="mt-10">
           {request.status === "pending" ? (
             <Actions requestId={request.id} />
+          ) : request.status === "approved" ? (
+            <ResendActions
+              requestId={request.id}
+              resendCount={request.resend_count ?? 0}
+            />
           ) : (
             <p className="text-gray-500">
               This request has already been {request.status}.
