@@ -1,5 +1,8 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import ResendActions from "./requests/[id]/ResendActions";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -55,6 +58,24 @@ export default async function AdminDashboardPage() {
     `)
     .eq("status", "pending")
     .order("created_at", { ascending: false })
+    .limit(5);
+
+  //----------------------------------------------------
+  // Recently Approved Businesses
+  //----------------------------------------------------
+
+  const { data: approvedRequests } = await supabase
+    .from("business_requests")
+    .select(`
+      id,
+      business_name,
+      owner_name,
+      email,
+      approved_at,
+      resend_count
+    `)
+    .eq("status", "approved")
+    .order("approved_at", { ascending: false })
     .limit(5);
 
   return (
@@ -195,6 +216,89 @@ export default async function AdminDashboardPage() {
                     className="px-6 py-10 text-center text-gray-500"
                   >
                     No pending registrations.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recently Approved Businesses */}
+
+      <div className="mt-10 rounded-xl bg-white shadow">
+        <div className="flex items-center justify-between border-b p-6">
+          <h2 className="text-xl font-semibold">
+            Recently Approved Businesses
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  Business
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Owner
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Email
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Approved
+                </th>
+
+                <th className="px-6 py-3 text-left">
+                  Action
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {approvedRequests && approvedRequests.length > 0 ? (
+                approvedRequests.map((request) => (
+                  <tr
+                    key={request.id}
+                    className="border-t"
+                  >
+                    <td className="px-6 py-4">
+                      {request.business_name}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {request.owner_name}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {request.email}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {request.approved_at
+                        ? new Date(request.approved_at).toLocaleDateString()
+                        : "-"}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <ResendActions
+                        requestId={request.id}
+                        resendCount={request.resend_count ?? 0}
+                      />
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
+                    No approved businesses yet.
                   </td>
                 </tr>
               )}
