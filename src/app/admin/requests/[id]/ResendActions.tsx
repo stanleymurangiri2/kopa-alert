@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,37 +12,45 @@ export default function ResendActions({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
   const MAX_RESENDS = 3;
-  const remaining = MAX_RESENDS - resendCount;
+  const remaining = Math.max(0, MAX_RESENDS - resendCount);
 
   async function resendInvitation() {
     const confirmed = confirm(
-      `Resend the approval invitation with a new temporary password? (${remaining} resend${remaining === 1 ? "" : "s"} left)`
+      `Resend the approval invitation?\n\nA new temporary password will be generated and sent to the business email address.`
     );
 
-    if (!confirmed) return;
+    if (!confirmed || loading) return;
 
     setLoading(true);
 
-    const response = await fetch(
-      `/api/admin/requests/${requestId}/resend`,
-      {
-        method: "POST",
+    try {
+      const response = await fetch(
+        `/api/admin/requests/${requestId}/resend`,
+        {
+          method: "POST",
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error ?? "Resend failed.");
+        return;
       }
-    );
 
-    const result = await response.json();
+      alert(
+        `Invitation resent successfully.\n\nRemaining attempts: ${result.remaining}`
+      );
 
-    setLoading(false);
-
-    if (!response.ok) {
-      alert(result.error ?? "Resend failed.");
-      return;
+      router.refresh();
+    } catch (error) {
+      console.error("Resend request failed:", error);
+      alert("Unable to resend the invitation. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    alert("Invitation resent with a new temporary password.");
-
-    router.refresh();
   }
 
   if (remaining <= 0) {
@@ -58,9 +66,11 @@ export default function ResendActions({
       <button
         onClick={resendInvitation}
         disabled={loading}
-        className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Sending..." : `Resend Invitation (${remaining} left)`}
+        {loading
+          ? "Sending..."
+          : `Resend Invitation (${remaining} left)`}
       </button>
     </div>
   );

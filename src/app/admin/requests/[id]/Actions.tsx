@@ -9,47 +9,21 @@ export default function Actions({
   requestId: string;
 }) {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
 
   async function approveBusiness() {
-    setLoading(true);
+    if (loading) return;
 
-    const response = await fetch("/api/admin/approve", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        requestId,
-      }),
-    });
-
-    const result = await response.json();
-
-    setLoading(false);
-
-    if (!response.ok) {
-      alert(result.error ?? "Approval failed.");
-      return;
-    }
-
-    alert("Business approved successfully. Login credentials have been emailed to the owner.");
-
-    router.push("/admin/requests");
-    router.refresh();
-  }
-
-  async function rejectBusiness() {
-    const confirmed = confirm("Reject this registration?");
+    const confirmed = confirm(
+      "Approve this business registration?\n\nA KopaAlert account will be created for the business owner."
+    );
 
     if (!confirmed) return;
 
     setLoading(true);
 
-    const response = await fetch(
-      `/api/admin/requests/${requestId}/reject`,
-      {
+    try {
+      const response = await fetch("/api/admin/approve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,22 +31,76 @@ export default function Actions({
         body: JSON.stringify({
           requestId,
         }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Approval failed.");
       }
+
+      alert(
+        "Business approved successfully. The owner can now use the KopaAlert account."
+      );
+
+      router.push("/admin/requests");
+      router.refresh();
+    } catch (error) {
+      console.error("Approval error:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Approval failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function rejectBusiness() {
+    if (loading) return;
+
+    const confirmed = confirm(
+      "Reject this business registration?"
     );
 
-    const result = await response.json();
+    if (!confirmed) return;
 
-    setLoading(false);
+    setLoading(true);
 
-    if (!response.ok) {
-      alert(result.error ?? "Reject failed.");
-      return;
+    try {
+      const response = await fetch(
+        `/api/admin/requests/${requestId}/reject`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Rejection failed.");
+      }
+
+      alert("Registration rejected successfully.");
+
+      router.push("/admin/requests");
+      router.refresh();
+    } catch (error) {
+      console.error("Rejection error:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Rejection failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    alert("Registration rejected.");
-
-    router.push("/admin/requests");
-    router.refresh();
   }
 
   return (
@@ -80,7 +108,7 @@ export default function Actions({
       <button
         onClick={approveBusiness}
         disabled={loading}
-        className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 disabled:opacity-50"
+        className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Processing..." : "Approve Business"}
       </button>
@@ -88,7 +116,7 @@ export default function Actions({
       <button
         onClick={rejectBusiness}
         disabled={loading}
-        className="rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700 disabled:opacity-50"
+        className="rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Reject Business
       </button>

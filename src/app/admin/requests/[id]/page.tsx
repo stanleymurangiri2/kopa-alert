@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
@@ -9,6 +9,8 @@ interface PageProps {
     id: string;
   }>;
 }
+
+export const dynamic = "force-dynamic";
 
 export default async function BusinessRequestDetails({
   params,
@@ -34,6 +36,13 @@ export default async function BusinessRequestDetails({
   if (error || !request) {
     notFound();
   }
+
+  const statusClasses =
+    request.status === "approved"
+      ? "bg-green-100 text-green-700"
+      : request.status === "rejected"
+        ? "bg-red-100 text-red-700"
+        : "bg-yellow-100 text-yellow-700";
 
   return (
     <main className="max-w-4xl mx-auto p-8">
@@ -72,7 +81,9 @@ export default async function BusinessRequestDetails({
 
           <div>
             <p className="text-sm text-gray-500">Status</p>
-            <span className="rounded-full bg-yellow-100 px-3 py-1 text-yellow-700">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 ${statusClasses}`}
+            >
               {request.status}
             </span>
           </div>

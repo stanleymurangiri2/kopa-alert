@@ -18,6 +18,7 @@ export default function AdminRequestsPage() {
 
   const [requests, setRequests] = useState<BusinessRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,75 +27,120 @@ export default function AdminRequestsPage() {
 
   async function loadRequests() {
     setLoading(true);
+    setError('');
 
     const { data, error } = await supabase
       .from('business_requests')
-      .select('*')
+      .select(
+        'id, business_name, owner_name, phone, email, status, created_at'
+      )
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setRequests(data);
+    if (error) {
+      console.error('Failed to load business requests:', error);
+      setError('Failed to load business requests. Please refresh and try again.');
+      setRequests([]);
+    } else {
+      setRequests(data ?? []);
     }
 
     setLoading(false);
   }
 
   async function approveRequest(requestId: string) {
+    if (processing) return;
+
+    const confirmed = confirm(
+      'Approve this business registration request?'
+    );
+
+    if (!confirmed) return;
+
     setProcessing(requestId);
+    setError('');
 
-    const response = await fetch('/api/admin/approve', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        requestId,
-      }),
-    });
+    try {
+      const response = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ requestId }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    setProcessing(null);
+      if (!response.ok) {
+        throw new Error(result.error || 'Approval failed.');
+      }
 
-    if (!response.ok) {
-      alert(result.error || 'Approval failed.');
-      return;
+      alert(
+        'Business approved successfully. The owner can now access the KopaAlert account.'
+      );
+
+      await loadRequests();
+    } catch (err) {
+      console.error('Approval error:', err);
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Approval failed. Please try again.'
+      );
+    } finally {
+      setProcessing(null);
     }
-
-    alert('Business approved successfully. Login credentials have been emailed to the owner.');
-
-    loadRequests();
   }
 
   async function rejectRequest(requestId: string) {
-    if (!confirm('Reject this registration request?')) {
-      return;
+    if (processing) return;
+
+    const confirmed = confirm(
+      'Reject this registration request?'
+    );
+
+    if (!confirmed) return;
+
+    setProcessing(requestId);
+    setError('');
+
+    try {
+      const response = await fetch(
+        `/api/admin/requests/${requestId}/reject`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Rejection failed.');
+      }
+
+      alert('Business request rejected successfully.');
+
+      await loadRequests();
+    } catch (err) {
+      console.error('Rejection error:', err);
+
+      alert(
+        err instanceof Error
+          ? err.message
+          : 'Rejection failed. Please try again.'
+      );
+    } finally {
+      setProcessing(null);
     }
-
-    const response = await fetch(`/api/admin/requests/${requestId}/reject`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ requestId }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.error || 'Rejection failed.');
-      return;
-    }
-
-    alert('Business request rejected.');
-
-    loadRequests();
   }
 
   if (loading) {
     return (
       <div className="p-6">
-        Loading business requests...
+        <p className="text-gray-600">Loading business requests...</p>
       </div>
     );
   }
@@ -106,13 +152,19 @@ export default function AdminRequestsPage() {
           Business Registration Requests
         </h1>
 
-        <p className="text-gray-500">
+        <p className="text-gray-500 mt-1">
           Review and approve new business registrations.
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded-lg border bg-white">
-        <table className="min-w-full">
+        <table className="min-w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
               <th className="px-4 py-3 text-left">Business</th>
@@ -121,68 +173,100 @@ export default function AdminRequestsPage() {
               <th className="px-4 py-3 text-left">Phone</th>
               <th className="px-4 py-3 text-left">Status</th>
               <th className="px-4 py-3 text-left">Date</th>
-              <th className="px-4 py-3 text-center">Actions</th>
+              <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {requests.length === 0 && (
+            {requests.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-500">
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-gray-500"
+                >
                   No business requests found.
                 </td>
               </tr>
-            )}
+            ) : (
+              requests.map((request) => {
+                const isProcessing = processing === request.id;
 
-            {requests.map((request) => (
-              <tr key={request.id} className="border-t">
-                <td className="px-4 py-3">{request.business_name}</td>
-                <td className="px-4 py-3">{request.owner_name}</td>
-                <td className="px-4 py-3">{request.email}</td>
-                <td className="px-4 py-3">{request.phone}</td>
-
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      request.status === 'approved'
-                        ? 'bg-green-100 text-green-700'
-                        : request.status === 'rejected'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-yellow-100 text-yellow-700'
-                    }`}
+                return (
+                  <tr
+                    key={request.id}
+                    className="border-t hover:bg-gray-50"
                   >
-                    {request.status}
-                  </span>
-                </td>
+                    <td className="px-4 py-3 font-medium">
+                      {request.business_name}
+                    </td>
 
-                <td className="px-4 py-3">
-                  {new Date(request.created_at).toLocaleDateString()}
-                </td>
+                    <td className="px-4 py-3">
+                      {request.owner_name}
+                    </td>
 
-                <td className="px-4 py-3">
-                  {request.status === 'pending' ? (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => approveRequest(request.id)}
-                        disabled={processing === request.id}
-                        className="rounded bg-green-600 px-3 py-2 text-white hover:bg-green-700"
+                    <td className="px-4 py-3">
+                      {request.email}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {request.phone}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                          request.status === 'approved'
+                            ? 'bg-green-100 text-green-700'
+                            : request.status === 'rejected'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}
                       >
-                        {processing === request.id ? 'Approving...' : 'Approve'}
-                      </button>
+                        {request.status}
+                      </span>
+                    </td>
 
-                      <button
-                        onClick={() => rejectRequest(request.id)}
-                        className="rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">Processed</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+                    <td className="px-4 py-3">
+                      {new Date(
+                        request.created_at
+                      ).toLocaleDateString()}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {request.status === 'pending' ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() =>
+                              approveRequest(request.id)
+                            }
+                            disabled={processing !== null}
+                            className="rounded bg-green-600 px-3 py-1.5 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isProcessing
+                              ? 'Processing...'
+                              : 'Approve'}
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              rejectRequest(request.id)
+                            }
+                            disabled={processing !== null}
+                            className="rounded bg-red-600 px-3 py-1.5 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500">
+                          Processed
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

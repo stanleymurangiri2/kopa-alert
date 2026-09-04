@@ -33,12 +33,21 @@ export default function DeleteBusiness({
     try {
       const response = await fetch(
         `/api/admin/businesses/${businessId}/delete-preview`,
+        {
+          method: "GET",
+          cache: "no-store",
+        }
       );
 
       const result = await response.json();
 
       if (!response.ok) {
         setError(result.error ?? "Failed to load business data.");
+        return;
+      }
+
+      if (!result.counts) {
+        setError("Business deletion preview is unavailable.");
         return;
       }
 
@@ -71,20 +80,20 @@ export default function DeleteBusiness({
           body: JSON.stringify({
             confirmName: confirmText.trim(),
           }),
-        },
+        }
       );
 
       const result = await response.json();
 
       if (!response.ok) {
         setError(
-          result.error ?? "Failed to permanently delete business.",
+          result.error ?? "Failed to permanently delete business."
         );
         return;
       }
 
       alert(
-        `Business "${businessName}" and all associated data were permanently deleted.`,
+        `Business "${businessName}" and all associated data were permanently deleted.`
       );
 
       router.push("/admin/businesses");
@@ -216,6 +225,7 @@ export default function DeleteBusiness({
         <button
           onClick={() => {
             setStep("idle");
+            setCounts(null);
             setConfirmText("");
             setError(null);
           }}
