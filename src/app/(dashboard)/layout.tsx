@@ -15,59 +15,50 @@ export default async function DashboardLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) {
     redirect('/login');
   }
-
   const { data: profile } = await supabase
     .from('users')
     .select('*, businesses(*)')
     .eq('id', user.id)
     .single();
-
   const businessName = profile?.businesses?.business_name || 'System Admin';
   if (profile?.must_change_password) {
     redirect('/change-password');
   }
-
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
        <DashboardSidebar businessName={businessName} role={profile?.role} />
-       
   <IdleTimeout />
-
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6">
+          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-2">
               <MobileMenuButton />
               <div>
-                <h2 className="text-lg font-bold text-gray-800">KopaAlert</h2>
-                <p className="text-xs text-gray-500">{businessName}</p>
+                <h2 className="text-lg font-bold text-gray-800 dark:text-slate-100">KopaAlert</h2>
+                <p className="text-xs text-gray-500 dark:text-slate-400">{businessName}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <ThemeToggle />
-              <span className="hidden text-sm font-medium text-gray-700 sm:inline">
-  {profile?.name} <span className="text-xs text-gray-400">({profile?.role?.replace('_', ' ')})</span>
+              <span className="hidden text-sm font-medium text-gray-700 dark:text-slate-300 sm:inline">
+  {profile?.name} <span className="text-xs text-gray-400 dark:text-slate-500">({profile?.role?.replace('_', ' ')})</span>
 </span>
               <form action="/api/signout" method="post">
                 <button
                   type="submit"
-                  className="text-xs font-medium text-red-600 hover:underline"
+                  className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
                 >
                   Sign out
                 </button>
               </form>
             </div>
           </header>
-
           <main className="w-full flex-1 p-4 sm:p-6">{children}</main>
         </div>
       </div>
     </SidebarProvider>
   );
 }
-
-
