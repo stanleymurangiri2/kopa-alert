@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -12,6 +12,7 @@ type Customer = {
   phone: string;
   email: string | null;
   is_blacklisted?: boolean | null;
+  available_credit?: number | null;
 };
 
 type Debt = {
@@ -22,6 +23,14 @@ type Debt = {
   description: string;
   due_date: string;
   status: string;
+};
+
+type LedgerEntry = {
+  id: string;
+  type: string;
+  amount: number;
+  description: string | null;
+  created_at: string;
 };
 
 function badgeColor(status: string) {
@@ -37,12 +46,35 @@ function badgeColor(status: string) {
   }
 }
 
+function ledgerTypeStyle(type: string) {
+  const styles: Record<string, string> = {
+    LOAN_DISBURSEMENT: 'bg-blue-100 text-blue-700',
+    PAYMENT: 'bg-green-100 text-green-700',
+    CREDIT_CREATED: 'bg-emerald-100 text-emerald-700',
+    CREDIT_APPLIED: 'bg-purple-100 text-purple-700',
+    OVERPAYMENT: 'bg-emerald-100 text-emerald-700',
+    REFUND: 'bg-orange-100 text-orange-700',
+    ADJUSTMENT: 'bg-gray-100 text-gray-700',
+    WRITE_OFF: 'bg-red-100 text-red-700',
+    REVERSAL: 'bg-red-100 text-red-700',
+  };
+  return styles[type] ?? 'bg-gray-100 text-gray-700';
+}
+
+function ledgerTypeLabel(type: string) {
+  return type
+    .split('_')
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export default function CustomerDetailPage() {
   const params = useParams();
   const customerId = params.id as string;
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -98,6 +130,15 @@ export default function CustomerDetailPage() {
     );
 
     setDebts(customerDebts as Debt[]);
+
+    const { data: ledgerData } = await supabase
+      .from('financial_transactions')
+      .select('id, type, amount, description, created_at')
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false });
+
+    setLedger((ledgerData ?? []) as LedgerEntry[]);
+
     setLoading(false);
   }
 
@@ -206,6 +247,8 @@ export default function CustomerDetailPage() {
     0
   );
 
+  const availableCredit = Number(customer.available_credit ?? 0);
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -213,7 +256,7 @@ export default function CustomerDetailPage() {
           <h1 className="text-2xl font-bold">{customer.full_name}</h1>
           <p className="text-gray-500">
             {customer.phone}
-            {customer.email ? ` · ${customer.email}` : ''}
+            {customer.email ? ` - ${customer.email}` : ''}
           </p>
         </div>
 
@@ -226,7 +269,7 @@ export default function CustomerDetailPage() {
       </div>
 
       <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="text-sm text-gray-500">Status</div>
             <div className="mt-1">
@@ -249,6 +292,13 @@ export default function CustomerDetailPage() {
             </div>
           </div>
 
+          <div className="text-right">
+            <div className="text-sm text-gray-500">Available Credit</div>
+            <div className={`text-xl font-bold ${availableCredit > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+              KES {availableCredit.toLocaleString()}
+            </div>
+          </div>
+
           {(role === 'business_admin' || role === 'super_admin') && (
             <button
               onClick={toggleBlacklist}
@@ -267,6 +317,12 @@ export default function CustomerDetailPage() {
             </button>
           )}
         </div>
+
+        {availableCredit > 0 && (
+          <p className="mt-4 rounded-md bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-800">
+            This customer has KES {availableCredit.toLocaleString()} in available credit from a past overpayment. It can be applied automatically when you record a new debt for them.
+          </p>
+        )}
       </div>
 
       <div className="rounded-lg border bg-white shadow-sm">
@@ -409,6 +465,54 @@ export default function CustomerDetailPage() {
                     </tr>
                   )}
                 </>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="rounded-lg border bg-white shadow-sm">
+        <div className="border-b p-4">
+          <h2 className="font-semibold">Financial Statement</h2>
+          <p className="text-sm text-gray-500">
+            Full transaction history for this customer.
+          </p>
+        </div>
+
+        {ledger.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            No transactions yet.
+          </div>
+        ) : (
+          <table className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left">Date</th>
+                <th className="px-4 py-3 text-left">Transaction</th>
+                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ledger.map((entry) => (
+                <tr key={entry.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {new Date(entry.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${ledgerTypeStyle(entry.type)}`}
+                    >
+                      {ledgerTypeLabel(entry.type)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {entry.description ?? '-'}
+                  </td>
+                  <td className="px-4 py-3 text-right font-medium">
+                    KES {Number(entry.amount).toLocaleString()}
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
