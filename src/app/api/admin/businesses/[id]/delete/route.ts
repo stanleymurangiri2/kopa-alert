@@ -87,6 +87,7 @@ export async function POST(
 
     // ---------------------------------------------------------
     // 4. Find all users belonging to this business
+    //    BEFORE the transactional DB deletion removes them.
     // ---------------------------------------------------------
     const { data: businessUsers, error: usersLookupError } =
       await supabase
@@ -140,273 +141,64 @@ export async function POST(
     }
 
     // ---------------------------------------------------------
-    // 6. Capture ALL deletion counts before deleting anything
+    // 6. Atomically delete ALL public database records
     // ---------------------------------------------------------
-    const [
-      customersResult,
-      debtsResult,
-      paymentsResult,
-      notificationsResult,
-      notificationQueueResult,
-      financialTransactionsResult,
-      notificationTemplatesResult,
-      businessSettingsResult,
-      subscriptionPaymentsResult,
-      systemErrorsResult,
-      activityLogsResult,
-      usersResult,
-    ] = await Promise.all([
-      supabase
-        .from("customers")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
+    const { data: deletedData, error: deletionError } =
+      await supabase.rpc("delete_business_data", {
+        p_business_id: id,
+      });
 
-      supabase
-        .from("debts")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("payments")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("notification_queue")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("financial_transactions")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("notification_templates")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("business_settings")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("subscription_payments")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("system_errors")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("activity_logs")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-
-      supabase
-        .from("users")
-        .select("*", { count: "exact", head: true })
-        .eq("business_id", id),
-    ]);
-
-    // ---------------------------------------------------------
-    // 7. STOP if any preflight query failed
-    // ---------------------------------------------------------
-    const countResults = [
-      customersResult,
-      debtsResult,
-      paymentsResult,
-      notificationsResult,
-      notificationQueueResult,
-      financialTransactionsResult,
-      notificationTemplatesResult,
-      businessSettingsResult,
-      subscriptionPaymentsResult,
-      systemErrorsResult,
-      activityLogsResult,
-      usersResult,
-    ];
-
-    const failedCountQuery = countResults.find(
-      (result) => result.error,
-    );
-
-    if (failedCountQuery?.error) {
+    if (deletionError) {
       console.error(
-        "Business deletion preflight failed:",
-        failedCountQuery.error,
+        "Atomic business database deletion failed:",
+        deletionError,
       );
 
       return NextResponse.json(
         {
           error:
-            "Could not verify all business data before deletion. No data was deleted.",
+            "Business deletion failed. No business database records were deleted.",
+          details: deletionError.message,
         },
         { status: 500 },
       );
     }
 
-    // ---------------------------------------------------------
-    // 8. Delete dependent records FIRST
-    // ---------------------------------------------------------
-
-    const { error: notificationQueueError } = await supabase
-      .from("notification_queue")
-      .delete()
-      .eq("business_id", id);
-
-    if (notificationQueueError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete notification queue: " +
-            notificationQueueError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    const { error: paymentsError } = await supabase
-      .from("payments")
-      .delete()
-      .eq("business_id", id);
-
-    if (paymentsError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete payments: " +
-            paymentsError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    const { error: financialTransactionsError } =
-      await supabase
-        .from("financial_transactions")
-        .delete()
-        .eq("business_id", id);
-
-    if (financialTransactionsError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete financial transactions: " +
-            financialTransactionsError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    const { error: debtsError } = await supabase
-      .from("debts")
-      .delete()
-      .eq("business_id", id);
-
-    if (debtsError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete debts: " +
-            debtsError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    const { error: customersError } = await supabase
-      .from("customers")
-      .delete()
-      .eq("business_id", id);
-
-    if (customersError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete customers: " +
-            customersError.message,
-        },
-        { status: 500 },
-      );
-    }
+    const deletedCounts = {
+      customers: Number(deletedData?.customers ?? 0),
+      debts: Number(deletedData?.debts ?? 0),
+      payments: Number(deletedData?.payments ?? 0),
+      notifications: Number(deletedData?.notifications ?? 0),
+      notification_queue: Number(
+        deletedData?.notification_queue ?? 0,
+      ),
+      financial_transactions: Number(
+        deletedData?.financial_transactions ?? 0,
+      ),
+      notification_templates: Number(
+        deletedData?.notification_templates ?? 0,
+      ),
+      business_settings: Number(
+        deletedData?.business_settings ?? 0,
+      ),
+      subscription_payments: Number(
+        deletedData?.subscription_payments ?? 0,
+      ),
+      system_errors: Number(
+        deletedData?.system_errors ?? 0,
+      ),
+      activity_logs: Number(
+        deletedData?.activity_logs ?? 0,
+      ),
+      users: Number(deletedData?.users ?? 0),
+      auth_users: authUserIds.length,
+      business_requests: Number(
+        deletedData?.business_requests ?? 0,
+      ),
+    };
 
     // ---------------------------------------------------------
-    // 9. Delete remaining business-owned records
-    // ---------------------------------------------------------
-    const businessOwnedTables = [
-      "notifications",
-      "notification_templates",
-      "business_settings",
-      "subscription_payments",
-      "system_errors",
-    ] as const;
-
-    for (const table of businessOwnedTables) {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq("business_id", id);
-
-      if (error) {
-        return NextResponse.json(
-          {
-            error:
-              `Failed to delete ${table}: ${error.message}`,
-          },
-          { status: 500 },
-        );
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 10. Delete activity logs before users
-    // ---------------------------------------------------------
-    const { error: activityLogsError } = await supabase
-      .from("activity_logs")
-      .delete()
-      .eq("business_id", id);
-
-    if (activityLogsError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete activity logs: " +
-            activityLogsError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 11. Delete public user profiles
-    // ---------------------------------------------------------
-    const { error: usersDeleteError } = await supabase
-      .from("users")
-      .delete()
-      .eq("business_id", id);
-
-    if (usersDeleteError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete business users: " +
-            usersDeleteError.message,
-        },
-        { status: 500 },
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 12. Delete Supabase Auth accounts
+    // 7. Delete Supabase Auth accounts
     // ---------------------------------------------------------
     const authDeletionErrors: string[] = [];
 
@@ -423,87 +215,29 @@ export async function POST(
 
     if (authDeletionErrors.length > 0) {
       console.error(
-        "Supabase Auth deletion errors:",
+        "Supabase Auth deletion errors after database deletion:",
         authDeletionErrors,
       );
 
       return NextResponse.json(
         {
+          success: false,
           error:
-            "Business data was deleted, but one or more authentication accounts could not be deleted.",
+            "Business database records were deleted, but one or more authentication accounts could not be deleted.",
           authDeletionErrors,
-        },
-        { status: 500 },
-      );
-    }
-
-    // ---------------------------------------------------------
-    // 13. Delete the exact associated business request
-    // ---------------------------------------------------------
-    if (matchingRequests && matchingRequests.length === 1) {
-      const requestId = matchingRequests[0].id;
-
-      const { error: requestDeleteError } = await supabase
-        .from("business_requests")
-        .delete()
-        .eq("id", requestId);
-
-      if (requestDeleteError) {
-        return NextResponse.json(
-          {
-            error:
-              "Business data was deleted, but the associated business request could not be deleted: " +
-              requestDeleteError.message,
+          deleted: {
+            business_id: business.id,
+            business_code: business.business_code,
+            ...deletedCounts,
           },
-          { status: 500 },
-        );
-      }
-    }
-
-    // ---------------------------------------------------------
-    // 14. Delete the business itself
-    // ---------------------------------------------------------
-    const { error: businessDeleteError } = await supabase
-      .from("businesses")
-      .delete()
-      .eq("id", id);
-
-    if (businessDeleteError) {
-      return NextResponse.json(
-        {
-          error:
-            "Failed to delete the business record: " +
-            businessDeleteError.message,
         },
         { status: 500 },
       );
     }
 
     // ---------------------------------------------------------
-    // 15. Keep a permanent audit record
+    // 8. Preserve a permanent audit record
     // ---------------------------------------------------------
-    const deletedCounts = {
-      customers: customersResult.count ?? 0,
-      debts: debtsResult.count ?? 0,
-      payments: paymentsResult.count ?? 0,
-      notifications: notificationsResult.count ?? 0,
-      notification_queue: notificationQueueResult.count ?? 0,
-      financial_transactions:
-        financialTransactionsResult.count ?? 0,
-      notification_templates:
-        notificationTemplatesResult.count ?? 0,
-      business_settings:
-        businessSettingsResult.count ?? 0,
-      subscription_payments:
-        subscriptionPaymentsResult.count ?? 0,
-      system_errors: systemErrorsResult.count ?? 0,
-      activity_logs: activityLogsResult.count ?? 0,
-      users: usersResult.count ?? 0,
-      auth_users: authUserIds.length,
-      business_requests:
-        matchingRequests?.length === 1 ? 1 : 0,
-    };
-
     const { error: auditError } = await supabase
       .from("audit_logs")
       .insert({
@@ -512,7 +246,7 @@ export async function POST(
         action: "DELETE_BUSINESS",
         target_type: "business",
         description:
-          `Permanently deleted business "${business.business_name}" and all associated data`,
+          `Permanently deleted business ${business.business_code} (${business.business_name}).`,
         details: {
           business_id: business.id,
           business_code: business.business_code,

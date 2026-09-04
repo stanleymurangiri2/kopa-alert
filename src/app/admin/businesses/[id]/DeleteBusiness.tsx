@@ -8,7 +8,14 @@ type Counts = {
   debts: number;
   payments: number;
   notifications: number;
+  notification_queue: number;
   users: number;
+  financial_transactions: number;
+  notification_templates: number;
+  business_settings: number;
+  subscription_payments: number;
+  system_errors: number;
+  activity_logs: number;
 };
 
 export default function DeleteBusiness({
@@ -147,45 +154,86 @@ export default function DeleteBusiness({
       </p>
 
       {counts && (
-        <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-red-800">
-          <li>
-            {counts.customers} customer
-            {counts.customers === 1 ? "" : "s"}
-          </li>
+        <div className="mt-4 rounded-lg border border-red-200 bg-white p-4">
+          <p className="mb-3 text-sm font-semibold text-red-800">
+            Data that will be permanently deleted:
+          </p>
 
-          <li>
-            {counts.debts} debt record
-            {counts.debts === 1 ? "" : "s"}
-          </li>
+          <ul className="grid gap-2 text-sm text-red-800 sm:grid-cols-2">
+            <li>
+              {counts.customers} customer
+              {counts.customers === 1 ? "" : "s"}
+            </li>
 
-          <li>
-            {counts.payments} payment record
-            {counts.payments === 1 ? "" : "s"}
-          </li>
+            <li>
+              {counts.debts} debt record
+              {counts.debts === 1 ? "" : "s"}
+            </li>
 
-          <li>
-            {counts.notifications} notification
-            {counts.notifications === 1 ? "" : "s"}
-          </li>
+            <li>
+              {counts.payments} payment record
+              {counts.payments === 1 ? "" : "s"}
+            </li>
 
-          <li>
-            {counts.users} team member account
-            {counts.users === 1 ? "" : "s"} —{" "}
-            <strong>will also be permanently deleted</strong>
-          </li>
-        </ul>
+            <li>
+              {counts.notifications} notification
+              {counts.notifications === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.notification_queue} queued notification
+              {counts.notification_queue === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.users} team member account
+              {counts.users === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.financial_transactions} financial transaction
+              {counts.financial_transactions === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.notification_templates} notification template
+              {counts.notification_templates === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.business_settings} business setting
+              {counts.business_settings === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.subscription_payments} subscription payment
+              {counts.subscription_payments === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.system_errors} system error
+              {counts.system_errors === 1 ? "" : "s"}
+            </li>
+
+            <li>
+              {counts.activity_logs} activity log
+              {counts.activity_logs === 1 ? "" : "s"}
+            </li>
+          </ul>
+        </div>
       )}
 
       <div className="mt-5 rounded-md border border-red-300 bg-white p-4">
         <p className="text-sm font-semibold text-red-800">
-          ?? Permanent deletion
+          WARNING: Permanent deletion
         </p>
 
         <p className="mt-1 text-sm text-red-700">
           This will permanently remove the business, its
-          customers, debts, payments, notifications, financial
-          records, team accounts, authentication accounts and
-          other business data.
+          customers, debts, payments, notifications, queued
+          notifications, financial records, team accounts,
+          authentication accounts, settings, logs and other
+          associated business data.
         </p>
       </div>
 
@@ -200,6 +248,7 @@ export default function DeleteBusiness({
         className="mt-1 w-full rounded-md border border-red-300 px-3 py-2 text-sm"
         placeholder={businessName}
         disabled={loading}
+        autoComplete="off"
       />
 
       {error && (
