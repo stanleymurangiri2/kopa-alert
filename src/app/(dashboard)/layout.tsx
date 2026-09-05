@@ -5,6 +5,7 @@ import MobileMenuButton from '@/components/layout/MobileMenuButton';
 import { SidebarProvider } from '@/components/layout/sidebar-context';
 import IdleTimeout from '@/components/auth/IdleTimeout';
 import ThemeToggle from '@/components/layout/ThemeToggle';
+import UserAvatar from '@/components/layout/UserAvatar';
 
 export default async function DashboardLayout({
   children,
@@ -29,27 +30,28 @@ export default async function DashboardLayout({
   }
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="flex min-h-screen bg-background">
        <DashboardSidebar businessName={businessName} role={profile?.role} />
   <IdleTimeout />
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+          <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6">
             <div className="flex items-center gap-2">
               <MobileMenuButton />
               <div>
-                <h2 className="text-lg font-bold text-gray-800 dark:text-slate-100">KopaAlert</h2>
-                <p className="text-xs text-gray-500 dark:text-slate-400">{businessName}</p>
+                <h2 className="text-lg font-bold text-foreground">KopaAlert</h2>
+                <p className="text-xs text-muted-foreground">{businessName}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <ThemeToggle />
-              <span className="hidden text-sm font-medium text-gray-700 dark:text-slate-300 sm:inline">
-  {profile?.name} <span className="text-xs text-gray-400 dark:text-slate-500">({profile?.role?.replace('_', ' ')})</span>
+              <UserAvatar name={profile?.name} />
+              <span className="hidden text-sm font-medium text-foreground sm:inline">
+  {profile?.name} <span className="text-xs text-muted-foreground">({profile?.role?.replace('_', ' ')})</span>
 </span>
               <form action="/api/signout" method="post">
                 <button
                   type="submit"
-                  className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                  className="text-xs font-medium text-destructive hover:underline"
                 >
                   Sign out
                 </button>

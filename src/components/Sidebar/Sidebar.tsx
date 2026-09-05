@@ -30,23 +30,23 @@ export function Sidebar({ menu, title, subtitle }: SidebarProps) {
       className={`
         ${widthClass}
         flex h-screen flex-col
-        bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950
-        text-white border-r border-slate-800/60
+        bg-sidebar
+        text-sidebar-foreground border-r border-sidebar-border
         transition-all duration-300 ease-out
         ${isMobile ? "fixed left-0 top-0 z-50 shadow-2xl" : "sticky top-0 left-0"}
         ${isMobile && !mobileOpen ? "-translate-x-full" : "translate-x-0"}
       `}
     >
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-slate-800/60 px-4 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 shadow-lg shadow-indigo-500/20">
-          <Zap className="h-5 w-5 text-white" fill="white" />
+      <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent shadow-lg shadow-black/20">
+          <Zap className="h-5 w-5 text-sidebar" fill="currentColor" />
         </div>
         {showLabel && (
           <div className="min-w-0">
-            <h1 className="truncate text-base font-bold tracking-tight">{title}</h1>
+            <h1 className="truncate text-base font-extrabold uppercase tracking-wide">{title}</h1>
             {subtitle && (
-              <p className="mt-0.5 truncate text-xs text-slate-400">{subtitle}</p>
+              <p className="mt-0.5 truncate text-xs text-sidebar-foreground/60">{subtitle}</p>
             )}
           </div>
         )}
@@ -72,20 +72,20 @@ export function Sidebar({ menu, title, subtitle }: SidebarProps) {
                 ${!showLabel ? "justify-center" : ""}
                 ${
                   active
-                    ? "bg-gradient-to-r from-indigo-500/15 to-blue-500/5 text-white"
-                    : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
+                    ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 }
               `}
             >
               {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-indigo-400 to-blue-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+                <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-accent shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
               )}
 
               <span
                 className={`
                   flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
                   transition-colors duration-200
-                  ${active ? "bg-indigo-500/20 text-indigo-300" : "text-slate-500 group-hover:text-slate-200"}
+                  ${active ? "bg-sidebar-hover/10 text-sidebar-active-foreground" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground"}
                 `}
               >
                 <Icon className="h-[18px] w-[18px]" />
@@ -102,14 +102,14 @@ export function Sidebar({ menu, title, subtitle }: SidebarProps) {
       </nav>
 
       {/* Footer status */}
-      <div className="border-t border-slate-800/60 px-4 py-3">
+      <div className="border-t border-sidebar-border px-4 py-3">
         <div className={`flex items-center gap-2 ${!showLabel ? "justify-center" : ""}`}>
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
           </span>
           {showLabel && (
-            <span className="text-xs text-slate-500">All systems online</span>
+            <span className="text-xs text-sidebar-foreground/50">All systems online</span>
           )}
         </div>
       </div>

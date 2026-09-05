@@ -8,6 +8,7 @@ import {
 } from "@/components/Sidebar";
 import { sidebarMenus } from "@/sidebar-config";
 import ThemeToggle from "@/components/layout/ThemeToggle";
+import UserAvatar from "@/components/layout/UserAvatar";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function AdminLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-gray-100 dark:bg-slate-950">
+      <div className="flex min-h-screen bg-background">
         <Sidebar
           title="KopaAlert"
           subtitle={profile.name ?? "Super Admin"}
@@ -52,11 +53,11 @@ export default async function AdminLayout({
         />
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+          <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <div className="flex items-center gap-2">
               <SidebarToggle />
 
-              <span className="font-bold text-gray-800 lg:hidden dark:text-slate-100">
+              <span className="font-bold text-foreground lg:hidden">
                 KopaAlert
               </span>
             </div>
@@ -64,10 +65,16 @@ export default async function AdminLayout({
             <div className="flex items-center gap-3">
               <ThemeToggle />
 
+              <UserAvatar name={profile.name} />
+
+              <span className="hidden text-sm font-medium text-foreground sm:inline">
+                {profile.name}
+              </span>
+
               <form action="/api/signout" method="post">
                 <button
                   type="submit"
-                  className="text-xs font-medium text-red-600 hover:underline"
+                  className="text-xs font-medium text-destructive hover:underline"
                 >
                   Sign out
                 </button>

@@ -51,17 +51,17 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
 
       <aside
         aria-label="Main navigation"
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-slate-900 text-white transition-[width,transform] duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col bg-sidebar text-sidebar-foreground transition-[width,transform] duration-300 ease-in-out md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           collapsed ? "w-20" : "w-64"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="flex items-center gap-3 border-b border-slate-700 p-4">
+        <div className="flex items-center gap-3 border-b border-sidebar-border p-4">
           <button
             type="button"
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden shrink-0 rounded-lg p-2 transition-colors hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 md:block"
+            className="hidden shrink-0 rounded-lg p-2 transition-colors hover:bg-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent md:block"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -70,7 +70,7 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
             type="button"
             onClick={closeMobile}
             aria-label="Close sidebar"
-            className="shrink-0 rounded-lg p-2 transition-colors hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 md:hidden"
+            className="shrink-0 rounded-lg p-2 transition-colors hover:bg-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent md:hidden"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -80,9 +80,11 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
               collapsed ? "md:w-0 md:opacity-0" : "w-auto opacity-100"
             }`}
           >
-            <p className="truncate text-lg font-bold leading-tight">{title}</p>
+            <p className="truncate text-lg font-extrabold uppercase leading-tight tracking-wide">
+              {title}
+            </p>
             {subtitle ? (
-              <p className="truncate text-xs text-slate-400">{subtitle}</p>
+              <p className="truncate text-xs text-sidebar-foreground/60">{subtitle}</p>
             ) : null}
           </div>
         </div>
@@ -98,10 +100,10 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
                 href={item.href}
                 onClick={closeMobile}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
+                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent ${
                   active
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -117,7 +119,7 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
                 {collapsed ? (
                   <span
                     role="tooltip"
-                    className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 md:block"
+                    className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-md bg-sidebar-hover px-2 py-1 text-xs text-sidebar-foreground opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 md:block"
                   >
                     {item.name}
                   </span>
