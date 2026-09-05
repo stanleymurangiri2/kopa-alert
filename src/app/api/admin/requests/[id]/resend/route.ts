@@ -89,7 +89,7 @@ export async function POST(
       await supabase
         .from("businesses")
         .select("id, business_code, email")
-        .eq("business_name", requestData.business_name)
+        .eq("business_name", requestData.business_name.trim())
         .maybeSingle();
 
     if (businessError) {
@@ -297,3 +297,4 @@ export async function POST(
     );
   }
 }
+
