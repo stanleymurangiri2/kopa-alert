@@ -137,11 +137,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { error: auditError } = await supabase.from("audit_logs").insert({
-      business_id: approvedBusiness.id,
+      business_id: approvedBusiness.business_id,
       user_id: adminUser.id,
       action: "APPROVE_BUSINESS",
       target_type: "business_request",
-      description: `Approved ${registration.business_name}`,
+      description: `Approved ${registration.business_name.trim()}`,
       details: { request_id: requestId, email_sent: emailSent },
     });
 
