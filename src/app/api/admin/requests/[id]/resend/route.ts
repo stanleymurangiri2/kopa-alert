@@ -101,6 +101,16 @@ export async function POST(
       );
     }
 
+    if (!businessRow) {
+      return NextResponse.json(
+        {
+          error:
+            "No registered business found for this request. It may have been deleted; this invitation cannot be resent.",
+        },
+        { status: 404 },
+      );
+    }
+
     let userRow = null;
 
     /*
@@ -152,7 +162,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Linked user account not found. The business exists, but no user account is linked to it.",
+            "Linked user account not found for this business.",
         },
         { status: 404 },
       );
