@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCustomerById } from '@/lib/supabase/customers';
 import { getDebts, addToDebt } from '@/lib/supabase/debts';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Customer = {
   id: string;
@@ -84,6 +85,7 @@ function ledgerTypeLabel(type: string) {
 export default function CustomerDetailPage() {
   const params = useParams();
   const customerId = params.id as string;
+  const { showToast } = useToast();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -179,12 +181,17 @@ export default function CustomerDetailPage() {
     const result = await response.json();
 
     if (result.success) {
+      const nowBlacklisted = !customer.is_blacklisted;
       setCustomer({
         ...customer,
-        is_blacklisted: !customer.is_blacklisted,
+        is_blacklisted: nowBlacklisted,
       });
+      showToast(
+        'success',
+        nowBlacklisted ? 'Customer blacklisted.' : 'Customer removed from blacklist.'
+      );
     } else {
-      alert(result.message || 'Failed to update blacklist status.');
+      showToast('error', result.message || 'Failed to update blacklist status.');
     }
 
     setUpdating(false);

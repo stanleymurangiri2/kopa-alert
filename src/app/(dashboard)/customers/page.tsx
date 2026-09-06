@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Ban, Download, Eye, Pencil, Search, Star, Trash2 } from 'lucide-react';
 import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Customer = {
   id: string;
@@ -112,6 +113,7 @@ function exportCsv(rows: (Customer & { outstanding: number; status: CustomerStat
 
 export default function CustomersPage() {
   const searchParams = useSearchParams();
+  const { showToast } = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
@@ -127,10 +129,6 @@ export default function CustomersPage() {
 
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
 
   useEffect(() => {
     loadCustomers();
@@ -183,7 +181,7 @@ export default function CustomersPage() {
     }
 
     setEditingCustomer(null);
-    setMessage({ type: 'success', text: 'Customer updated successfully.' });
+    showToast('success', 'Customer updated successfully.');
     loadCustomers();
   }
 
@@ -198,11 +196,11 @@ export default function CustomersPage() {
     setDeletingCustomer(null);
 
     if (error) {
-      setMessage({ type: 'error', text: error.message || 'Failed to delete customer.' });
+      showToast('error', error.message || 'Failed to delete customer.');
       return;
     }
 
-    setMessage({ type: 'success', text: 'Customer and all associated records deleted.' });
+    showToast('success', 'Customer and all associated records deleted.');
     loadCustomers();
   }
 
@@ -282,18 +280,6 @@ export default function CustomersPage() {
           + Add Customer
         </Link>
       </div>
-
-      {message && (
-        <div
-          className={`mb-4 rounded-md border p-3 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative">
