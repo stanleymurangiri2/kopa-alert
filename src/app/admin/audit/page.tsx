@@ -105,7 +105,9 @@ export default function AuditLogsPage() {
     }
 
     if (endDate) {
-      rows = rows.filter((log) => log.created_at <= `${endDate}T23:59:59`);
+      const endOfDay = new Date(`${endDate}T00:00:00`);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      rows = rows.filter((log) => log.created_at < endOfDay.toISOString());
     }
 
     const query = search.trim().toLowerCase();
