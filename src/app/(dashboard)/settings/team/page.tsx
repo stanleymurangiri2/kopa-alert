@@ -52,6 +52,10 @@ export default function TeamPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [memberPendingRemoval, setMemberPendingRemoval] = useState<TeamMember | null>(null);
+  const [memberPendingRoleChange, setMemberPendingRoleChange] = useState<TeamMember | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
 
   const [form, setForm] = useState({
     name: '',
@@ -107,11 +111,12 @@ export default function TeamPage() {
 
   async function inviteMember() {
     if (!form.name || !form.email) {
-      alert('Please complete all required fields.');
+      setMessage({ type: 'error', text: 'Please complete all required fields.' });
       return;
     }
 
     setInviting(true);
+    setMessage(null);
 
     const token = await getToken();
 
@@ -133,19 +138,25 @@ export default function TeamPage() {
     setInviting(false);
 
     if (!response.ok) {
-      alert(result.message || 'Unable to invite member.');
+      setMessage({ type: 'error', text: result.message || 'Unable to invite member.' });
       return;
     }
 
-    alert('Invitation sent successfully.');
+    setMessage({ type: 'success', text: 'Invitation sent successfully.' });
 
     setForm({ name: '', email: '', role: 'employee' });
 
     loadMembers();
   }
 
-  async function changeRole(memberId: string, newRole: 'business_admin' | 'employee') {
+  async function confirmRoleChange() {
+    if (!memberPendingRoleChange) return;
+
+    const memberId = memberPendingRoleChange.id;
+    const newRole = memberPendingRoleChange.role === 'business_admin' ? 'employee' : 'business_admin';
+
     setBusyMemberId(memberId);
+    setMessage(null);
 
     const token = await getToken();
 
@@ -164,11 +175,14 @@ export default function TeamPage() {
     const result = await response.json();
 
     setBusyMemberId(null);
+    setMemberPendingRoleChange(null);
 
     if (!response.ok || !result.success) {
-      alert(result.message || 'Unable to update role.');
+      setMessage({ type: 'error', text: result.message || 'Unable to update role.' });
       return;
     }
+
+    setMessage({ type: 'success', text: 'Role updated successfully.' });
 
     loadMembers();
   }
@@ -178,6 +192,7 @@ export default function TeamPage() {
 
     const memberId = memberPendingRemoval.id;
     setBusyMemberId(memberId);
+    setMessage(null);
 
     const token = await getToken();
 
@@ -198,9 +213,11 @@ export default function TeamPage() {
     setMemberPendingRemoval(null);
 
     if (!response.ok || !result.success) {
-      alert(result.message || 'Unable to remove member.');
+      setMessage({ type: 'error', text: result.message || 'Unable to remove member.' });
       return;
     }
+
+    setMessage({ type: 'success', text: 'Team member removed successfully.' });
 
     loadMembers();
   }
@@ -219,6 +236,18 @@ export default function TeamPage() {
           </p>
         </div>
       </div>
+
+      {message && (
+        <div
+          className={`rounded-md border p-3 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-foreground">Invite Team Member</h2>
@@ -331,14 +360,7 @@ export default function TeamPage() {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           disabled={busyMemberId === member.id}
-                          onClick={() =>
-                            changeRole(
-                              member.id,
-                              member.role === 'business_admin'
-                                ? 'employee'
-                                : 'business_admin'
-                            )
-                          }
+                          onClick={() => setMemberPendingRoleChange(member)}
                           aria-label={`Make ${member.name} ${
                             member.role === 'business_admin' ? 'an Employee' : 'an Admin'
                           }`}
@@ -364,6 +386,53 @@ export default function TeamPage() {
           </tbody>
         </table>
       </div>
+
+      {memberPendingRoleChange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">
+              {memberPendingRoleChange.role === 'business_admin'
+                ? 'Remove admin access?'
+                : 'Grant admin access?'}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {memberPendingRoleChange.role === 'business_admin' ? (
+                <>
+                  <span className="font-medium text-foreground">
+                    {memberPendingRoleChange.name}
+                  </span>{' '}
+                  will become an Employee and lose Business Admin permissions.
+                </>
+              ) : (
+                <>
+                  <span className="font-medium text-foreground">
+                    {memberPendingRoleChange.name}
+                  </span>{' '}
+                  will become a Business Admin with full access to this business.
+                </>
+              )}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setMemberPendingRoleChange(null)}
+                disabled={busyMemberId === memberPendingRoleChange.id}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRoleChange}
+                disabled={busyMemberId === memberPendingRoleChange.id}
+                className="rounded-md bg-employee px-4 py-2 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
+              >
+                {busyMemberId === memberPendingRoleChange.id ? 'Updating...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {memberPendingRemoval && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
