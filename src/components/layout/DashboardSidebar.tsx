@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Receipt,
   Settings,
+  Star,
   Users,
 } from "lucide-react";
 import Sidebar, { type NavItem } from "./Sidebar";
@@ -16,6 +17,7 @@ import Sidebar, { type NavItem } from "./Sidebar";
 const allItems: (NavItem & { adminOnly?: boolean })[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Customers", href: "/customers", icon: Users },
+  { name: "Customer Ratings", href: "/customers/ratings", icon: Star },
   { name: "Debts", href: "/debts", icon: Receipt },
   { name: "Payments", href: "/payments", icon: CreditCard, adminOnly: true },
   { name: "Notifications", href: "/notifications", icon: Bell },
