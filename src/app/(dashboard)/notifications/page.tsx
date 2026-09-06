@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { AlertTriangle, CheckCircle2, Clock, FileText, XCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 const MAX_ATTEMPTS = 3;
@@ -15,9 +17,48 @@ type Notification = {
   error_message: string | null;
   sent_at: string | null;
   created_at: string;
+  customers?: {
+    full_name: string;
+  } | null;
 };
 
 type FilterOption = 'all' | 'pending' | 'sent' | 'failed' | 'permanently_failed';
+
+function StatusBadge({ status, attempts }: { status: string; attempts: number }) {
+  if (status === 'sent') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
+        <CheckCircle2 className="h-3 w-3" />
+        Sent
+      </span>
+    );
+  }
+
+  if (status === 'failed' && attempts >= MAX_ATTEMPTS) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
+        <XCircle className="h-3 w-3" />
+        Failed (gave up)
+      </span>
+    );
+  }
+
+  if (status === 'failed') {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
+        <AlertTriangle className="h-3 w-3" />
+        Retrying ({attempts}/{MAX_ATTEMPTS})
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
+      <Clock className="h-3 w-3" />
+      Pending
+    </span>
+  );
+}
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -43,7 +84,8 @@ export default function NotificationsPage() {
           attempts,
           error_message,
           sent_at,
-          created_at
+          created_at,
+          customers ( full_name )
         `)
         .order('created_at', { ascending: false });
 
@@ -52,37 +94,10 @@ export default function NotificationsPage() {
         return;
       }
 
-      setNotifications(data || []);
+      setNotifications((data ?? []) as unknown as Notification[]);
     } finally {
       setLoading(false);
     }
-  }
-
-  function statusStyle(status: string, attempts: number) {
-    if (status === 'failed' && attempts >= MAX_ATTEMPTS) {
-      return 'bg-red-200 text-red-900';
-    }
-
-    switch (status) {
-      case 'sent':
-        return 'bg-green-100 text-green-700';
-      case 'failed':
-        return 'bg-orange-100 text-orange-700';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  }
-
-  function statusLabel(status: string, attempts: number) {
-    if (status === 'failed' && attempts >= MAX_ATTEMPTS) {
-      return 'failed (gave up)';
-    }
-    if (status === 'failed') {
-      return `failed (retry ${attempts}/${MAX_ATTEMPTS})`;
-    }
-    return status;
   }
 
   const filteredNotifications = notifications.filter((n) => {
@@ -98,28 +113,41 @@ export default function NotificationsPage() {
   ).length;
 
   if (loading) {
-    return <div className="p-6">Loading notifications...</div>;
+    return <div className="p-6 text-muted-foreground">Loading notifications...</div>;
   }
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-        <p className="text-sm text-gray-500">
-          Monitor SMS reminders and delivery status
-        </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">SMS Management</h1>
+          <p className="text-sm text-muted-foreground">
+            Monitor SMS reminders and delivery status.
+          </p>
+        </div>
+
+        <Link
+          href="/settings/templates"
+          className="flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+        >
+          <FileText className="h-4 w-4" />
+          View Templates
+        </Link>
       </div>
 
       {permanentlyFailedCount > 0 && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          <strong>{permanentlyFailedCount}</strong> message
-          {permanentlyFailedCount === 1 ? '' : 's'} permanently failed after{' '}
-          {MAX_ATTEMPTS} attempts — likely an invalid phone number. Check and
-          correct the customer's number.
+        <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            <strong>{permanentlyFailedCount}</strong> message
+            {permanentlyFailedCount === 1 ? '' : 's'} permanently failed after{' '}
+            {MAX_ATTEMPTS} attempts — likely an invalid phone number. Check and
+            correct the customer&apos;s number.
+          </p>
         </div>
       )}
 
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {(
           [
             { value: 'all', label: 'All' },
@@ -134,8 +162,8 @@ export default function NotificationsPage() {
             onClick={() => setFilter(opt.value)}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               filter === opt.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
             }`}
           >
             {opt.label}
@@ -143,58 +171,74 @@ export default function NotificationsPage() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="w-full text-sm">
-          <thead className="border-b bg-gray-50">
+          <thead className="bg-primary">
             <tr>
-              <th className="px-4 py-3 text-left">Recipient</th>
-              <th className="px-4 py-3 text-left">Message</th>
-              <th className="px-4 py-3 text-left">Channel</th>
-              <th className="px-4 py-3 text-left">Status</th>
-              <th className="px-4 py-3 text-left">Attempts</th>
-              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Customer
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Message
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Channel
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Date
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {filteredNotifications.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   No notifications found.
                 </td>
               </tr>
             )}
 
-            {filteredNotifications.map((notification) => (
-              <tr key={notification.id} className="border-b last:border-none">
-                <td className="px-4 py-3">{notification.recipient_phone}</td>
+            {filteredNotifications.map((notification, i) => (
+              <tr
+                key={notification.id}
+                className={`border-t border-border transition-colors hover:bg-accent ${
+                  i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
+                }`}
+              >
+                <td className="px-4 py-3">
+                  <div className="text-[15px] font-semibold text-foreground">
+                    {notification.customers?.full_name ?? 'Unknown'}
+                  </div>
+                  <div className="font-mono text-xs text-muted-foreground">
+                    {notification.recipient_phone}
+                  </div>
+                </td>
 
                 <td className="max-w-md px-4 py-3">
-                  <p className="whitespace-normal break-words">{notification.message_body}</p>
+                  <p className="whitespace-normal break-words text-foreground">
+                    &ldquo;{notification.message_body}&rdquo;
+                  </p>
 
                   {notification.error_message && (
-                    <p className="mt-1 text-xs text-red-600">
+                    <p className="mt-1 text-xs text-destructive">
                       {notification.error_message}
                     </p>
                   )}
                 </td>
 
-                <td className="px-4 py-3 uppercase">{notification.channel}</td>
-
-                <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${statusStyle(
-                      notification.status,
-                      notification.attempts
-                    )}`}
-                  >
-                    {statusLabel(notification.status, notification.attempts)}
-                  </span>
+                <td className="px-4 py-3 uppercase text-muted-foreground">
+                  {notification.channel}
                 </td>
 
-                <td className="px-4 py-3">{notification.attempts}</td>
+                <td className="px-4 py-3">
+                  <StatusBadge status={notification.status} attempts={notification.attempts} />
+                </td>
 
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-muted-foreground">
                   {new Date(notification.created_at).toLocaleDateString()}
                 </td>
               </tr>
@@ -205,7 +249,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
-
-
-
