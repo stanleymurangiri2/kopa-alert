@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Loader2 } from "lucide-react";
 
 type FormData = {
   business_name: string;
@@ -182,8 +183,9 @@ export default function BusinessRegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-primary py-3 text-primary-foreground font-medium transition hover:bg-primary/90 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-primary-foreground font-medium transition hover:bg-primary/90 disabled:opacity-50"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Submitting..." : "Register Business"}
           </button>
         </form>

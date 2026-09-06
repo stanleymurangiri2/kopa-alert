@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 export default function ChangePasswordPage() {
   const router = useRouter();
@@ -124,8 +125,9 @@ export default function ChangePasswordPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-md bg-primary py-2.5 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary py-2.5 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             {saving ? 'Saving...' : 'Set New Password'}
           </button>
         </form>

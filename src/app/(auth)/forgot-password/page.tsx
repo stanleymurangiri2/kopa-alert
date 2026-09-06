@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -102,8 +103,9 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-primary py-3 text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>

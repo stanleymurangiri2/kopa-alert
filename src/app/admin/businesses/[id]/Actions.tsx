@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Loader2 } from "lucide-react";
 
 export default function Actions({
   id,
@@ -80,8 +81,9 @@ export default function Actions({
           <button
             onClick={() => setPendingStatus("suspended")}
             disabled={loading}
-            className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Processing..." : "Suspend Business"}
           </button>
         )}
@@ -90,8 +92,9 @@ export default function Actions({
           <button
             onClick={() => setPendingStatus("approved")}
             disabled={loading}
-            className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? "Processing..." : "Activate Business"}
           </button>
         )}

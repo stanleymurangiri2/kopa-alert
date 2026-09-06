@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/ToastProvider";
+import { Loader2 } from "lucide-react";
 
 export default function ResendActions({
   requestId,
@@ -59,8 +60,9 @@ export default function ResendActions({
         <button
           onClick={() => setConfirming(true)}
           disabled={loading}
-          className="rounded-md border border-warning px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-md border border-warning px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
           {loading ? "Sending..." : `Resend Invitation (${remaining} left)`}
         </button>
       )}

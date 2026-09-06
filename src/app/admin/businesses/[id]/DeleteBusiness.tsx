@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 type Counts = {
   customers: number;
@@ -127,8 +128,9 @@ export default function DeleteBusiness({
         <button
           onClick={loadPreview}
           disabled={loading}
-          className="mt-4 rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
         >
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Loading..." : "Delete Business"}
         </button>
 
@@ -264,8 +266,9 @@ export default function DeleteBusiness({
             loading ||
             confirmText.trim() !== businessName
           }
-          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
         >
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading
             ? "Permanently Deleting..."
             : "Permanently Delete"}

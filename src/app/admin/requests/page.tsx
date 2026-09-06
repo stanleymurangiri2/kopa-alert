@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastProvider';
+import { Loader2 } from 'lucide-react';
 
 interface BusinessRequest {
   id: string;
@@ -277,16 +278,18 @@ export default function AdminRequestsPage() {
               type="button"
               onClick={() => setPendingBulkAction('approve')}
               disabled={bulkProcessing || processing !== null}
-              className="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {bulkProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
               Approve All ({pendingCount})
             </button>
             <button
               type="button"
               onClick={() => setPendingBulkAction('reject')}
               disabled={bulkProcessing || processing !== null}
-              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {bulkProcessing && <Loader2 className="h-4 w-4 animate-spin" />}
               Reject All ({pendingCount})
             </button>
           </div>
@@ -384,8 +387,9 @@ export default function AdminRequestsPage() {
                               setPendingAction({ type: 'approve', request })
                             }
                             disabled={processing !== null}
-                            className="rounded-md bg-success px-4 py-1.5 text-xs font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-success px-4 py-1.5 text-xs font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
                           >
+                            {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                             {isProcessing
                               ? 'Processing...'
                               : 'Approve'}
@@ -396,8 +400,9 @@ export default function AdminRequestsPage() {
                               setPendingAction({ type: 'reject', request })
                             }
                             disabled={processing !== null}
-                            className="rounded-md bg-destructive px-4 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-destructive px-4 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
                           >
+                            {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                             Reject
                           </button>
                         </div>
