@@ -22,7 +22,15 @@ function startOfDay(date: Date) {
 }
 
 function dateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateKey(key: string) {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 export default async function ReportsPage() {
@@ -172,7 +180,7 @@ export default async function ReportsPage() {
                   className={`border-t border-border ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
                 >
                   <td className="px-6 py-2 text-sm text-muted-foreground">
-                    {new Date(day).toLocaleDateString(undefined, {
+                    {parseDateKey(day).toLocaleDateString(undefined, {
                       weekday: "short",
                       month: "short",
                       day: "numeric",
