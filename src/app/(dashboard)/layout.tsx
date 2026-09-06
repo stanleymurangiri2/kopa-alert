@@ -7,6 +7,33 @@ import IdleTimeout from '@/components/auth/IdleTimeout';
 import ThemeToggle from '@/components/layout/ThemeToggle';
 import UserAvatar from '@/components/layout/UserAvatar';
 import GlobalSearchBar from '@/components/layout/GlobalSearchBar';
+import NotificationMarquee from '@/components/layout/NotificationMarquee';
+
+function getSubscriptionNotice(business: {
+  subscription_tier?: string | null;
+  subscription_expires_at?: string | null;
+  subscription_price?: number | null;
+} | null | undefined) {
+  if (!business || business.subscription_tier === 'free' || !business.subscription_expires_at) {
+    return null;
+  }
+
+  const daysLeft = Math.ceil(
+    (new Date(business.subscription_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (daysLeft > 7) {
+    return null;
+  }
+
+  const price = Number(business.subscription_price ?? 0).toLocaleString();
+
+  if (daysLeft <= 0) {
+    return `Your KopaAlert subscription is overdue — KES ${price}. Contact support immediately to avoid losing access.`;
+  }
+
+  return `Your KopaAlert subscription renews in ${daysLeft} day${daysLeft === 1 ? '' : 's'} — KES ${price}. Contact support to arrange payment.`;
+}
 
 export default async function DashboardLayout({
   children,
@@ -39,6 +66,8 @@ export default async function DashboardLayout({
   ) {
     redirect('/account-locked');
   }
+  const subscriptionNotice =
+    profile?.role !== 'super_admin' ? getSubscriptionNotice(profile?.businesses) : null;
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
@@ -72,6 +101,7 @@ export default async function DashboardLayout({
               </form>
             </div>
           </header>
+          {subscriptionNotice && <NotificationMarquee message={subscriptionNotice} />}
           <main className="w-full flex-1 p-4 sm:p-6">{children}</main>
         </div>
       </div>
