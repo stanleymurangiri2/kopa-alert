@@ -67,6 +67,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterOption>('all');
   const [page, setPage] = useState(1);
+  const [smsBalance, setSmsBalance] = useState<number | null>(null);
 
   useEffect(() => {
     loadNotifications();
@@ -93,6 +94,14 @@ export default function NotificationsPage() {
       if (!profile?.business_id) {
         return;
       }
+
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('sms_balance')
+        .eq('id', profile.business_id)
+        .single();
+
+      setSmsBalance(business?.sms_balance ?? null);
 
       const { data, error } = await supabase
         .from('notification_queue')
@@ -135,6 +144,9 @@ export default function NotificationsPage() {
     (n) => n.status === 'failed' && n.attempts >= MAX_ATTEMPTS
   ).length;
 
+  const pendingCount = notifications.filter((n) => n.status === 'pending').length;
+  const balanceDepleted = smsBalance !== null && smsBalance <= 0;
+
   const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / PAGE_SIZE));
   const paginatedNotifications = filteredNotifications.slice(
     (page - 1) * PAGE_SIZE,
@@ -163,6 +175,24 @@ export default function NotificationsPage() {
           View Templates
         </Link>
       </div>
+
+      {balanceDepleted && (
+        <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Your SMS balance is depleted.
+            {pendingCount > 0 && (
+              <>
+                {' '}
+                <strong>{pendingCount}</strong> message{pendingCount === 1 ? '' : 's'} waiting to
+                send —
+              </>
+            )}{' '}
+            they will send automatically once your balance is topped up. Contact support to add
+            credits.
+          </p>
+        </div>
+      )}
 
       {permanentlyFailedCount > 0 && (
         <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">

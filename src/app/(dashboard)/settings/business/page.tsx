@@ -264,8 +264,18 @@ export default function BusinessSettingsPage() {
               type="text"
               value={business.sms_balance !== null ? business.sms_balance.toLocaleString() : '—'}
               readOnly
-              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 font-mono"
+              className={`mt-1 w-full rounded-md border border-border bg-muted px-3 py-2 font-mono ${
+                business.sms_balance !== null && business.sms_balance <= 0
+                  ? 'text-destructive'
+                  : 'text-muted-foreground'
+              }`}
             />
+
+            {business.sms_balance !== null && business.sms_balance <= 0 && (
+              <p className="mt-1 text-xs text-destructive">
+                Balance depleted — SMS reminders will not send until topped up. Contact support to add credits.
+              </p>
+            )}
           </div>
 
           <div>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
 import DeleteBusiness from "./DeleteBusiness";
+import SmsBalanceControl from "./SmsBalanceControl";
 
 interface BusinessPageProps {
   params: Promise<{
@@ -86,14 +87,13 @@ export default async function BusinessPage({
             value={business.subscription_status}
           />
 
-          <Info
-            label="SMS Balance"
-            value={
-              business.sms_balance !== null
-                ? business.sms_balance.toLocaleString()
-                : null
-            }
-          />
+          <div>
+            <p className="text-sm text-muted-foreground">SMS Balance</p>
+            <p className="font-semibold text-foreground">
+              {business.sms_balance !== null ? business.sms_balance.toLocaleString() : "-"}
+            </p>
+            <SmsBalanceControl businessId={business.id} balance={business.sms_balance ?? 0} />
+          </div>
 
           <Info
             label="Registered On"

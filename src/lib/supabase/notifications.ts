@@ -124,6 +124,20 @@ export async function incrementNotificationAttempt(
 }
 
 /**
+ * Decrement a business's SMS balance by 1 after a successful send — CRON ONLY.
+ * Atomic in the database; never goes below 0. Returns the new balance.
+ */
+export async function decrementSmsBalance(businessId: string): Promise<number> {
+  const { data, error } = await supabaseAdmin.rpc("decrement_sms_balance", {
+    p_business_id: businessId,
+  });
+  if (error) {
+    throw error;
+  }
+  return data ?? 0;
+}
+
+/**
  * Cancel notification (used from client/dashboard)
  */
 export async function cancelNotification(id: string) {

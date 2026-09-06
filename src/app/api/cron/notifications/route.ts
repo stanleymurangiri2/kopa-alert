@@ -6,8 +6,10 @@ import {
   markNotificationSent,
   markNotificationFailed,
   incrementNotificationAttempt,
+  decrementSmsBalance,
 } from '@/lib/supabase/notifications';
 import { sendSMS } from '@/lib/sms/africastalking';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const dynamic = "force-dynamic";
 
@@ -35,11 +37,41 @@ export async function GET(request: Request) {
 
     const notifications = [...(pending || []), ...(retryable || [])];
 
+    // -------------------------------------------------------
+    // Load current SMS balance for every business represented
+    // in this batch, so we don't send past a depleted balance.
+    // -------------------------------------------------------
+
+    const businessIds = [...new Set(notifications.map((n) => n.business_id))];
+
+    const balances = new Map<string, number>();
+
+    if (businessIds.length > 0) {
+      const { data: businesses, error: businessesError } = await supabaseAdmin
+        .from('businesses')
+        .select('id, sms_balance')
+        .in('id', businessIds);
+
+      if (businessesError) throw businessesError;
+
+      for (const business of businesses ?? []) {
+        balances.set(business.id, business.sms_balance ?? 0);
+      }
+    }
+
     let sent = 0;
     let failed = 0;
     let gaveUp = 0;
+    let skippedInsufficientBalance = 0;
 
     for (const notification of notifications) {
+      const balance = balances.get(notification.business_id) ?? 0;
+
+      if (balance <= 0) {
+        skippedInsufficientBalance++;
+        continue;
+      }
+
       try {
         const result = await sendSMS(
           notification.recipient_phone,
@@ -69,6 +101,9 @@ export async function GET(request: Request) {
 
         await markNotificationSent(notification.id, result.messageId);
         sent++;
+
+        const newBalance = await decrementSmsBalance(notification.business_id);
+        balances.set(notification.business_id, newBalance);
       } catch (error: any) {
         await incrementNotificationAttempt(
           notification.id,
@@ -92,6 +127,7 @@ export async function GET(request: Request) {
       sent,
       failed,
       gaveUpPermanently: gaveUp,
+      skippedInsufficientBalance,
     });
   } catch (error: any) {
     console.error('Notification Cron Error:', error);
