@@ -1,37 +1,81 @@
-﻿"use client";
 import Link from "next/link";
-export default function SettingsHubPage() {
+import { createClient } from "@/lib/supabase/server";
+
+export default async function SettingsHubPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = user
+    ? await supabase
+        .from("users")
+        .select("business_id, businesses(business_name)")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
+
+  const businessId = profile?.business_id ?? null;
+  const business = Array.isArray(profile?.businesses)
+    ? profile?.businesses[0]
+    : profile?.businesses;
+
+  const [{ count: teamCount }, { count: activeTemplateCount }] = businessId
+    ? await Promise.all([
+        supabase
+          .from("users")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId),
+        supabase
+          .from("notification_templates")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId)
+          .eq("is_active", true),
+      ])
+    : [{ count: null }, { count: null }];
+
   const settingOptions = [
     {
       title: "Business Details",
       description: "Manage business identity, contact information, and default currency.",
-      href: "/dashboard/settings/business",
-      icon: "🏢"
+      href: "/settings/business",
+      icon: "🏢",
+      stat: business?.business_name,
     },
     {
       title: "Notification Templates",
       description: "Customize automated upcoming, due, and overdue SMS reminder messages.",
-      href: "/dashboard/settings/templates",
-      icon: "💬"
+      href: "/settings/templates",
+      icon: "💬",
+      stat:
+        activeTemplateCount !== null
+          ? `${activeTemplateCount} active`
+          : undefined,
     },
     {
       title: "Team Management",
       description: "Invite employees, assign roles, and manage permissions.",
-      href: "/dashboard/settings/team",
-      icon: "👥"
+      href: "/settings/team",
+      icon: "👥",
+      stat: teamCount !== null ? `${teamCount} member${teamCount === 1 ? "" : "s"}` : undefined,
     },
     {
       title: "Profile & Account",
       description: "Update personal details, password, and security preferences.",
-      href: "/dashboard/settings/profile",
-      icon: "👤"
-    }
+      href: "/settings/profile",
+      icon: "👤",
+      stat: undefined as string | undefined,
+    },
   ];
+
   return (
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-1">Configure your business account, team members, integrations, and automated alerts.</p>
+        <p className="text-muted-foreground mt-1">
+          Configure your business account, team members, integrations, and automated alerts.
+        </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {settingOptions.map((opt) => (
@@ -41,7 +85,14 @@ export default function SettingsHubPage() {
             className="group bg-card rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition hover:border-primary flex flex-col justify-between"
           >
             <div>
-              <span className="text-3xl block mb-4">{opt.icon}</span>
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-3xl">{opt.icon}</span>
+                {opt.stat && (
+                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                    {opt.stat}
+                  </span>
+                )}
+              </div>
               <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition">
                 {opt.title}
               </h2>

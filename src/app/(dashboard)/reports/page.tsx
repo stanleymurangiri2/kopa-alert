@@ -7,21 +7,21 @@ export default function ReportsHubPage() {
     {
       title: "Debt Reports",
       description: "Analyze outstanding balances, repayment statuses, and overdue trends.",
-      href: "/dashboard/reports/debts",
+      href: "/reports/debts",
       icon: "📊",
       badge: "Financial"
     },
     {
       title: "Customer Reports",
       description: "View customer debt histories, credit profiles, and performance metrics.",
-      href: "/dashboard/reports/customers",
+      href: "/reports/customers",
       icon: "👥",
       badge: "Clients"
     },
     {
       title: "SMS & Notification Reports",
       description: "Track alert delivery rates, carrier logs, and messaging costs.",
-      href: "/dashboard/reports/sms",
+      href: "/reports/sms",
       icon: "📱",
       badge: "Messaging"
     }
