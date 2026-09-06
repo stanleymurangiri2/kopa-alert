@@ -63,7 +63,7 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="hidden shrink-0 rounded-lg p-2 transition-colors hover:bg-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent md:block"
           >
-            <Menu className="h-5 w-5" aria-hidden="true" />
+            <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <button
@@ -72,7 +72,7 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
             aria-label="Close sidebar"
             className="shrink-0 rounded-lg p-2 transition-colors hover:bg-sidebar-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent md:hidden"
           >
-            <Menu className="h-5 w-5" aria-hidden="true" />
+            <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
           <div
@@ -100,13 +100,13 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
                 href={item.href}
                 onClick={closeMobile}
                 aria-current={active ? "page" : undefined}
-                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent ${
+                className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-accent ${
                   active
                     ? "bg-sidebar-active text-sidebar-active-foreground shadow-sm"
                     : "text-sidebar-foreground/60 hover:bg-sidebar-hover hover:text-sidebar-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
 
                 <span
                   className={`truncate transition-all duration-300 ${

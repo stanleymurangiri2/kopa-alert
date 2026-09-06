@@ -88,11 +88,11 @@ export function Sidebar({ menu, title, subtitle }: SidebarProps) {
                   ${active ? "bg-sidebar-hover/10 text-sidebar-active-foreground" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground"}
                 `}
               >
-                <Icon className="h-[18px] w-[18px]" />
+                <Icon className="h-6 w-6" />
               </span>
 
               {showLabel && (
-                <span className={`truncate ${active ? "font-medium" : ""}`}>
+                <span className="truncate font-semibold">
                   {item.name}
                 </span>
               )}
