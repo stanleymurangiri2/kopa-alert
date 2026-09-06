@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ResendActions from "./requests/[id]/ResendActions";
+import { getPlatformSetting } from "@/lib/supabase/platform-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,8 @@ export default async function AdminDashboardPage() {
     .eq("status", "approved")
     .order("approved_at", { ascending: false })
     .limit(5);
+
+  const maxResends = await getPlatformSetting(supabase, "resend_limit", 3);
 
   return (
     <main className="p-8">
@@ -325,6 +328,7 @@ export default async function AdminDashboardPage() {
                       <ResendActions
                         requestId={request.id}
                         resendCount={request.resend_count ?? 0}
+                        maxResends={maxResends}
                       />
 
                     </td>

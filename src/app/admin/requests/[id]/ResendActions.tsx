@@ -8,17 +8,18 @@ import { Loader2 } from "lucide-react";
 export default function ResendActions({
   requestId,
   resendCount,
+  maxResends = 3,
 }: {
   requestId: string;
   resendCount: number;
+  maxResends?: number;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const { showToast } = useToast();
 
-  const MAX_RESENDS = 3;
-  const remaining = Math.max(0, MAX_RESENDS - resendCount);
+  const remaining = Math.max(0, maxResends - resendCount);
 
   async function resendInvitation() {
     setConfirming(false);
@@ -54,7 +55,7 @@ export default function ResendActions({
     <div>
       {remaining <= 0 ? (
         <p className="text-sm text-muted-foreground">
-          Resend limit reached ({resendCount}/{MAX_RESENDS}).
+          Resend limit reached ({resendCount}/{maxResends}).
         </p>
       ) : (
         <button

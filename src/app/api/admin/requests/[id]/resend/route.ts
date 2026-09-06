@@ -3,8 +3,7 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
-
-const MAX_RESENDS = 3;
+import { getPlatformSetting } from "@/lib/supabase/platform-settings";
 
 export async function POST(
   request: Request,
@@ -43,6 +42,8 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    const MAX_RESENDS = await getPlatformSetting(supabase, "resend_limit", 3);
 
     const { data: requestData, error: requestError } =
       await supabase

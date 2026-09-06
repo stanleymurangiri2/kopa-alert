@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getPlatformSetting } from "@/lib/supabase/platform-settings";
+import ApprovalRulesControl from "./ApprovalRulesControl";
+import AuditRetentionControl from "./AuditRetentionControl";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +18,18 @@ export default async function AdminSettingsPage() {
       supabase.from("businesses").select("sms_balance"),
       supabase.from("audit_logs").select("id", { count: "exact", head: true }),
     ]);
+
+  const resendLimit = await getPlatformSetting(supabase, "resend_limit", 3);
+  const autoExpireDays = await getPlatformSetting<number | null>(
+    supabase,
+    "pending_request_auto_expire_days",
+    null
+  );
+  const auditRetentionDays = await getPlatformSetting<number | null>(
+    supabase,
+    "audit_log_retention_days",
+    null
+  );
 
   const gatewayConfigured = Boolean(
     process.env.AT_USERNAME && process.env.AT_API_KEY
@@ -115,19 +130,15 @@ export default async function AdminSettingsPage() {
         </section>
 
         <section className="rounded-xl bg-card border border-border p-6 shadow">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Approval Rules</h2>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Approval Rules</h2>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                Configure default rules for business registration approval.
-              </p>
-            </div>
-
-            <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              Coming soon
-            </span>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Rules governing business registration approval.
+            </p>
           </div>
+
+          <ApprovalRulesControl resendLimit={resendLimit} autoExpireDays={autoExpireDays} />
         </section>
 
         <section className="rounded-xl bg-card border border-border p-6 shadow">
@@ -141,27 +152,22 @@ export default async function AdminSettingsPage() {
             </div>
 
             <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-              Coming soon
+              {(auditLogCount ?? 0).toLocaleString()} entries
             </span>
           </div>
 
-          <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-            <span className="font-mono font-semibold text-foreground">
-              {(auditLogCount ?? 0).toLocaleString()}
-            </span>{" "}
-            entries logged so far. No automatic retention or cleanup policy is
-            configured yet.
-          </p>
+          <AuditRetentionControl retentionDays={auditRetentionDays} />
         </section>
       </div>
 
       <div className="mt-8 rounded-xl border border-info/30 bg-info/10 p-6">
-        <h2 className="font-semibold text-info">Most platform settings are not configurable yet</h2>
+        <h2 className="font-semibold text-info">Some platform settings are still not configurable</h2>
 
         <p className="mt-2 text-sm text-info">
-          Admin Users, SMS Gateway status, and audit log count above reflect real
-          platform data. Approval rules and log retention are planned controls —
-          nothing is changed from this page for those yet.
+          Admin Users and SMS Gateway status above are read-only: creating/removing
+          super admins isn't built yet, and SMS gateway credentials intentionally stay
+          in environment variables rather than an editable form, since exposing API
+          keys in a web UI would be a security downgrade, not an improvement.
         </p>
       </div>
     </main>

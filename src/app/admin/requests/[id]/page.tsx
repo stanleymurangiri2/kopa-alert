@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
 import ResendActions from "./ResendActions";
+import { getPlatformSetting } from "@/lib/supabase/platform-settings";
 
 interface PageProps {
   params: Promise<{
@@ -36,6 +37,8 @@ export default async function BusinessRequestDetails({
   if (error || !request) {
     notFound();
   }
+
+  const maxResends = await getPlatformSetting(supabase, "resend_limit", 3);
 
   const statusClasses =
     request.status === "approved"
@@ -103,6 +106,7 @@ export default async function BusinessRequestDetails({
             <ResendActions
               requestId={request.id}
               resendCount={request.resend_count ?? 0}
+              maxResends={maxResends}
             />
           ) : (
             <p className="text-muted-foreground">
