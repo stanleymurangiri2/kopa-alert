@@ -166,7 +166,7 @@ export default function CustomersPage() {
     }
 
     if (!isValidKenyanPhone(editForm.phone)) {
-      setEditError('Enter a valid Kenyan mobile number (e.g. 0712345678 or +254712345678).');
+      setEditError('Enter the customer\'s real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000.');
       return;
     }
 

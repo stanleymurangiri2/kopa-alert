@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
+import { normalizeKenyanPhone, isValidKenyanPhone } from "@/lib/utils/phone";
 
 type FormData = {
   business_name: string;
@@ -42,13 +43,22 @@ export default function BusinessRegisterPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    setLoading(true);
     setMessage(null);
+
+    if (!isValidKenyanPhone(formData.phone)) {
+      setMessage({
+        type: "error",
+        text: "Enter your real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000.",
+      });
+      return;
+    }
+
+    setLoading(true);
 
     const { error } = await supabase.from("business_requests").insert({
       business_name: formData.business_name,
       owner_name: formData.owner_name,
-      phone: formData.phone,
+      phone: normalizeKenyanPhone(formData.phone),
       email: formData.email.trim().toLowerCase(),
       status: "pending",
     });
