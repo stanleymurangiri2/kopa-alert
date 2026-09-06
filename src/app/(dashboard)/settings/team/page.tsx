@@ -142,7 +142,14 @@ export default function TeamPage() {
       return;
     }
 
-    setMessage({ type: 'success', text: 'Invitation sent successfully.' });
+    if (result.emailSent === false) {
+      setMessage({
+        type: 'error',
+        text: `${form.name}'s account was created, but the invitation email failed to send. They won't be able to log in until they receive their credentials — use "Forgot Password" from the login page to send a fresh reset link, or contact support.`,
+      });
+    } else {
+      setMessage({ type: 'success', text: 'Invitation sent successfully.' });
+    }
 
     setForm({ name: '', email: '', role: 'employee' });
 
