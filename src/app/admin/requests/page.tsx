@@ -37,6 +37,12 @@ export default function AdminRequestsPage() {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>('pending');
 
+  const [pendingBulkAction, setPendingBulkAction] = useState<'approve' | 'reject' | null>(null);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(
+    null
+  );
+
   useEffect(() => {
     loadRequests();
   }, []);
@@ -178,6 +184,65 @@ export default function AdminRequestsPage() {
     }
   }
 
+  async function confirmBulkAction() {
+    const type = pendingBulkAction;
+    setPendingBulkAction(null);
+    if (!type) return;
+
+    const targets = requests.filter((r) => r.status === 'pending');
+    if (targets.length === 0) return;
+
+    setBulkProcessing(true);
+    setMessage(null);
+    setBulkProgress({ done: 0, total: targets.length });
+
+    let succeeded = 0;
+    let failed = 0;
+    let emailFailures = 0;
+
+    for (const request of targets) {
+      try {
+        const url =
+          type === 'approve' ? '/api/admin/approve' : `/api/admin/requests/${request.id}/reject`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: type === 'approve' ? JSON.stringify({ requestId: request.id }) : undefined,
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          failed++;
+        } else {
+          succeeded++;
+          if (result.emailSent === false) emailFailures++;
+        }
+      } catch (err) {
+        console.error(`Bulk ${type} failed for ${request.id}:`, err);
+        failed++;
+      }
+
+      setBulkProgress((prev) => (prev ? { ...prev, done: prev.done + 1 } : prev));
+    }
+
+    setBulkProcessing(false);
+    setBulkProgress(null);
+
+    const verb = type === 'approve' ? 'approved' : 'rejected';
+    const parts = [`${succeeded} of ${targets.length} request(s) ${verb}.`];
+    if (failed > 0) parts.push(`${failed} failed.`);
+    if (emailFailures > 0) parts.push(`${emailFailures} notification email(s) failed to send.`);
+
+    setMessage({
+      type: failed > 0 || emailFailures > 0 ? 'error' : 'success',
+      text: parts.join(' '),
+    });
+
+    await loadRequests();
+  }
+
   if (loading) {
     return (
       <div className="p-6">
@@ -221,7 +286,7 @@ export default function AdminRequestsPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as 'pending' | 'all')}
@@ -230,6 +295,32 @@ export default function AdminRequestsPage() {
           <option value="pending">Pending only</option>
           <option value="all">All requests</option>
         </select>
+
+        {pendingCount > 0 && (
+          <div className="flex items-center gap-2">
+            {bulkProgress && (
+              <span className="text-sm text-muted-foreground">
+                Processing {bulkProgress.done} of {bulkProgress.total}...
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setPendingBulkAction('approve')}
+              disabled={bulkProcessing || processing !== null}
+              className="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Approve All ({pendingCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingBulkAction('reject')}
+              disabled={bulkProcessing || processing !== null}
+              className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Reject All ({pendingCount})
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
@@ -400,6 +491,51 @@ export default function AdminRequestsPage() {
                 }`}
               >
                 {pendingAction.type === 'approve' ? 'Approve' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingBulkAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">
+              {pendingBulkAction === 'approve'
+                ? `Approve all ${pendingCount} pending requests?`
+                : `Reject all ${pendingCount} pending requests?`}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {pendingBulkAction === 'approve' ? (
+                <>
+                  This creates a KopaAlert account for every one of these {pendingCount}{' '}
+                  businesses and emails each owner their login details. This cannot be undone.
+                </>
+              ) : (
+                <>
+                  This rejects all {pendingCount} pending requests and emails each applicant.
+                  This cannot be undone.
+                </>
+              )}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingBulkAction(null)}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmBulkAction}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  pendingBulkAction === 'approve'
+                    ? 'bg-success text-success-foreground hover:bg-success/90'
+                    : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                }`}
+              >
+                {pendingBulkAction === 'approve' ? `Approve All ${pendingCount}` : `Reject All ${pendingCount}`}
               </button>
             </div>
           </div>
