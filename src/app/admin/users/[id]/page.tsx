@@ -87,14 +87,16 @@ export default async function UserPage({ params }: PageProps) {
           <div>
             <p className="text-sm font-medium text-muted-foreground">Business</p>
             <p className="mt-1 text-foreground">
-              {business?.business_name ?? "—"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Business ID</p>
-            <p className="mt-1 break-all font-mono text-sm text-foreground">
-              {user.business_id ?? "-"}
+              {business?.business_name && user.business_id ? (
+                <Link
+                  href={`/admin/businesses/${user.business_id}`}
+                  className="text-primary hover:underline"
+                >
+                  {business.business_name}
+                </Link>
+              ) : (
+                "—"
+              )}
             </p>
           </div>
 
