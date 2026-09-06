@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { deleteDebt, getDebts } from '@/lib/supabase/debts';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Debt = {
   id: string;
@@ -121,11 +122,12 @@ function LedgerStatusBadge({ debt }: { debt: Debt }) {
 const PAGE_SIZE = 15;
 
 export default function DebtsPage() {
+  const { showToast } = useToast();
+
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [debtPendingDelete, setDebtPendingDelete] = useState<Debt | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -143,18 +145,18 @@ export default function DebtsPage() {
   async function confirmDelete() {
     if (!debtPendingDelete) return;
     setDeleting(true);
-    setError('');
 
     const { error: deleteError } = await deleteDebt(debtPendingDelete.id);
 
     setDeleting(false);
 
     if (deleteError) {
-      setError(deleteError.message || 'Failed to delete debt.');
+      showToast('error', deleteError.message || 'Failed to delete debt.');
       return;
     }
 
     setDebtPendingDelete(null);
+    showToast('success', 'Debt deleted successfully.');
     loadDebts();
   }
 
@@ -195,12 +197,6 @@ export default function DebtsPage() {
           + Add New Debt
         </Link>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border-l-4 border-primary bg-card p-4 shadow-sm">

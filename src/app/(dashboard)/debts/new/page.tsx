@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Customer } from '@/types/database.types';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type CustomerWithCredit = Customer & { available_credit?: number };
 
@@ -21,10 +22,10 @@ export default function NewDebtPage() {
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [creditNote, setCreditNote] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
+  const { showToast } = useToast();
 
   useEffect(() => {
     async function fetchCustomers() {
@@ -76,7 +77,6 @@ export default function NewDebtPage() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    setCreditNote(null);
 
     const numericAmount = parseFloat(formData.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
@@ -129,14 +129,10 @@ export default function NewDebtPage() {
     }
 
     if (result?.credit_applied > 0) {
-      setCreditNote(
+      showToast(
+        'success',
         `KES ${Number(result.credit_applied).toLocaleString()} of available credit was applied to this loan.`
       );
-      setTimeout(() => {
-        router.push('/debts');
-        router.refresh();
-      }, 1500);
-      return;
     }
 
     router.push('/debts');
@@ -160,12 +156,6 @@ export default function NewDebtPage() {
         {error && (
           <div className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-md">
             {error}
-          </div>
-        )}
-
-        {creditNote && (
-          <div className="mb-4 bg-success/10 border border-success/30 text-success text-sm p-3 rounded-md">
-            {creditNote}
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useToast } from '@/components/ui/ToastProvider';
 
 export default function RecordPaymentPage({
   params,
@@ -29,10 +30,10 @@ export default function RecordPaymentPage({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [creditNote, setCreditNote] = useState<string | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
+  const { showToast } = useToast();
 
   useEffect(() => {
     async function loadDebt() {
@@ -79,7 +80,6 @@ export default function RecordPaymentPage({
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    setCreditNote(null);
 
     const payAmount = parseFloat(paymentData.amount_paid);
     if (isNaN(payAmount) || payAmount <= 0) {
@@ -117,14 +117,10 @@ export default function RecordPaymentPage({
     }
 
     if (result?.excess > 0) {
-      setCreditNote(
+      showToast(
+        'success',
         `KES ${Number(result.excess).toLocaleString()} was added to this customer's available credit.`
       );
-      setTimeout(() => {
-        router.push('/payments');
-        router.refresh();
-      }, 1800);
-      return;
     }
 
     router.push('/payments');
@@ -173,12 +169,6 @@ export default function RecordPaymentPage({
         {error && (
           <div className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-md">
             {error}
-          </div>
-        )}
-
-        {creditNote && (
-          <div className="mb-4 bg-success/10 border border-success/30 text-success text-sm p-3 rounded-md">
-            {creditNote}
           </div>
         )}
 
