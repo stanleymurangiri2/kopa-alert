@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface BusinessRequest {
   id: string;
@@ -30,9 +31,7 @@ export default function AdminRequestsPage() {
   const [requests, setRequests] = useState<BusinessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const { showToast } = useToast();
   const [processing, setProcessing] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>('pending');
@@ -85,7 +84,6 @@ export default function AdminRequestsPage() {
   async function approveRequest(requestId: string) {
     setProcessing(requestId);
     setError('');
-    setMessage(null);
 
     try {
       const response = await fetch('/api/admin/approve', {
@@ -103,25 +101,18 @@ export default function AdminRequestsPage() {
       }
 
       if (result.emailSent === false) {
-        setMessage({
-          type: 'error',
-          text: 'Business approved, but the approval email failed to send. The owner won’t have their login details — open this request and use Resend Invitation, or share credentials manually.',
-        });
+        showToast(
+          'error',
+          'Business approved, but the approval email failed to send. The owner won’t have their login details — open this request and use Resend Invitation, or share credentials manually.'
+        );
       } else {
-        setMessage({
-          type: 'success',
-          text: 'Business approved successfully. The owner can now access the KopaAlert account.',
-        });
+        showToast('success', 'Business approved successfully. The owner can now access the KopaAlert account.');
       }
 
       await loadRequests();
     } catch (err) {
       console.error('Approval error:', err);
-
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Approval failed. Please try again.',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Approval failed. Please try again.');
     } finally {
       setProcessing(null);
     }
@@ -130,7 +121,6 @@ export default function AdminRequestsPage() {
   async function rejectRequest(requestId: string) {
     setProcessing(requestId);
     setError('');
-    setMessage(null);
 
     try {
       const response = await fetch(
@@ -150,22 +140,18 @@ export default function AdminRequestsPage() {
       }
 
       if (result.emailSent === false) {
-        setMessage({
-          type: 'error',
-          text: 'Registration rejected, but the notification email failed to send. The applicant won’t be told automatically — consider contacting them directly.',
-        });
+        showToast(
+          'error',
+          'Registration rejected, but the notification email failed to send. The applicant won’t be told automatically — consider contacting them directly.'
+        );
       } else {
-        setMessage({ type: 'success', text: 'Business request rejected successfully.' });
+        showToast('success', 'Business request rejected successfully.');
       }
 
       await loadRequests();
     } catch (err) {
       console.error('Rejection error:', err);
-
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Rejection failed. Please try again.',
-      });
+      showToast('error', err instanceof Error ? err.message : 'Rejection failed. Please try again.');
     } finally {
       setProcessing(null);
     }
@@ -193,7 +179,6 @@ export default function AdminRequestsPage() {
     if (targets.length === 0) return;
 
     setBulkProcessing(true);
-    setMessage(null);
     setBulkProgress({ done: 0, total: targets.length });
 
     let succeeded = 0;
@@ -235,10 +220,7 @@ export default function AdminRequestsPage() {
     if (failed > 0) parts.push(`${failed} failed.`);
     if (emailFailures > 0) parts.push(`${emailFailures} notification email(s) failed to send.`);
 
-    setMessage({
-      type: failed > 0 || emailFailures > 0 ? 'error' : 'success',
-      text: parts.join(' '),
-    });
+    showToast(failed > 0 || emailFailures > 0 ? 'error' : 'success', parts.join(' '));
 
     await loadRequests();
   }
@@ -271,18 +253,6 @@ export default function AdminRequestsPage() {
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
           {error}
-        </div>
-      )}
-
-      {message && (
-        <div
-          className={`rounded-lg border p-4 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
         </div>
       )}
 

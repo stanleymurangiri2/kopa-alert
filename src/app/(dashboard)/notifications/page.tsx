@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { AlertTriangle, CheckCircle2, Clock, FileText, Send, XCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getCustomers } from '@/lib/supabase/customers';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const MAX_ATTEMPTS = 3;
 
@@ -79,9 +80,8 @@ export default function NotificationsPage() {
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkSending, setBulkSending] = useState(false);
-  const [bulkResult, setBulkResult] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadNotifications();
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
 
   async function openBulkModal() {
     setShowBulkModal(true);
-    setBulkResult(null);
+    setBulkError(null);
     setBulkSelected(new Set());
     setBulkMessage('');
     setBulkSearch('');
@@ -135,17 +135,17 @@ export default function NotificationsPage() {
 
   async function sendBulk() {
     if (bulkSelected.size === 0) {
-      setBulkResult({ type: 'error', text: 'Select at least one customer.' });
+      setBulkError('Select at least one customer.');
       return;
     }
 
     if (!bulkMessage.trim()) {
-      setBulkResult({ type: 'error', text: 'Message cannot be empty.' });
+      setBulkError('Message cannot be empty.');
       return;
     }
 
     setBulkSending(true);
-    setBulkResult(null);
+    setBulkError(null);
 
     try {
       const response = await fetch('/api/notifications/bulk-sms', {
@@ -163,19 +163,17 @@ export default function NotificationsPage() {
         throw new Error(result.message || 'Failed to send bulk SMS.');
       }
 
-      setBulkResult({
-        type: 'success',
-        text: `Sent to ${result.sentCount} of ${result.totalRecipients} recipient${result.totalRecipients === 1 ? '' : 's'}.${
+      showToast(
+        'success',
+        `Sent to ${result.sentCount} of ${result.totalRecipients} recipient${result.totalRecipients === 1 ? '' : 's'}.${
           result.failedCount > 0 ? ` ${result.failedCount} failed.` : ''
-        }`,
-      });
+        }`
+      );
 
+      setShowBulkModal(false);
       loadNotifications();
     } catch (error) {
-      setBulkResult({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Failed to send bulk SMS.',
-      });
+      showToast('error', error instanceof Error ? error.message : 'Failed to send bulk SMS.');
     } finally {
       setBulkSending(false);
     }
@@ -460,15 +458,9 @@ export default function NotificationsPage() {
               credit{smsBalance === 1 ? '' : 's'}
             </p>
 
-            {bulkResult && (
-              <div
-                className={`mt-3 rounded-md border p-2 text-sm ${
-                  bulkResult.type === 'success'
-                    ? 'border-success/30 bg-success/10 text-success'
-                    : 'border-destructive/30 bg-destructive/10 text-destructive'
-                }`}
-              >
-                {bulkResult.text}
+            {bulkError && (
+              <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+                {bulkError}
               </div>
             )}
 

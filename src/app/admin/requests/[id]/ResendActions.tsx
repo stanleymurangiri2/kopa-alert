@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function ResendActions({
   requestId,
@@ -13,9 +14,7 @@ export default function ResendActions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
-    null
-  );
+  const { showToast } = useToast();
 
   const MAX_RESENDS = 3;
   const remaining = Math.max(0, MAX_RESENDS - resendCount);
@@ -23,7 +22,6 @@ export default function ResendActions({
   async function resendInvitation() {
     setConfirming(false);
     setLoading(true);
-    setMessage(null);
 
     try {
       const response = await fetch(
@@ -36,19 +34,16 @@ export default function ResendActions({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage({ type: "error", text: result.error ?? "Resend failed." });
+        showToast("error", result.error ?? "Resend failed.");
         return;
       }
 
-      setMessage({
-        type: "success",
-        text: `Invitation resent successfully. Remaining attempts: ${result.remaining}`,
-      });
+      showToast("success", `Invitation resent successfully. Remaining attempts: ${result.remaining}`);
 
       router.refresh();
     } catch (error) {
       console.error("Resend request failed:", error);
-      setMessage({ type: "error", text: "Unable to resend the invitation. Please try again." });
+      showToast("error", "Unable to resend the invitation. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -56,18 +51,6 @@ export default function ResendActions({
 
   return (
     <div>
-      {message && (
-        <div
-          className={`mb-4 rounded-md border p-3 text-sm ${
-            message.type === "success"
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-destructive/30 bg-destructive/10 text-destructive"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
       {remaining <= 0 ? (
         <p className="text-sm text-muted-foreground">
           Resend limit reached ({resendCount}/{MAX_RESENDS}).

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Ban, RefreshCw, Star } from 'lucide-react';
 import { getCustomers } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Customer = {
   id: string;
@@ -95,9 +96,7 @@ export default function CustomerRatingsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'All' | RatingKey>('All');
   const [recalculating, setRecalculating] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
+  const { showToast } = useToast();
 
   useEffect(() => {
     loadData();
@@ -116,7 +115,6 @@ export default function CustomerRatingsPage() {
 
   async function recalculate() {
     setRecalculating(true);
-    setMessage(null);
 
     try {
       const response = await fetch('/api/ratings/recalculate', { method: 'POST' });
@@ -126,16 +124,13 @@ export default function CustomerRatingsPage() {
         throw new Error(result.message || 'Unable to recalculate ratings.');
       }
 
-      setMessage({
-        type: 'success',
-        text: `Ratings recalculated for ${result.updated} customer${result.updated === 1 ? '' : 's'}.`,
-      });
+      showToast(
+        'success',
+        `Ratings recalculated for ${result.updated} customer${result.updated === 1 ? '' : 's'}.`
+      );
       await loadData();
     } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Unable to recalculate ratings.',
-      });
+      showToast('error', error instanceof Error ? error.message : 'Unable to recalculate ratings.');
     } finally {
       setRecalculating(false);
     }
@@ -225,18 +220,6 @@ export default function CustomerRatingsPage() {
           {recalculating ? 'Recalculating...' : 'Recalculate Ratings'}
         </button>
       </div>
-
-      {message && (
-        <div
-          className={`rounded-md border p-3 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {loading ? (
         <div className="rounded-lg border border-border bg-card p-6 text-center text-muted-foreground">
