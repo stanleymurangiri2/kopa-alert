@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type PendingAction = "approve" | "reject";
+
 export default function Actions({
   requestId,
 }: {
@@ -10,16 +12,9 @@ export default function Actions({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   async function approveBusiness() {
-    if (loading) return;
-
-    const confirmed = confirm(
-      "Approve this business registration?\n\nA KopaAlert account will be created for the business owner."
-    );
-
-    if (!confirmed) return;
-
     setLoading(true);
 
     try {
@@ -59,14 +54,6 @@ export default function Actions({
   }
 
   async function rejectBusiness() {
-    if (loading) return;
-
-    const confirmed = confirm(
-      "Reject this business registration?"
-    );
-
-    if (!confirmed) return;
-
     setLoading(true);
 
     try {
@@ -103,23 +90,73 @@ export default function Actions({
     }
   }
 
-  return (
-    <div className="flex gap-4">
-      <button
-        onClick={approveBusiness}
-        disabled={loading}
-        className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {loading ? "Processing..." : "Approve Business"}
-      </button>
+  async function confirmPendingAction() {
+    const action = pendingAction;
+    setPendingAction(null);
 
-      <button
-        onClick={rejectBusiness}
-        disabled={loading}
-        className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        Reject Business
-      </button>
-    </div>
+    if (action === "approve") {
+      await approveBusiness();
+    } else if (action === "reject") {
+      await rejectBusiness();
+    }
+  }
+
+  return (
+    <>
+      <div className="flex gap-4">
+        <button
+          onClick={() => setPendingAction("approve")}
+          disabled={loading}
+          className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Processing..." : "Approve Business"}
+        </button>
+
+        <button
+          onClick={() => setPendingAction("reject")}
+          disabled={loading}
+          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Reject Business
+        </button>
+      </div>
+
+      {pendingAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">
+              {pendingAction === "approve"
+                ? "Approve this business?"
+                : "Reject this registration?"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {pendingAction === "approve"
+                ? "A KopaAlert account will be created for the business owner and they'll be emailed their login details."
+                : "This cannot be undone. The applicant will need to submit a new registration to be reconsidered."}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingAction(null)}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmPendingAction}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  pendingAction === "approve"
+                    ? "bg-success text-success-foreground hover:bg-success/90"
+                    : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                }`}
+              >
+                {pendingAction === "approve" ? "Approve" : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
