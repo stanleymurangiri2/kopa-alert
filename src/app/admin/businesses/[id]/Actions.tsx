@@ -13,9 +13,13 @@ export default function Actions({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
+    null
+  );
 
   async function updateBusiness(nextStatus: string) {
     setLoading(true);
+    setMessage(null);
 
     try {
       const response = await fetch(
@@ -40,21 +44,28 @@ export default function Actions({
         );
       }
 
-      alert(
-        nextStatus === "suspended"
-          ? "Business suspended successfully."
-          : "Business activated successfully."
-      );
+      const actionLabel = nextStatus === "suspended" ? "suspended" : "activated";
+
+      if (result.emailSent === false) {
+        setMessage({
+          type: "error",
+          text: `Business ${actionLabel} successfully, but the notification email failed to send - the business owner won't know their access changed unless you tell them directly.`,
+        });
+      } else {
+        setMessage({
+          type: "success",
+          text: `Business ${actionLabel} successfully.`,
+        });
+      }
 
       router.refresh();
     } catch (error) {
       console.error("Business status update error:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Unable to update business."
-      );
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Unable to update business.",
+      });
     } finally {
       setLoading(false);
     }
@@ -73,6 +84,18 @@ export default function Actions({
 
   return (
     <>
+      {message && (
+        <div
+          className={`mb-4 rounded-md border p-3 text-sm ${
+            message.type === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
       <div className="flex gap-4">
         {status === "approved" && (
           <button

@@ -77,6 +77,46 @@ export function rejectionEmail(params: {
     </div>
   `;
 }
+export function businessSuspendedEmail(params: {
+  business_name: string;
+  support_email: string;
+  support_phone: string;
+}) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #dc2626;">Your KopaAlert Account Has Been Suspended</h2>
+      <p>Hi there,</p>
+      <p>Your business "<strong>${params.business_name}</strong>" and its team no longer have access to KopaAlert. This account has been suspended by KopaAlert administration.</p>
+      <p>If you believe this is a mistake or would like more information, please get in touch.</p>
+      <hr />
+      <p>Contact support:<br/>
+      Email: ${params.support_email}<br/>
+      Phone: ${params.support_phone}</p>
+      <p>— The KopaAlert Team</p>
+    </div>
+  `;
+}
+
+export function businessActivatedEmail(params: {
+  business_name: string;
+  support_email: string;
+  support_phone: string;
+}) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2 style="color: #2563eb;">Your KopaAlert Account Is Active Again</h2>
+      <p>Hi there,</p>
+      <p>Good news - your business "<strong>${params.business_name}</strong>" and its team have regained full access to KopaAlert.</p>
+      <p>You can log in and pick up right where you left off.</p>
+      <hr />
+      <p>Need help? Contact support:<br/>
+      Email: ${params.support_email}<br/>
+      Phone: ${params.support_phone}</p>
+      <p>— The KopaAlert Team</p>
+    </div>
+  `;
+}
+
 export function passwordResetEmail(params: {
   name: string;
   reset_url: string;
