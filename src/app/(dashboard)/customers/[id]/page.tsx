@@ -46,6 +46,19 @@ function badgeColor(status: string) {
   }
 }
 
+function displayStatus(debt: Debt): string {
+  const balance = Number(debt.amount) - Number(debt.amount_paid);
+  if (balance <= 0) return 'fully_paid';
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(debt.due_date);
+  due.setHours(0, 0, 0, 0);
+
+  if (due.getTime() < today.getTime()) return 'overdue';
+  return debt.status;
+}
+
 function ledgerTypeStyle(type: string) {
   const styles: Record<string, string> = {
     LOAN_DISBURSEMENT: 'bg-info/10 text-info',
@@ -375,10 +388,10 @@ export default function CustomerDetailPage() {
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${badgeColor(
-                          debt.status
+                          displayStatus(debt)
                         )}`}
                       >
-                        {debt.status.replace('_', ' ')}
+                        {displayStatus(debt).replace('_', ' ')}
                       </span>
                     </td>
 

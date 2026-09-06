@@ -13,7 +13,21 @@ export type Debt = {
 };
 
 export async function getDebts() {
-  const { data, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: [], error: null };
+  }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('business_id')
+    .eq('id', user.id)
+    .single();
+
+  let query = supabase
     .from('debts')
     .select(
       `
@@ -26,6 +40,12 @@ export async function getDebts() {
       `
     )
     .order('created_at', { ascending: false });
+
+  if (profile?.business_id) {
+    query = query.eq('business_id', profile.business_id);
+  }
+
+  const { data, error } = await query;
 
   return { data, error };
 }
@@ -143,7 +163,11 @@ export async function addToDebt(
 
   const newAmount = Number(current.amount) + additionalAmount;
   const newStatus =
-    Number(current.amount_paid) >= newAmount ? 'fully_paid' : 'partially_paid';
+    Number(current.amount_paid) >= newAmount
+      ? 'fully_paid'
+      : Number(current.amount_paid) > 0
+        ? 'partially_paid'
+        : 'pending';
 
   const { data, error } = await supabase
     .from('debts')

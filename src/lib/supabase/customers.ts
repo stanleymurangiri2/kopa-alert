@@ -15,10 +15,30 @@ export type Customer = {
 };
 
 export async function getCustomers() {
-  const { data, error } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: [], error: null };
+  }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('business_id')
+    .eq('id', user.id)
+    .single();
+
+  let query = supabase
     .from('customers')
     .select('*')
     .order('full_name', { ascending: true });
+
+  if (profile?.business_id) {
+    query = query.eq('business_id', profile.business_id);
+  }
+
+  const { data, error } = await query;
 
   return { data, error };
 }

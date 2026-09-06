@@ -20,6 +20,7 @@ type Debt = {
   amount: number;
   amount_paid: number;
   status: string;
+  due_date: string;
 };
 
 type CustomerStatus = 'Active' | 'Overdue' | 'Blacklisted';
@@ -45,6 +46,18 @@ const STATUS_STYLES: Record<CustomerStatus, string> = {
   Overdue: 'bg-destructive/10 text-destructive',
   Blacklisted: 'bg-blacklist text-blacklist-foreground',
 };
+
+function isDebtOverdue(debt: Debt): boolean {
+  const balance = Number(debt.amount) - Number(debt.amount_paid);
+  if (balance <= 0) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(debt.due_date);
+  due.setHours(0, 0, 0, 0);
+
+  return due.getTime() < today.getTime();
+}
 
 function RatingStars({ rating }: { rating?: string | null }) {
   if (!rating) {
@@ -127,7 +140,7 @@ export default function CustomersPage() {
       if (debt.status !== 'fully_paid') {
         entry.outstanding += Number(debt.amount) - Number(debt.amount_paid);
       }
-      if (debt.status === 'overdue') {
+      if (isDebtOverdue(debt)) {
         entry.hasOverdue = true;
       }
       summary.set(debt.customer_id, entry);
