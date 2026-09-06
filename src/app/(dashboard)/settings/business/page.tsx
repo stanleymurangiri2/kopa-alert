@@ -6,9 +6,13 @@ import { createClient } from '@/lib/supabase/client';
 type Business = {
   id: string;
   business_name: string;
+  business_code: string;
   phone: string;
   email: string;
   status: string;
+  subscription_tier: string | null;
+  subscription_status: string | null;
+  sms_balance: number | null;
   created_at: string;
 };
 
@@ -18,7 +22,9 @@ export default function BusinessSettingsPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
 
   useEffect(() => {
     loadBusiness();
@@ -68,7 +74,7 @@ export default function BusinessSettingsPage() {
     if (!business) return;
 
     setSaving(true);
-    setMessage('');
+    setMessage(null);
 
     const { error } = await supabase
       .from('businesses')
@@ -80,12 +86,12 @@ export default function BusinessSettingsPage() {
       .eq('id', business.id);
 
     if (error) {
-      setMessage(error.message);
+      setMessage({ type: 'error', text: error.message });
       setSaving(false);
       return;
     }
 
-    setMessage('Business information updated successfully.');
+    setMessage({ type: 'success', text: 'Business information updated successfully.' });
     setSaving(false);
   }
 
@@ -119,8 +125,14 @@ export default function BusinessSettingsPage() {
       </div>
 
       {message && (
-        <div className="mb-6 rounded-md border border-border bg-muted p-3 text-sm text-foreground">
-          {message}
+        <div
+          className={`mb-6 rounded-md border p-3 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
         </div>
       )}
 
@@ -186,32 +198,90 @@ export default function BusinessSettingsPage() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground">
-            Status
-          </label>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Business Code
+            </label>
 
-          <input
-            type="text"
-            value={business.status}
-            readOnly
-            className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
-          />
+            <input
+              type="text"
+              value={business.business_code}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Status
+            </label>
+
+            <input
+              type="text"
+              value={business.status}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 capitalize"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground">
-            Registered On
-          </label>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Subscription Tier
+            </label>
 
-          <input
-            type="text"
-            value={new Date(
-              business.created_at
-            ).toLocaleString()}
-            readOnly
-            className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
-          />
+            <input
+              type="text"
+              value={business.subscription_tier ?? '—'}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 capitalize"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Subscription Status
+            </label>
+
+            <input
+              type="text"
+              value={business.subscription_status ?? '—'}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 capitalize"
+            />
+          </div>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              SMS Balance
+            </label>
+
+            <input
+              type="text"
+              value={business.sms_balance !== null ? business.sms_balance.toLocaleString() : '—'}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Registered On
+            </label>
+
+            <input
+              type="text"
+              value={new Date(
+                business.created_at
+              ).toLocaleDateString()}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
+            />
+          </div>
         </div>
 
         <button
