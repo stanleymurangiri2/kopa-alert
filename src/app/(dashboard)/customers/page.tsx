@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Ban, Download, Eye, Search, Star } from 'lucide-react';
-import { getCustomers } from '@/lib/supabase/customers';
+import { Ban, Download, Eye, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
 
 type Customer = {
@@ -117,6 +117,18 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | CustomerStatus>('All');
 
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', email: '' });
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
+
   useEffect(() => {
     loadCustomers();
   }, []);
@@ -130,6 +142,65 @@ export default function CustomersPage() {
     setCustomers((customerData ?? []) as Customer[]);
     setDebts((debtData ?? []) as Debt[]);
     setLoading(false);
+  }
+
+  function openEdit(customer: Customer) {
+    setEditingCustomer(customer);
+    setEditForm({
+      full_name: customer.full_name,
+      phone: customer.phone,
+      email: customer.email ?? '',
+    });
+    setEditError('');
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingCustomer) return;
+
+    if (!editForm.full_name.trim() || !editForm.phone.trim()) {
+      setEditError('Name and phone are required.');
+      return;
+    }
+
+    setSaving(true);
+    setEditError('');
+
+    const { error } = await updateCustomer(editingCustomer.id, {
+      full_name: editForm.full_name.trim(),
+      phone: editForm.phone.trim(),
+      email: editForm.email.trim() || null,
+    });
+
+    setSaving(false);
+
+    if (error) {
+      setEditError(error.message);
+      return;
+    }
+
+    setEditingCustomer(null);
+    setMessage({ type: 'success', text: 'Customer updated successfully.' });
+    loadCustomers();
+  }
+
+  async function confirmDelete() {
+    if (!deletingCustomer) return;
+
+    setDeleting(true);
+
+    const { error } = await deleteCustomer(deletingCustomer.id);
+
+    setDeleting(false);
+    setDeletingCustomer(null);
+
+    if (error) {
+      setMessage({ type: 'error', text: error.message || 'Failed to delete customer.' });
+      return;
+    }
+
+    setMessage({ type: 'success', text: 'Customer and all associated records deleted.' });
+    loadCustomers();
   }
 
   const debtSummaryByCustomer = useMemo(() => {
@@ -208,6 +279,18 @@ export default function CustomersPage() {
           + Add Customer
         </Link>
       </div>
+
+      {message && (
+        <div
+          className={`mb-4 rounded-md border p-3 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative">
@@ -318,14 +401,34 @@ export default function CustomersPage() {
                   <td className="px-4 py-3">
                     <StatusBadge status={customer.status} />
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <Link
-                      href={`/customers/${customer.id}`}
-                      aria-label={`View ${customer.full_name}'s profile`}
-                      className="inline-flex items-center justify-center rounded-md p-1.5 text-teal hover:bg-teal/10"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Link>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(customer)}
+                        aria-label={`Edit ${customer.full_name}`}
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-info hover:bg-info/10"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeletingCustomer(customer)}
+                        aria-label={`Delete ${customer.full_name}`}
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        aria-label={`View ${customer.full_name}'s profile`}
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-teal hover:bg-teal/10"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -333,6 +436,105 @@ export default function CustomersPage() {
           </table>
         )}
       </div>
+
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">Edit Customer</h2>
+
+            <form onSubmit={saveEdit} className="mt-4 space-y-4">
+              {editError && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive">
+                  {editError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-foreground">Full Name</label>
+                <input
+                  type="text"
+                  value={editForm.full_name}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-foreground focus:border-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground">Phone</label>
+                <input
+                  type="text"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-foreground focus:border-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground">
+                  Email <span className="font-normal text-muted-foreground">(Optional)</span>
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="mt-1 w-full rounded-md border border-border bg-card px-3 py-2 text-foreground focus:border-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomer(null)}
+                  disabled={saving}
+                  className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deletingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">Delete this customer?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This will permanently delete{' '}
+              <span className="font-medium text-foreground">{deletingCustomer.full_name}</span>{' '}
+              and all of their debts, payments, and message history. This cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingCustomer(null)}
+                disabled={deleting}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

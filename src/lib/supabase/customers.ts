@@ -78,3 +78,9 @@ export async function updateCustomer(id: string, updates: Partial<Customer>) {
 
   return { data, error };
 }
+
+export async function deleteCustomer(id: string) {
+  const { error } = await supabase.from('customers').delete().eq('id', id);
+
+  return { error };
+}
