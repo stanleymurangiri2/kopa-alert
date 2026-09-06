@@ -21,7 +21,7 @@ export default async function BusinessPage({
   const { data: business, error } = await supabase
     .from("businesses")
     .select(
-      "id, business_code, business_name, email, phone, status"
+      "id, business_code, business_name, email, phone, status, subscription_tier, subscription_status, sms_balance, created_at"
     )
     .eq("id", id)
     .single();
@@ -75,6 +75,34 @@ export default async function BusinessPage({
               {business.status}
             </span>
           </div>
+
+          <Info
+            label="Subscription Tier"
+            value={business.subscription_tier}
+          />
+
+          <Info
+            label="Subscription Status"
+            value={business.subscription_status}
+          />
+
+          <Info
+            label="SMS Balance"
+            value={
+              business.sms_balance !== null
+                ? business.sms_balance.toLocaleString()
+                : null
+            }
+          />
+
+          <Info
+            label="Registered On"
+            value={
+              business.created_at
+                ? new Date(business.created_at).toLocaleString()
+                : null
+            }
+          />
         </div>
 
         <div className="mt-10">
