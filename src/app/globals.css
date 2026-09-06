@@ -125,6 +125,16 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  button:not(:disabled) {
+    @apply transition-transform duration-100 active:scale-[0.97];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled):active {
+    transform: none;
+  }
 }
 
 @keyframes toast-slide-in {
