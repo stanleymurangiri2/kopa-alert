@@ -8,7 +8,15 @@ type UserProfile = {
   name: string;
   email: string;
   role: string;
+  created_at: string | null;
+  businesses: { business_name: string } | { business_name: string }[] | null;
 };
+
+function businessName(profile: UserProfile) {
+  const rel = profile.businesses;
+  const b = Array.isArray(rel) ? rel[0] : rel;
+  return b?.business_name ?? null;
+}
 
 export default function ProfilePage() {
   const supabase = createClient();
@@ -16,12 +24,15 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [loading, setLoading] = useState(true);
 
   const [saving, setSaving] = useState(false);
 
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
 
   useEffect(() => {
     loadProfile();
@@ -40,16 +51,16 @@ export default function ProfilePage() {
 
       const { data } = await supabase
         .from('users')
-        .select('id, name, email, role')
+        .select('id, name, email, role, created_at, businesses(business_name)')
         .eq('id', user.id)
         .single();
 
       if (data) {
-        setProfile(data);
+        setProfile(data as unknown as UserProfile);
       }
     } catch (error) {
       console.error(error);
-      setMessage('Failed to load profile.');
+      setMessage({ type: 'error', text: 'Failed to load profile.' });
     } finally {
       setLoading(false);
     }
@@ -60,8 +71,20 @@ export default function ProfilePage() {
 
     if (!profile) return;
 
+    if (password.trim() !== '') {
+      if (password.length < 8) {
+        setMessage({ type: 'error', text: 'New password must be at least 8 characters.' });
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+        return;
+      }
+    }
+
     setSaving(true);
-    setMessage('');
+    setMessage(null);
 
     try {
       const { error } = await supabase
@@ -72,7 +95,7 @@ export default function ProfilePage() {
         .eq('id', profile.id);
 
       if (error) {
-        setMessage(error.message);
+        setMessage({ type: 'error', text: error.message });
         setSaving(false);
         return;
       }
@@ -84,18 +107,19 @@ export default function ProfilePage() {
           });
 
         if (passwordError) {
-          setMessage(passwordError.message);
+          setMessage({ type: 'error', text: passwordError.message });
           setSaving(false);
           return;
         }
 
         setPassword('');
+        setConfirmPassword('');
       }
 
-      setMessage('Profile updated successfully.');
+      setMessage({ type: 'success', text: 'Profile updated successfully.' });
     } catch (error) {
       console.error(error);
-      setMessage('Something went wrong.');
+      setMessage({ type: 'error', text: 'Something went wrong.' });
     } finally {
       setSaving(false);
     }
@@ -131,8 +155,14 @@ export default function ProfilePage() {
       </div>
 
       {message && (
-        <div className="mb-6 rounded-md border border-border bg-muted p-3 text-sm text-foreground">
-          {message}
+        <div
+          className={`mb-6 rounded-md border p-3 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
         </div>
       )}
 
@@ -173,33 +203,79 @@ export default function ProfilePage() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground">
-            Role
-          </label>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Role
+            </label>
 
-          <input
-            type="text"
-            value={profile.role}
-            readOnly
-            className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 capitalize"
-          />
+            <input
+              type="text"
+              value={profile.role.replace('_', ' ')}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2 capitalize"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Business
+            </label>
+
+            <input
+              type="text"
+              value={businessName(profile) ?? '—'}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-foreground">
-            New Password
-          </label>
+        {profile.created_at && (
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Member Since
+            </label>
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
-            placeholder="Leave blank to keep current password"
-            className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-          />
+            <input
+              type="text"
+              value={new Date(profile.created_at).toLocaleDateString()}
+              readOnly
+              className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
+            />
+          </div>
+        )}
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              New Password
+            </label>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              placeholder="Leave blank to keep current password"
+              className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground">
+              Confirm New Password
+            </label>
+
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
+            />
+          </div>
         </div>
 
         <button
