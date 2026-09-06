@@ -24,6 +24,8 @@ type Notification = {
 
 type FilterOption = 'all' | 'pending' | 'sent' | 'failed' | 'permanently_failed';
 
+const PAGE_SIZE = 15;
+
 function StatusBadge({ status, attempts }: { status: string; attempts: number }) {
   if (status === 'sent') {
     return (
@@ -64,6 +66,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterOption>('all');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     loadNotifications();
@@ -72,6 +75,24 @@ export default function NotificationsPage() {
   async function loadNotifications() {
     try {
       const supabase = createClient();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('business_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.business_id) {
+        return;
+      }
 
       const { data, error } = await supabase
         .from('notification_queue')
@@ -87,7 +108,9 @@ export default function NotificationsPage() {
           created_at,
           customers ( full_name )
         `)
-        .order('created_at', { ascending: false });
+        .eq('business_id', profile.business_id)
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) {
         console.error(error);
@@ -111,6 +134,12 @@ export default function NotificationsPage() {
   const permanentlyFailedCount = notifications.filter(
     (n) => n.status === 'failed' && n.attempts >= MAX_ATTEMPTS
   ).length;
+
+  const totalPages = Math.max(1, Math.ceil(filteredNotifications.length / PAGE_SIZE));
+  const paginatedNotifications = filteredNotifications.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   if (loading) {
     return <div className="p-6 text-muted-foreground">Loading notifications...</div>;
@@ -159,7 +188,10 @@ export default function NotificationsPage() {
         ).map((opt) => (
           <button
             key={opt.value}
-            onClick={() => setFilter(opt.value)}
+            onClick={() => {
+              setFilter(opt.value);
+              setPage(1);
+            }}
             className={`rounded-md px-3 py-1.5 text-sm font-medium ${
               filter === opt.value
                 ? 'bg-primary text-primary-foreground'
@@ -194,7 +226,7 @@ export default function NotificationsPage() {
           </thead>
 
           <tbody>
-            {filteredNotifications.length === 0 && (
+            {paginatedNotifications.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   No notifications found.
@@ -202,7 +234,7 @@ export default function NotificationsPage() {
               </tr>
             )}
 
-            {filteredNotifications.map((notification, i) => (
+            {paginatedNotifications.map((notification, i) => (
               <tr
                 key={notification.id}
                 className={`border-t border-border transition-colors hover:bg-accent ${
@@ -245,6 +277,28 @@ export default function NotificationsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <button
+          disabled={page === 1}
+          onClick={() => setPage((p) => p - 1)}
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <span className="text-muted-foreground">
+          Page {page} of {totalPages}
+        </span>
+
+        <button
+          disabled={page === totalPages}
+          onClick={() => setPage((p) => p + 1)}
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
