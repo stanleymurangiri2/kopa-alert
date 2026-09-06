@@ -33,6 +33,19 @@ export interface DebtReportResult {
   message?: string;
 }
 
+function deriveStatus(balance: number, amountPaid: number, dueDate: string): string {
+  if (balance <= 0) return "fully_paid";
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  if (due.getTime() < today.getTime()) return "overdue";
+  if (amountPaid > 0) return "partially_paid";
+  return "pending";
+}
+
 
 export async function getDebtReports(
   businessId: string,
@@ -79,9 +92,11 @@ export async function getDebtReports(
 
 
     if (endDate) {
-      query = query.lte(
+      const endOfDay = new Date(`${endDate}T00:00:00`);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query = query.lt(
         "created_at",
-        endDate
+        endOfDay.toISOString()
       );
     }
 
@@ -105,27 +120,29 @@ export async function getDebtReports(
     // -------------------------------------------------------
 
     const formattedDebts: DebtReportItem[] =
-      (debts ?? []).map((debt: any) => ({
-        id: debt.id,
-        customer_id: debt.customer_id,
-        customer_name:
-          debt.customers?.full_name ??
-          "Unknown",
-        phone:
-          debt.customers?.phone ??
-          "",
-        amount: Number(debt.amount),
-        amount_paid: Number(
-          debt.amount_paid
-        ),
-        balance:
-          Number(debt.amount) -
-          Number(debt.amount_paid),
-        status: debt.status,
-        due_date: debt.due_date,
-        description: debt.description,
-        created_at: debt.created_at,
-      }));
+      (debts ?? []).map((debt: any) => {
+        const amount = Number(debt.amount);
+        const amountPaid = Number(debt.amount_paid);
+        const balance = amount - amountPaid;
+
+        return {
+          id: debt.id,
+          customer_id: debt.customer_id,
+          customer_name:
+            debt.customers?.full_name ??
+            "Unknown",
+          phone:
+            debt.customers?.phone ??
+            "",
+          amount,
+          amount_paid: amountPaid,
+          balance,
+          status: deriveStatus(balance, amountPaid, debt.due_date),
+          due_date: debt.due_date,
+          description: debt.description,
+          created_at: debt.created_at,
+        };
+      });
 
 
     // -------------------------------------------------------

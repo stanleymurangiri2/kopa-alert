@@ -31,6 +31,18 @@ export interface CustomerReportResult {
   message?: string;
 }
 
+function isOverdue(amount: number, amountPaid: number, dueDate: string): boolean {
+  const balance = amount - amountPaid;
+  if (balance <= 0) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  return due.getTime() < today.getTime();
+}
+
 export async function getCustomerReports(
   businessId: string,
   startDate?: string,
@@ -61,9 +73,11 @@ export async function getCustomerReports(
     }
 
     if (endDate) {
-      customerQuery = customerQuery.lte(
+      const endOfDay = new Date(`${endDate}T00:00:00`);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      customerQuery = customerQuery.lt(
         "created_at",
-        endDate
+        endOfDay.toISOString()
       );
     }
 
@@ -92,7 +106,8 @@ export async function getCustomerReports(
         customer_id,
         amount,
         amount_paid,
-        status
+        status,
+        due_date
       `)
       .eq("business_id", businessId);
 
@@ -143,7 +158,7 @@ export async function getCustomerReports(
       const overdueDebts =
         customerDebts.filter(
           (debt) =>
-            debt.status === "overdue"
+            isOverdue(Number(debt.amount), Number(debt.amount_paid), debt.due_date)
         ).length;
 
       if (totalDebts > 0) {

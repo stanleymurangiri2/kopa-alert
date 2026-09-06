@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getCustomerReports } from "@/lib/reports/customers";
-import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 
 export async function GET(request: NextRequest) {
@@ -10,32 +11,18 @@ export async function GET(request: NextRequest) {
     // Authenticate user
     // -------------------------------------------------------
 
-    const authHeader = request.headers.get("authorization");
-
-    if (!authHeader) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        {
-          status: 401,
-        }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
+    const supabase = await createClient();
 
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid authentication token.",
+          message: "Unauthorized.",
         },
         {
           status: 401,
@@ -48,13 +35,13 @@ export async function GET(request: NextRequest) {
     // -------------------------------------------------------
 
     const { data: profile, error: profileError } =
-      await supabase
+      await supabaseAdmin
         .from("users")
         .select("business_id, role")
         .eq("id", user.id)
         .single();
 
-    if (profileError || !profile) {
+    if (profileError || !profile?.business_id) {
       return NextResponse.json(
         {
           success: false,
@@ -70,13 +57,7 @@ export async function GET(request: NextRequest) {
     // Authorization
     // -------------------------------------------------------
 
-    const allowedRoles = [
-      "super_admin",
-      "business_admin",
-      
-    ];
-
-    if (!allowedRoles.includes(profile.role)) {
+    if (profile.role !== "business_admin" && profile.role !== "super_admin") {
       return NextResponse.json(
         {
           success: false,

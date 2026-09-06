@@ -6,10 +6,8 @@ export interface SmsReportItem {
   customer_name: string | null;
   phone: string;
   message: string;
+  channel: string;
   status: string;
-  provider: string | null;
-  provider_message_id: string | null;
-  cost: number;
   sent_at: string | null;
   created_at: string;
 }
@@ -17,19 +15,19 @@ export interface SmsReportItem {
 export interface SmsDailyTrend {
   date: string;
   total: number;
-  delivered: number;
+  sent: number;
   failed: number;
   pending: number;
+  cancelled: number;
 }
 
 export interface SmsReportSummary {
   totalMessages: number;
-  delivered: number;
+  sent: number;
   failed: number;
   pending: number;
-  queued: number;
+  cancelled: number;
   deliveryRate: number;
-  totalCost: number;
 }
 
 export interface SmsReportResult {
@@ -38,6 +36,13 @@ export interface SmsReportResult {
   trends?: SmsDailyTrend[];
   messages?: SmsReportItem[];
   message?: string;
+}
+
+function dateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export async function getSmsReports(
@@ -50,12 +55,10 @@ export async function getSmsReports(
       .from("notification_queue")
       .select(`
         id,
-        phone,
-        message,
+        recipient_phone,
+        message_body,
+        channel,
         status,
-        provider,
-        provider_message_id,
-        cost,
         sent_at,
         created_at,
         customer_id,
@@ -76,9 +79,11 @@ export async function getSmsReports(
     }
 
     if (endDate) {
-      query = query.lte(
+      const endOfDay = new Date(`${endDate}T00:00:00`);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query = query.lt(
         "created_at",
-        endDate
+        endOfDay.toISOString()
       );
     }
 
@@ -96,11 +101,10 @@ export async function getSmsReports(
 
     const messages: SmsReportItem[] = [];
 
-    let delivered = 0;
+    let sent = 0;
     let failed = 0;
     let pending = 0;
-    let queued = 0;
-    let totalCost = 0;
+    let cancelled = 0;
 
     const trendMap = new Map<
       string,
@@ -114,14 +118,9 @@ export async function getSmsReports(
         ? row.customers[0]
         : row.customers;
 
-      const cost = Number(row.cost ?? 0);
-
-      totalCost += cost;
-
       switch (row.status) {
         case "sent":
-        case "delivered":
-          delivered++;
+          sent++;
           break;
 
         case "failed":
@@ -132,32 +131,28 @@ export async function getSmsReports(
           pending++;
           break;
 
-        case "queued":
-          queued++;
+        case "cancelled":
+          cancelled++;
           break;
       }
 
-      const day = new Date(
-        row.created_at
-      )
-        .toISOString()
-        .split("T")[0];
+      const day = dateKey(new Date(row.created_at));
 
       const trend =
         trendMap.get(day) ?? {
           date: day,
           total: 0,
-          delivered: 0,
+          sent: 0,
           failed: 0,
           pending: 0,
+          cancelled: 0,
         };
 
       trend.total++;
 
       switch (row.status) {
         case "sent":
-        case "delivered":
-          trend.delivered++;
+          trend.sent++;
           break;
 
         case "failed":
@@ -165,8 +160,11 @@ export async function getSmsReports(
           break;
 
         case "pending":
-        case "queued":
           trend.pending++;
+          break;
+
+        case "cancelled":
+          trend.cancelled++;
           break;
       }
 
@@ -176,13 +174,10 @@ export async function getSmsReports(
         id: row.id,
         customer_name:
           customer?.full_name ?? null,
-        phone: row.phone,
-        message: row.message,
+        phone: row.recipient_phone,
+        message: row.message_body,
+        channel: row.channel,
         status: row.status,
-        provider: row.provider,
-        provider_message_id:
-          row.provider_message_id,
-        cost,
         sent_at: row.sent_at,
         created_at: row.created_at,
       });
@@ -192,12 +187,12 @@ export async function getSmsReports(
       messages.length;
 
     const deliveryRate =
-      totalMessages === 0
+      sent + failed === 0
         ? 0
         : Number(
             (
-              (delivered /
-                totalMessages) *
+              (sent /
+                (sent + failed)) *
               100
             ).toFixed(2)
           );
@@ -206,12 +201,11 @@ export async function getSmsReports(
       success: true,
       summary: {
         totalMessages,
-        delivered,
+        sent,
         failed,
         pending,
-        queued,
+        cancelled,
         deliveryRate,
-        totalCost,
       },
       trends: [...trendMap.values()].sort(
         (a, b) =>

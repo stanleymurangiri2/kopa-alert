@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -7,10 +7,8 @@ interface SmsReport {
   customer_name: string | null;
   phone: string;
   message: string;
+  channel: string;
   status: string;
-  provider: string |null;
-  provider_message_id: string | null;
-  cost: number;
   sent_at: string | null;
   created_at: string;
 }
@@ -18,19 +16,19 @@ interface SmsReport {
 interface SmsTrend {
   date: string;
   total: number;
-  delivered: number;
+  sent: number;
   failed: number;
   pending: number;
+  cancelled: number;
 }
 
 interface SmsSummary {
   totalMessages: number;
-  delivered: number;
+  sent: number;
   failed: number;
   pending: number;
-  queued: number;
+  cancelled: number;
   deliveryRate: number;
-  totalCost: number;
 }
 
 interface ApiResponse {
@@ -38,6 +36,7 @@ interface ApiResponse {
   summary: SmsSummary;
   trends: SmsTrend[];
   messages: SmsReport[];
+  message?: string;
 }
 
 const PAGE_SIZE = 10;
@@ -67,8 +66,12 @@ export default function SmsReportsPage() {
 
   const [page, setPage] = useState(1);
 
+  const [error, setError] = useState("");
+
   async function loadReport() {
     setLoading(true);
+    setError("");
+    setPage(1);
 
     try {
       const params = new URLSearchParams();
@@ -92,7 +95,11 @@ export default function SmsReportsPage() {
         setSummary(data.summary);
         setMessages(data.messages);
         setTrends(data.trends);
+      } else {
+        setError(data.message || "Failed to load SMS reports.");
       }
+    } catch {
+      setError("Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -142,7 +149,6 @@ export default function SmsReportsPage() {
     status: string
   ) {
     switch (status) {
-      case "delivered":
       case "sent":
         return "bg-success/10 text-success";
 
@@ -152,8 +158,8 @@ export default function SmsReportsPage() {
       case "pending":
         return "bg-warning/10 text-warning";
 
-      case "queued":
-        return "bg-info/10 text-info";
+      case "cancelled":
+        return "bg-muted text-muted-foreground";
 
       default:
         return "bg-muted text-muted-foreground";
@@ -195,9 +201,15 @@ export default function SmsReportsPage() {
 
       </div>
 
+      {error && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {summary && (
 
-        <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
 
           <SummaryCard
             title="Messages"
@@ -207,9 +219,9 @@ export default function SmsReportsPage() {
           />
 
           <SummaryCard
-            title="Delivered"
+            title="Sent"
             value={
-              summary.delivered
+              summary.sent
             }
           />
 
@@ -228,20 +240,15 @@ export default function SmsReportsPage() {
           />
 
           <SummaryCard
-            title="Queued"
+            title="Cancelled"
             value={
-              summary.queued
+              summary.cancelled
             }
           />
 
           <SummaryCard
             title="Delivery Rate"
             value={`${summary.deliveryRate}%`}
-          />
-
-          <SummaryCard
-            title="SMS Cost"
-            value={`KES ${summary.totalCost.toLocaleString()}`}
           />
 
         </div>
@@ -278,10 +285,6 @@ export default function SmsReportsPage() {
               All Status
             </option>
 
-            <option value="delivered">
-              Delivered
-            </option>
-
             <option value="sent">
               Sent
             </option>
@@ -294,8 +297,8 @@ export default function SmsReportsPage() {
               Pending
             </option>
 
-            <option value="queued">
-              Queued
+            <option value="cancelled">
+              Cancelled
             </option>
 
           </select>
@@ -341,48 +344,58 @@ export default function SmsReportsPage() {
 
         <div className="space-y-3">
 
-          {trends.map((trend) => (
+          {trends.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No data yet.</p>
+          ) : (
+            trends.map((trend) => (
 
-            <div
-              key={trend.date}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-border p-3"
-            >
+              <div
+                key={trend.date}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-border p-3"
+              >
 
-              <span className="text-foreground">
-                {trend.date}
-              </span>
-
-              <div className="flex flex-wrap gap-4 text-sm">
-
-                <span className="text-muted-foreground">
-                  Total:
-                  {" "}
-                  {trend.total}
+                <span className="text-foreground">
+                  {trend.date}
                 </span>
 
-                <span className="text-success">
-                  Delivered:
-                  {" "}
-                  {trend.delivered}
-                </span>
+                <div className="flex flex-wrap gap-4 text-sm">
 
-                <span className="text-destructive">
-                  Failed:
-                  {" "}
-                  {trend.failed}
-                </span>
+                  <span className="text-muted-foreground">
+                    Total:
+                    {" "}
+                    {trend.total}
+                  </span>
 
-                <span className="text-warning">
-                  Pending:
-                  {" "}
-                  {trend.pending}
-                </span>
+                  <span className="text-success">
+                    Sent:
+                    {" "}
+                    {trend.sent}
+                  </span>
+
+                  <span className="text-destructive">
+                    Failed:
+                    {" "}
+                    {trend.failed}
+                  </span>
+
+                  <span className="text-warning">
+                    Pending:
+                    {" "}
+                    {trend.pending}
+                  </span>
+
+                  <span className="text-muted-foreground">
+                    Cancelled:
+                    {" "}
+                    {trend.cancelled}
+                  </span>
+
+                </div>
 
               </div>
 
-            </div>
-
-          ))}
+            ))
+          )}
 
         </div>
 
@@ -405,15 +418,11 @@ export default function SmsReportsPage() {
               </th>
 
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Channel
+              </th>
+
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
-              </th>
-
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
-                Provider
-              </th>
-
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
-                Cost
               </th>
 
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -432,7 +441,7 @@ export default function SmsReportsPage() {
               <tr>
 
                 <td
-                  colSpan={6}
+                  colSpan={5}
                   className="py-8 text-center text-muted-foreground"
                 >
                   No SMS records found.
@@ -463,6 +472,10 @@ export default function SmsReportsPage() {
                       {sms.phone}
                     </td>
 
+                    <td className="px-4 py-3 uppercase text-muted-foreground">
+                      {sms.channel}
+                    </td>
+
                     <td className="px-4 py-3">
 
                       <span
@@ -473,16 +486,6 @@ export default function SmsReportsPage() {
                         {sms.status}
                       </span>
 
-                    </td>
-
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {sms.provider ??
-                        "-"}
-                    </td>
-
-                    <td className="px-4 py-3 font-mono text-foreground">
-                      KES{" "}
-                      {sms.cost.toLocaleString()}
                     </td>
 
                     <td className="px-4 py-3 text-muted-foreground">
@@ -566,4 +569,3 @@ function SummaryCard({
     </div>
   );
 }
-

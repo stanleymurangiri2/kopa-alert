@@ -1,29 +1,61 @@
-"use client";
-
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ReportsHubPage() {
+export default async function ReportsHubPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = user
+    ? await supabase
+        .from("users")
+        .select("business_id")
+        .eq("id", user.id)
+        .single()
+    : { data: null };
+
+  const businessId = profile?.business_id ?? null;
+
+  const [{ count: debtCount }, { count: customerCount }, { count: smsCount }] = businessId
+    ? await Promise.all([
+        supabase
+          .from("debts")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId),
+        supabase
+          .from("customers")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId),
+        supabase
+          .from("notification_queue")
+          .select("id", { count: "exact", head: true })
+          .eq("business_id", businessId),
+      ])
+    : [{ count: null }, { count: null }, { count: null }];
+
   const reportCards = [
     {
       title: "Debt Reports",
       description: "Analyze outstanding balances, repayment statuses, and overdue trends.",
       href: "/reports/debts",
       icon: "📊",
-      badge: "Financial"
+      stat: debtCount !== null ? `${debtCount} debt${debtCount === 1 ? "" : "s"}` : undefined,
     },
     {
       title: "Customer Reports",
       description: "View customer debt histories, credit profiles, and performance metrics.",
       href: "/reports/customers",
       icon: "👥",
-      badge: "Clients"
+      stat: customerCount !== null ? `${customerCount} customer${customerCount === 1 ? "" : "s"}` : undefined,
     },
     {
       title: "SMS & Notification Reports",
-      description: "Track alert delivery rates, carrier logs, and messaging costs.",
+      description: "Track alert delivery rates and messaging history.",
       href: "/reports/sms",
       icon: "📱",
-      badge: "Messaging"
+      stat: smsCount !== null ? `${smsCount} message${smsCount === 1 ? "" : "s"}` : undefined,
     }
   ];
 
@@ -44,9 +76,11 @@ export default function ReportsHubPage() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-3xl">{card.icon}</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
-                  {card.badge}
-                </span>
+                {card.stat && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+                    {card.stat}
+                  </span>
+                )}
               </div>
               <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition">
                 {card.title}

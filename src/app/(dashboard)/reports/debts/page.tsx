@@ -49,8 +49,12 @@ export default function DebtReportsPage() {
 
   const [page, setPage] = useState(1);
 
+  const [error, setError] = useState("");
+
   async function loadReport() {
     setLoading(true);
+    setError("");
+    setPage(1);
 
     try {
       const params = new URLSearchParams();
@@ -72,7 +76,11 @@ export default function DebtReportsPage() {
       if (result.success) {
         setDebts(result.debts);
         setSummary(result.summary);
+      } else {
+        setError(result.message || "Failed to load debt reports.");
       }
+    } catch {
+      setError("Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -164,6 +172,12 @@ export default function DebtReportsPage() {
 
       </div>
 
+      {error && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {summary && (
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -186,6 +200,38 @@ export default function DebtReportsPage() {
           <Card
             title="Outstanding"
             value={`KES ${summary.outstandingBalance.toLocaleString()}`}
+          />
+
+        </div>
+
+      )}
+
+      {summary && (
+
+        <div className="grid gap-4 md:grid-cols-4">
+
+          <Card
+            title="Pending"
+            value={summary.pendingCount}
+            tone="warning"
+          />
+
+          <Card
+            title="Partially Paid"
+            value={summary.partiallyPaidCount}
+            tone="info"
+          />
+
+          <Card
+            title="Overdue"
+            value={summary.overdueCount}
+            tone="destructive"
+          />
+
+          <Card
+            title="Fully Paid"
+            value={summary.fullyPaidCount}
+            tone="success"
           />
 
         </div>
@@ -417,17 +463,26 @@ export default function DebtReportsPage() {
 function Card({
   title,
   value,
+  tone,
 }: {
   title: string;
   value: string | number;
+  tone?: "warning" | "info" | "destructive" | "success";
 }) {
+  const toneClasses: Record<string, string> = {
+    warning: "text-warning",
+    info: "text-info",
+    destructive: "text-destructive",
+    success: "text-success",
+  };
+
   return (
     <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
       <p className="text-sm text-muted-foreground">
         {title}
       </p>
 
-      <h2 className="mt-2 font-mono text-2xl font-bold text-foreground">
+      <h2 className={`mt-2 font-mono text-2xl font-bold ${tone ? toneClasses[tone] : "text-foreground"}`}>
         {value}
       </h2>
     </div>

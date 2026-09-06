@@ -48,8 +48,12 @@ export default function CustomerReportsPage() {
 
   const [page, setPage] = useState(1);
 
+  const [error, setError] = useState("");
+
   async function loadReport() {
     setLoading(true);
+    setError("");
+    setPage(1);
 
     try {
       const params = new URLSearchParams();
@@ -72,9 +76,12 @@ export default function CustomerReportsPage() {
       if (result.success) {
         setCustomers(result.customers);
         setSummary(result.summary);
+      } else {
+        setError(result.message || "Failed to load customer reports.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -146,6 +153,12 @@ export default function CustomerReportsPage() {
         </button>
 
       </div>
+
+      {error && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {summary && (
         <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-7">
