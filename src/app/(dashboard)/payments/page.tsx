@@ -332,7 +332,7 @@ export default function PaymentReportsPage() {
 
             <tr>
 
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+              <th className="sticky left-0 z-20 bg-primary px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Customer
               </th>
 
@@ -377,10 +377,10 @@ export default function PaymentReportsPage() {
 
                 <tr
                   key={payment.id}
-                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
+                  className={`group border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                 >
 
-                  <td className="px-4 py-3">
+                  <td className={`sticky left-0 z-10 px-4 py-3 group-hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
 
                     <div className="text-[15px] font-semibold text-foreground">
                       {payment.customer_name}

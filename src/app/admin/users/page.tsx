@@ -152,7 +152,7 @@ export default function UsersPage() {
         <table className="w-full">
           <thead className="bg-primary">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Name</th>
+              <th className="sticky left-0 z-20 bg-primary px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Name</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Email</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Role</th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Business</th>
@@ -166,9 +166,11 @@ export default function UsersPage() {
               paginatedUsers.map((user, i) => (
                 <tr
                   key={user.id}
-                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
+                  className={`group border-t border-border hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
                 >
-                  <td className="px-6 py-4 text-[15px] font-semibold text-foreground">
+                  <td
+                    className={`sticky left-0 z-10 px-6 py-4 text-[15px] font-semibold text-foreground group-hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
+                  >
                     {user.name || "-"}
                   </td>
 

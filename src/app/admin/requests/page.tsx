@@ -300,7 +300,7 @@ export default function AdminRequestsPage() {
         <table className="min-w-full text-sm">
           <thead className="bg-primary">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+              <th className="sticky left-0 z-20 bg-primary px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Business
               </th>
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -343,11 +343,15 @@ export default function AdminRequestsPage() {
                 return (
                   <tr
                     key={request.id}
-                    className={`border-t border-border transition-colors hover:bg-accent ${
+                    className={`group border-t border-border transition-colors hover:bg-accent ${
                       i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
                     }`}
                   >
-                    <td className="px-4 py-3 text-[15px] font-semibold text-foreground">
+                    <td
+                      className={`sticky left-0 z-10 px-4 py-3 text-[15px] font-semibold text-foreground group-hover:bg-accent ${
+                        i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
+                      }`}
+                    >
                       {request.business_name}
                     </td>
 

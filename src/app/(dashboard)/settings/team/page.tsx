@@ -288,7 +288,7 @@ export default function TeamPage() {
         <table className="min-w-full">
           <thead className="bg-primary">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+              <th className="sticky left-0 z-20 bg-primary px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Name
               </th>
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -320,11 +320,15 @@ export default function TeamPage() {
               members.map((member, i) => (
                 <tr
                   key={member.id}
-                  className={`border-t border-border transition-colors hover:bg-accent ${
+                  className={`group border-t border-border transition-colors hover:bg-accent ${
                     i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
                   }`}
                 >
-                  <td className="px-4 py-3 text-[15px] font-semibold text-foreground">
+                  <td
+                    className={`sticky left-0 z-10 px-4 py-3 text-[15px] font-semibold text-foreground group-hover:bg-accent ${
+                      i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
+                    }`}
+                  >
                     {member.name}
                     {member.id === currentUserId && (
                       <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">

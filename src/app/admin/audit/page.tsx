@@ -217,7 +217,7 @@ export default function AuditLogsPage() {
           <table className="w-full">
             <thead className="bg-primary">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                <th className="sticky left-0 z-20 bg-primary px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                   Date
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -239,9 +239,11 @@ export default function AuditLogsPage() {
               {paginatedLogs.map((log, i) => (
                 <tr
                   key={log.id}
-                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
+                  className={`group border-t border-border hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                  <td
+                    className={`sticky left-0 z-10 px-6 py-4 whitespace-nowrap text-sm text-muted-foreground group-hover:bg-accent ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
+                  >
                     {new Date(log.created_at).toLocaleString()}
                   </td>
 

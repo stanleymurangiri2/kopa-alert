@@ -142,7 +142,7 @@ export default async function AdminDashboardPage() {
 
               <tr>
 
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                <th className="sticky left-0 z-20 bg-primary px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                   Business
                 </th>
 
@@ -178,10 +178,12 @@ export default async function AdminDashboardPage() {
 
                   <tr
                     key={request.id}
-                    className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
+                    className={`group border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                   >
 
-                    <td className="px-6 py-4 text-[15px] font-semibold text-foreground">
+                    <td
+                      className={`sticky left-0 z-10 px-6 py-4 text-[15px] font-semibold text-foreground group-hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
+                    >
                       {request.business_name}
                     </td>
 
@@ -261,7 +263,7 @@ export default async function AdminDashboardPage() {
 
               <tr>
 
-                <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                <th className="sticky left-0 z-20 bg-primary px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                   Business
                 </th>
 
@@ -293,10 +295,12 @@ export default async function AdminDashboardPage() {
 
                   <tr
                     key={request.id}
-                    className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
+                    className={`group border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                   >
 
-                    <td className="px-6 py-4 text-[15px] font-semibold text-foreground">
+                    <td
+                      className={`sticky left-0 z-10 px-6 py-4 text-[15px] font-semibold text-foreground group-hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
+                    >
                       {request.business_name}
                     </td>
 

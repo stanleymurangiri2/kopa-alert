@@ -91,7 +91,7 @@ export default function AlertsPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-primary text-primary-foreground font-bold uppercase tracking-wide text-xs">
               <tr>
-                <th className="px-6 py-4">Customer</th>
+                <th className="sticky left-0 z-20 bg-primary px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Phone</th>
                 <th className="px-6 py-4">Message</th>
                 <th className="px-6 py-4">Channel</th>
@@ -101,8 +101,8 @@ export default function AlertsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {alerts.map((item, i) => (
-                <tr key={item.id} className={`hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
-                  <td className="px-6 py-4 text-[15px] font-semibold text-foreground">{item.customers?.full_name || "N/A"}</td>
+                <tr key={item.id} className={`group hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
+                  <td className={`sticky left-0 z-10 px-6 py-4 text-[15px] font-semibold text-foreground group-hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>{item.customers?.full_name || "N/A"}</td>
                   <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{item.recipient_phone}</td>
                   <td className="px-6 py-4 max-w-md whitespace-normal break-words text-muted-foreground">{item.message_body}</td>
                   <td className="px-6 py-4 uppercase text-xs font-semibold tracking-wider text-muted-foreground">{item.channel}</td>

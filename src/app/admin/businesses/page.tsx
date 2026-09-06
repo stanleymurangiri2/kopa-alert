@@ -159,7 +159,7 @@ export default function BusinessesPage() {
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Code
               </th>
-              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+              <th className="sticky left-0 z-20 bg-primary px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Business
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -188,7 +188,7 @@ export default function BusinessesPage() {
               paginatedBusinesses.map((business, i) => (
                 <tr
                   key={business.id}
-                  className={`border-t border-border hover:bg-accent ${
+                  className={`group border-t border-border hover:bg-accent ${
                     i % 2 === 1 ? "bg-table-stripe" : "bg-card"
                   }`}
                 >
@@ -196,7 +196,11 @@ export default function BusinessesPage() {
                     {business.business_code}
                   </td>
 
-                  <td className="px-6 py-4 text-[15px] font-semibold text-foreground">
+                  <td
+                    className={`sticky left-0 z-10 px-6 py-4 text-[15px] font-semibold text-foreground group-hover:bg-accent ${
+                      i % 2 === 1 ? "bg-table-stripe" : "bg-card"
+                    }`}
+                  >
                     {business.business_name}
                   </td>
 
