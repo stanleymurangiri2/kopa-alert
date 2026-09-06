@@ -63,6 +63,7 @@ export async function POST(
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
+    let emailSent = false;
     try {
       const { sendEmail } = await import("@/lib/notifications/resend");
       const { rejectionEmail } = await import("@/lib/notifications/email-templates");
@@ -78,6 +79,8 @@ export async function POST(
           support_phone: SUPPORT_PHONE,
         }),
       });
+
+      emailSent = true;
     } catch (emailErr) {
       console.error("Rejection email failed:", emailErr);
     }
@@ -88,7 +91,7 @@ export async function POST(
       action: "REJECT_BUSINESS",
       target_type: "business_request",
       description: `Rejected ${requestData.business_name}`,
-      details: { request_id: id, reason },
+      details: { request_id: id, reason, email_sent: emailSent },
     });
 
     if (auditError) {
@@ -98,6 +101,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: "Business request rejected successfully.",
+      emailSent,
     });
   } catch (error) {
     console.error(error);

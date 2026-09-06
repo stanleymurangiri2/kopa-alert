@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
       message: "Business approved successfully.",
       activationToken,
       business: approvedBusiness,
+      emailSent,
     });
   } catch (error) {
     console.error("Approve business error:", error);

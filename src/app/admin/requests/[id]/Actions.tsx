@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useState } from "react";
 
 type PendingAction = "approve" | "reject";
@@ -10,12 +10,16 @@ export default function Actions({
 }: {
   requestId: string;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [completed, setCompleted] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
+    null
+  );
 
   async function approveBusiness() {
     setLoading(true);
+    setMessage(null);
 
     try {
       const response = await fetch("/api/admin/approve", {
@@ -34,20 +38,26 @@ export default function Actions({
         throw new Error(result.error ?? "Approval failed.");
       }
 
-      alert(
-        "Business approved successfully. The owner can now use the KopaAlert account."
-      );
+      if (result.emailSent === false) {
+        setMessage({
+          type: "error",
+          text: "Business approved, but the approval email failed to send. The owner won't have their login details - refresh this page and use Resend Invitation, or share credentials manually.",
+        });
+      } else {
+        setMessage({
+          type: "success",
+          text: "Business approved successfully. The owner can now use the KopaAlert account.",
+        });
+      }
 
-      router.push("/admin/requests");
-      router.refresh();
+      setCompleted(true);
     } catch (error) {
       console.error("Approval error:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Approval failed. Please try again."
-      );
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Approval failed. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -55,6 +65,7 @@ export default function Actions({
 
   async function rejectBusiness() {
     setLoading(true);
+    setMessage(null);
 
     try {
       const response = await fetch(
@@ -73,18 +84,23 @@ export default function Actions({
         throw new Error(result.error ?? "Rejection failed.");
       }
 
-      alert("Registration rejected successfully.");
+      if (result.emailSent === false) {
+        setMessage({
+          type: "error",
+          text: "Registration rejected, but the notification email failed to send. The applicant won't be told automatically - consider contacting them directly.",
+        });
+      } else {
+        setMessage({ type: "success", text: "Registration rejected successfully." });
+      }
 
-      router.push("/admin/requests");
-      router.refresh();
+      setCompleted(true);
     } catch (error) {
       console.error("Rejection error:", error);
 
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Rejection failed. Please try again."
-      );
+      setMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Rejection failed. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -103,23 +119,41 @@ export default function Actions({
 
   return (
     <>
-      <div className="flex gap-4">
-        <button
-          onClick={() => setPendingAction("approve")}
-          disabled={loading}
-          className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+      {message && (
+        <div
+          className={`mb-4 rounded-md border p-3 text-sm ${
+            message.type === "success"
+              ? "border-success/30 bg-success/10 text-success"
+              : "border-destructive/30 bg-destructive/10 text-destructive"
+          }`}
         >
-          {loading ? "Processing..." : "Approve Business"}
-        </button>
+          {message.text}
+        </div>
+      )}
 
-        <button
-          onClick={() => setPendingAction("reject")}
-          disabled={loading}
-          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Reject Business
-        </button>
-      </div>
+      {completed ? (
+        <Link href="/admin/requests" className="text-sm text-primary hover:underline">
+          Back to Requests
+        </Link>
+      ) : (
+        <div className="flex gap-4">
+          <button
+            onClick={() => setPendingAction("approve")}
+            disabled={loading}
+            className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Processing..." : "Approve Business"}
+          </button>
+
+          <button
+            onClick={() => setPendingAction("reject")}
+            disabled={loading}
+            className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reject Business
+          </button>
+        </div>
+      )}
 
       {pendingAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
