@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
           business_name: registration.business_name,
           business_code: approvedBusiness.business_code,
           temporary_password: password,
-          login_url: "https://kopa-alert.vercel.app/login",
+          login_url: "https://kopaalert.shop/login",
           support_email: SUPPORT_EMAIL,
           support_phone: SUPPORT_PHONE,
         }),

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const redirectUrl = "https://kopa-alert.vercel.app/reset-password";
+    const redirectUrl = "https://kopaalert.shop/reset-password";
 
     const { data: userRow } = await supabase
       .from("users")

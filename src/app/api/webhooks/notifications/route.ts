@@ -112,7 +112,7 @@ export async function POST(request: Request) {
 
       if (resend) {
         await resend.emails.send({
-          from: "Notifications <notifications@yourdomain.com>",
+          from: "Notifications <notifications@kopaalert.shop>",
           to: [userEmail],
           subject: title,
           html: AlertEmailTemplate({

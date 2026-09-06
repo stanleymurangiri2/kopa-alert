@@ -59,7 +59,7 @@ const { data: authUser, error: authError } =
       business_id: business.id,
       role: "business_admin",
     },
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://kopaalert.shop"}/reset-password`,
   });
 
 if (authError || !authUser.user) {

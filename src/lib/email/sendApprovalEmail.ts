@@ -21,7 +21,7 @@ export async function sendApprovalEmail({
   }
 
   await resend.emails.send({
-    from: "KopaAlert <noreply@yourdomain.com>",
+    from: "KopaAlert <noreply@kopaalert.shop>",
     to: email,
     subject: "Your KopaAlert account has been approved",
     html: `
@@ -35,7 +35,7 @@ export async function sendApprovalEmail({
         <p>You can now access your account using the link below.</p>
 
         <p>
-          <a href="${process.env.NEXT_PUBLIC_SITE_URL}/login"
+          <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://kopaalert.shop"}/login"
              style="background:#2563eb;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;">
              Login to KopaAlert
           </a>
