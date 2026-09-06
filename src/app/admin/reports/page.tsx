@@ -15,6 +15,13 @@ const ROLE_STYLES: Record<string, string> = {
   employee: "bg-info",
 };
 
+const NOTIFICATION_STATUS_STYLES: Record<string, string> = {
+  sent: "bg-success",
+  pending: "bg-warning",
+  failed: "bg-destructive",
+  cancelled: "bg-muted-foreground",
+};
+
 function startOfDay(date: Date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -33,16 +40,33 @@ function parseDateKey(key: string) {
   return new Date(year, month - 1, day);
 }
 
+function isDebtOverdue(amount: number, amountPaid: number, dueDate: string): boolean {
+  const balance = amount - amountPaid;
+  if (balance <= 0) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+
+  return due.getTime() < today.getTime();
+}
+
 export default async function ReportsPage() {
   const supabase = await createClient();
 
-  const [requestsResult, businessesResult, usersResult] = await Promise.all([
-    supabase.from("business_requests").select("id, status, created_at"),
-    supabase.from("businesses").select("id, status, subscription_tier"),
-    supabase.from("users").select("id, role"),
-  ]);
+  const [requestsResult, businessesResult, usersResult, customersResult, debtsResult, notificationsResult] =
+    await Promise.all([
+      supabase.from("business_requests").select("id, status, created_at"),
+      supabase.from("businesses").select("id, status, subscription_tier"),
+      supabase.from("users").select("id, role"),
+      supabase.from("customers").select("id", { count: "exact", head: true }),
+      supabase.from("debts").select("amount, amount_paid, due_date"),
+      supabase.from("notification_queue").select("status"),
+    ]);
 
-  const error = requestsResult.error ?? businessesResult.error ?? usersResult.error;
+  const error =
+    requestsResult.error ?? businessesResult.error ?? usersResult.error ?? debtsResult.error;
 
   if (error) {
     return (
@@ -65,6 +89,32 @@ export default async function ReportsPage() {
   const requests = requestsResult.data ?? [];
   const businesses = businessesResult.data ?? [];
   const users = usersResult.data ?? [];
+  const debts = debtsResult.data ?? [];
+  const notifications = notificationsResult.data ?? [];
+  const totalCustomers = customersResult.count ?? 0;
+
+  let totalDebtValue = 0;
+  let totalCollected = 0;
+  let totalOutstanding = 0;
+  let overdueCount = 0;
+
+  for (const debt of debts) {
+    const amount = Number(debt.amount);
+    const amountPaid = Number(debt.amount_paid);
+    const balance = amount - amountPaid;
+
+    totalDebtValue += amount;
+    totalCollected += amountPaid;
+    if (balance > 0) totalOutstanding += balance;
+    if (isDebtOverdue(amount, amountPaid, debt.due_date)) overdueCount++;
+  }
+
+  const notificationsByStatus: Record<string, number> = {};
+  for (const notification of notifications) {
+    const status = notification.status ?? "unknown";
+    notificationsByStatus[status] = (notificationsByStatus[status] ?? 0) + 1;
+  }
+  const smsSent = notificationsByStatus.sent ?? 0;
 
   const totalRequests = requests.length;
   const pendingRequests = requests.filter((r) => r.status === "pending").length;
@@ -130,6 +180,21 @@ export default async function ReportsPage() {
         </div>
       </section>
 
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Platform Activity</h2>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <ReportCard title="Total Customers" value={totalCustomers} />
+          <ReportCard title="Total Debts" value={debts.length} />
+          <ReportCard title="Overdue Debts" value={overdueCount} tone="destructive" />
+          <ReportCard title="SMS Sent" value={smsSent} tone="success" />
+        </div>
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          <MoneyCard title="Total Debt Value" value={totalDebtValue} />
+          <MoneyCard title="Total Collected" value={totalCollected} tone="success" />
+          <MoneyCard title="Total Outstanding" value={totalOutstanding} tone="destructive" />
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <BreakdownCard
           title="Businesses by Status"
@@ -150,6 +215,13 @@ export default async function ReportsPage() {
           total={users.length}
           styles={ROLE_STYLES}
           counts={usersByRole}
+        />
+
+        <BreakdownCard
+          title="Notifications by Status"
+          total={notifications.length}
+          styles={NOTIFICATION_STATUS_STYLES}
+          counts={notificationsByStatus}
         />
       </div>
 
@@ -223,6 +295,31 @@ function ReportCard({
     <div className="rounded-xl bg-card border border-border p-6 shadow">
       <h3 className="text-muted-foreground">{title}</h3>
       <p className={`mt-4 font-mono text-4xl font-bold ${toneClass}`}>{value}</p>
+    </div>
+  );
+}
+
+function MoneyCard({
+  title,
+  value,
+  tone,
+}: {
+  title: string;
+  value: number;
+  tone?: "success" | "destructive";
+}) {
+  const toneClasses: Record<string, string> = {
+    success: "text-success",
+    destructive: "text-destructive",
+  };
+  const toneClass = tone ? toneClasses[tone] : "text-foreground";
+
+  return (
+    <div className="rounded-xl bg-card border border-border p-6 shadow">
+      <h3 className="text-muted-foreground">{title}</h3>
+      <p className={`mt-4 font-mono text-2xl font-bold ${toneClass}`}>
+        KES {value.toLocaleString()}
+      </p>
     </div>
   );
 }
