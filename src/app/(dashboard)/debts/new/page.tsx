@@ -28,10 +28,32 @@ export default function NewDebtPage() {
 
   useEffect(() => {
     async function fetchCustomers() {
-      const { data, error } = await supabase
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError('Authentication required.');
+        setLoadingCustomers(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('business_id')
+        .eq('id', user.id)
+        .single();
+
+      let query = supabase
         .from('customers')
         .select('*')
         .order('full_name', { ascending: true });
+
+      if (profile?.business_id) {
+        query = query.eq('business_id', profile.business_id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         setError('Failed to fetch customers.');

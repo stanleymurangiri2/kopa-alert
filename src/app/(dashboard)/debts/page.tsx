@@ -44,6 +44,14 @@ function daysUntilDue(dueDate: string) {
   return Math.round((due.getTime() - today.getTime()) / 86_400_000);
 }
 
+function formatDueDate(dueDate: string) {
+  const due = new Date(dueDate);
+  const day = String(due.getUTCDate()).padStart(2, '0');
+  const month = String(due.getUTCMonth() + 1).padStart(2, '0');
+  const year = due.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 function getLedgerStatus(debt: Debt) {
   const balance = Number(debt.amount) - Number(debt.amount_paid);
 
@@ -110,11 +118,15 @@ function LedgerStatusBadge({ debt }: { debt: Debt }) {
   );
 }
 
+const PAGE_SIZE = 15;
+
 export default function DebtsPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [debtPendingDelete, setDebtPendingDelete] = useState<Debt | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     loadDebts();
@@ -124,14 +136,24 @@ export default function DebtsPage() {
     setLoading(true);
     const { data } = await getDebts();
     setDebts((data ?? []) as Debt[]);
+    setPage(1);
     setLoading(false);
   }
 
   async function confirmDelete() {
     if (!debtPendingDelete) return;
     setDeleting(true);
-    await deleteDebt(debtPendingDelete.id);
+    setError('');
+
+    const { error: deleteError } = await deleteDebt(debtPendingDelete.id);
+
     setDeleting(false);
+
+    if (deleteError) {
+      setError(deleteError.message || 'Failed to delete debt.');
+      return;
+    }
+
     setDebtPendingDelete(null);
     loadDebts();
   }
@@ -155,6 +177,9 @@ export default function DebtsPage() {
     return { totalOutstanding, dueToday, overdue };
   }, [debts]);
 
+  const totalPages = Math.max(1, Math.ceil(debts.length / PAGE_SIZE));
+  const paginatedDebts = debts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -170,6 +195,12 @@ export default function DebtsPage() {
           + Add New Debt
         </Link>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border-l-4 border-primary bg-card p-4 shadow-sm">
@@ -232,7 +263,7 @@ export default function DebtsPage() {
             </thead>
 
             <tbody>
-              {debts.map((debt, i) => {
+              {paginatedDebts.map((debt, i) => {
                 const balance = Number(debt.amount) - Number(debt.amount_paid);
                 const isSettled = balance <= 0;
                 const { dueDateClass } = getLedgerStatus(debt);
@@ -265,7 +296,7 @@ export default function DebtsPage() {
                       KES {balance.toLocaleString()}
                     </td>
 
-                    <td className={`px-4 py-3 text-sm ${dueDateClass}`}>{debt.due_date}</td>
+                    <td className={`px-4 py-3 text-sm ${dueDateClass}`}>{formatDueDate(debt.due_date)}</td>
 
                     <td className="px-4 py-3">
                       <LedgerStatusBadge debt={debt} />
@@ -305,6 +336,30 @@ export default function DebtsPage() {
           </table>
         )}
       </div>
+
+      {!loading && debts.length > 0 && (
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {debtPendingDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
