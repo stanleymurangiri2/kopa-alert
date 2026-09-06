@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createCustomer } from '@/lib/supabase/customers';
 import { createClient } from '@/lib/supabase/client';
-import { normalizeKenyanPhone } from '@/lib/utils/phone';
+import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
 import { Loader2 } from 'lucide-react';
 
 export default function NewCustomerPage() {
@@ -24,8 +24,14 @@ export default function NewCustomerPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    setLoading(true);
     setError('');
+
+    if (!isValidKenyanPhone(form.phone)) {
+      setError('Enter a valid Kenyan mobile number (e.g. 0712345678 or +254712345678).');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const {

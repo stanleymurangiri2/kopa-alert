@@ -7,6 +7,7 @@ import { Ban, Download, Eye, Loader2, Pencil, Search, Star, Trash2 } from 'lucid
 import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
+import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
 
 type Customer = {
   id: string;
@@ -164,12 +165,17 @@ export default function CustomersPage() {
       return;
     }
 
+    if (!isValidKenyanPhone(editForm.phone)) {
+      setEditError('Enter a valid Kenyan mobile number (e.g. 0712345678 or +254712345678).');
+      return;
+    }
+
     setSaving(true);
     setEditError('');
 
     const { error } = await updateCustomer(editingCustomer.id, {
       full_name: editForm.full_name.trim(),
-      phone: editForm.phone.trim(),
+      phone: normalizeKenyanPhone(editForm.phone),
       email: editForm.email.trim() || null,
     });
 
