@@ -29,6 +29,9 @@ export default async function DashboardLayout({
   if (profile?.must_change_password) {
     redirect('/change-password');
   }
+  if (profile?.role !== 'super_admin' && profile?.businesses?.status === 'suspended') {
+    redirect('/account-suspended');
+  }
   if (
     profile?.role !== 'super_admin' &&
     profile?.businesses?.subscription_tier !== 'free' &&
