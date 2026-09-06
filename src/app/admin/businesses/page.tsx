@@ -23,6 +23,8 @@ const STATUS_STYLES: Record<Business["status"], string> = {
   rejected: "bg-blacklist text-blacklist-foreground",
 };
 
+const PAGE_SIZE = 15;
+
 export default function BusinessesPage() {
   const supabase = createClient();
 
@@ -32,6 +34,7 @@ export default function BusinessesPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | Business["status"]>("all");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -89,6 +92,12 @@ export default function BusinessesPage() {
     return rows;
   }, [businesses, search, statusFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredBusinesses.length / PAGE_SIZE));
+  const paginatedBusinesses = filteredBusinesses.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
+
   if (loading) {
     return <main className="p-8 text-muted-foreground">Loading businesses...</main>;
   }
@@ -116,7 +125,10 @@ export default function BusinessesPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search business, code, email, or phone..."
             className="w-72 rounded-full border border-border bg-card py-2 pl-9 pr-4 text-sm text-foreground outline-none focus:border-primary"
           />
@@ -124,7 +136,10 @@ export default function BusinessesPage() {
 
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as "all" | Business["status"])}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as "all" | Business["status"]);
+            setPage(1);
+          }}
           className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
         >
           <option value="all">All statuses</option>
@@ -155,6 +170,9 @@ export default function BusinessesPage() {
                 Customers
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Plan
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -164,8 +182,8 @@ export default function BusinessesPage() {
           </thead>
 
           <tbody>
-            {filteredBusinesses.length > 0 ? (
-              filteredBusinesses.map((business, i) => (
+            {paginatedBusinesses.length > 0 ? (
+              paginatedBusinesses.map((business, i) => (
                 <tr
                   key={business.id}
                   className={`border-t border-border hover:bg-accent ${
@@ -190,6 +208,10 @@ export default function BusinessesPage() {
                     {customerCounts[business.id] ?? 0}
                   </td>
 
+                  <td className="px-6 py-4 text-sm capitalize text-muted-foreground">
+                    {business.subscription_tier ?? "—"}
+                  </td>
+
                   <td className="px-6 py-4">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_STYLES[business.status]}`}
@@ -210,7 +232,7 @@ export default function BusinessesPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">
+                <td colSpan={8} className="px-6 py-10 text-center text-muted-foreground">
                   No businesses match your search.
                 </td>
               </tr>
@@ -218,6 +240,30 @@ export default function BusinessesPage() {
           </tbody>
         </table>
       </div>
+
+      {filteredBusinesses.length > 0 && (
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <span className="text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </main>
   );
 }
