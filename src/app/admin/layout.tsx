@@ -1,4 +1,6 @@
 import { ReactNode } from "react";
+import Link from "next/link";
+import { Bell } from "lucide-react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -44,6 +46,11 @@ export default async function AdminLayout({
     redirect("/dashboard");
   }
 
+  const { count: pendingCount } = await supabase
+    .from("business_requests")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
@@ -66,6 +73,19 @@ export default async function AdminLayout({
             <GlobalSearchBar href="/admin/businesses" placeholder="Search business, code, email, or phone..." />
 
             <div className="flex items-center gap-3">
+              <Link
+                href="/admin/requests"
+                aria-label={`Pending approvals${pendingCount ? ` (${pendingCount})` : ""}`}
+                className="relative rounded-lg p-2 text-foreground hover:bg-accent"
+              >
+                <Bell className="h-5 w-5" />
+                {pendingCount !== null && pendingCount > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                    {pendingCount > 99 ? "99+" : pendingCount}
+                  </span>
+                )}
+              </Link>
+
               <ThemeToggle />
 
               <UserAvatar name={profile.name} />
