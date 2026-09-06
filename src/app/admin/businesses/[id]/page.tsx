@@ -32,22 +32,22 @@ export default async function BusinessPage({
 
   const statusClasses =
     business.status === "approved"
-      ? "bg-green-100 text-green-700"
+      ? "bg-success/10 text-success"
       : business.status === "suspended"
-        ? "bg-red-100 text-red-700"
-        : "bg-gray-100 text-gray-700";
+        ? "bg-destructive/10 text-destructive"
+        : "bg-muted text-muted-foreground";
 
   return (
     <main className="max-w-4xl mx-auto p-8">
       <Link
         href="/admin/businesses"
-        className="text-blue-600 hover:underline"
+        className="text-primary hover:underline"
       >
         Back to Businesses
       </Link>
 
-      <div className="mt-6 rounded-xl bg-white p-8 shadow">
-        <h1 className="text-3xl font-bold mb-8">
+      <div className="mt-6 rounded-xl bg-card border border-border p-8 shadow">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">
           {business.business_name}
         </h1>
 
@@ -68,7 +68,7 @@ export default async function BusinessPage({
           />
 
           <div>
-            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-sm text-muted-foreground">Status</p>
             <span
               className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusClasses}`}
             >
@@ -102,8 +102,8 @@ function Info({
 }) {
   return (
     <div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="font-semibold">{value ?? "-"}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="font-semibold text-foreground">{value ?? "-"}</p>
     </div>
   );
 }

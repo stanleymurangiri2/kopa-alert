@@ -103,7 +103,7 @@ export default function NotificationTemplatesPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading templates...
       </div>
     );
@@ -114,18 +114,18 @@ export default function NotificationTemplatesPage() {
 
       <div>
 
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-foreground">
           Notification Templates
         </h1>
 
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Customize automatic SMS reminders.
         </p>
 
       </div>
 
       {message && (
-        <div className="rounded-md border bg-green-50 p-3 text-green-700">
+        <div className="rounded-md border border-success/30 bg-success/10 p-3 text-success">
           {message}
         </div>
       )}
@@ -134,12 +134,12 @@ export default function NotificationTemplatesPage() {
 
         <div
           key={template.id}
-          className="rounded-lg border bg-white p-6 shadow-sm space-y-4"
+          className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-4"
         >
 
           <div className="flex items-center justify-between">
 
-            <h2 className="text-lg font-semibold capitalize">
+            <h2 className="text-lg font-semibold capitalize text-foreground">
               {template.type.replace('_', ' ')}
             </h2>
 
@@ -165,7 +165,7 @@ export default function NotificationTemplatesPage() {
 
           <div>
 
-            <label className="block mb-2 text-sm font-medium">
+            <label className="block mb-2 text-sm font-medium text-foreground">
               Days Offset
             </label>
 
@@ -179,10 +179,10 @@ export default function NotificationTemplatesPage() {
                   Number(e.target.value)
                 )
               }
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
             />
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Example: -2 = two days before due date, 0 = due date, 3 = three days after.
             </p>
 
@@ -190,7 +190,7 @@ export default function NotificationTemplatesPage() {
 
           <div>
 
-            <label className="block mb-2 text-sm font-medium">
+            <label className="block mb-2 text-sm font-medium text-foreground">
               SMS Message
             </label>
 
@@ -204,18 +204,18 @@ export default function NotificationTemplatesPage() {
                   e.target.value
                 )
               }
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
             />
 
           </div>
 
-          <div className="rounded-md bg-gray-50 p-3 text-sm">
+          <div className="rounded-md bg-muted p-3 text-sm">
 
-            <p className="font-semibold mb-2">
+            <p className="font-semibold mb-2 text-foreground">
               Available Variables
             </p>
 
-            <div className="grid grid-cols-2 gap-2 text-gray-600">
+            <div className="grid grid-cols-2 gap-2 text-muted-foreground font-mono">
 
               <span>{'{customer_name}'}</span>
 
@@ -238,7 +238,7 @@ export default function NotificationTemplatesPage() {
           <button
             onClick={() => saveTemplate(template)}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-md bg-primary px-5 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Save Template'}
           </button>

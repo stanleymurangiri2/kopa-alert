@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -36,29 +36,29 @@ type LedgerEntry = {
 function badgeColor(status: string) {
   switch (status) {
     case 'fully_paid':
-      return 'bg-green-100 text-green-700';
+      return 'bg-success/10 text-success';
     case 'partially_paid':
-      return 'bg-yellow-100 text-yellow-700';
+      return 'bg-warning/10 text-warning';
     case 'overdue':
-      return 'bg-red-100 text-red-700';
+      return 'bg-destructive/10 text-destructive';
     default:
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-info/10 text-info';
   }
 }
 
 function ledgerTypeStyle(type: string) {
   const styles: Record<string, string> = {
-    LOAN_DISBURSEMENT: 'bg-blue-100 text-blue-700',
-    PAYMENT: 'bg-green-100 text-green-700',
-    CREDIT_CREATED: 'bg-emerald-100 text-emerald-700',
-    CREDIT_APPLIED: 'bg-purple-100 text-purple-700',
-    OVERPAYMENT: 'bg-emerald-100 text-emerald-700',
-    REFUND: 'bg-orange-100 text-orange-700',
-    ADJUSTMENT: 'bg-gray-100 text-gray-700',
-    WRITE_OFF: 'bg-red-100 text-red-700',
-    REVERSAL: 'bg-red-100 text-red-700',
+    LOAN_DISBURSEMENT: 'bg-info/10 text-info',
+    PAYMENT: 'bg-success/10 text-success',
+    CREDIT_CREATED: 'bg-success/10 text-success',
+    CREDIT_APPLIED: 'bg-employee/10 text-employee',
+    OVERPAYMENT: 'bg-success/10 text-success',
+    REFUND: 'bg-warning/10 text-warning',
+    ADJUSTMENT: 'bg-muted text-muted-foreground',
+    WRITE_OFF: 'bg-destructive/10 text-destructive',
+    REVERSAL: 'bg-destructive/10 text-destructive',
   };
-  return styles[type] ?? 'bg-gray-100 text-gray-700';
+  return styles[type] ?? 'bg-muted text-muted-foreground';
 }
 
 function ledgerTypeLabel(type: string) {
@@ -223,18 +223,18 @@ export default function CustomerDetailPage() {
   }
 
   if (loading) {
-    return <div className="p-6 text-gray-500">Loading customer...</div>;
+    return <div className="p-6 text-muted-foreground">Loading customer...</div>;
   }
 
   if (error || !customer) {
     return (
       <div className="p-6">
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-600">
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive">
           {error || 'Customer not found.'}
         </div>
         <Link
           href="/customers"
-          className="mt-4 inline-block text-blue-600 hover:underline"
+          className="mt-4 inline-block text-primary hover:underline"
         >
           Back to customers
         </Link>
@@ -253,8 +253,8 @@ export default function CustomerDetailPage() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{customer.full_name}</h1>
-          <p className="text-gray-500">
+          <h1 className="text-2xl font-bold text-foreground">{customer.full_name}</h1>
+          <p className="text-muted-foreground">
             {customer.phone}
             {customer.email ? ` - ${customer.email}` : ''}
           </p>
@@ -262,23 +262,23 @@ export default function CustomerDetailPage() {
 
         <Link
           href="/customers"
-          className="rounded-md border px-4 py-2 hover:bg-gray-100"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent"
         >
           Back
         </Link>
       </div>
 
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="text-sm text-gray-500">Status</div>
+            <div className="text-sm text-muted-foreground">Status</div>
             <div className="mt-1">
               {customer.is_blacklisted ? (
-                <span className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700">
+                <span className="rounded-full bg-blacklist px-3 py-1 text-sm font-medium text-blacklist-foreground">
                   Blacklisted
                 </span>
               ) : (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
+                <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">
                   Active
                 </span>
               )}
@@ -286,15 +286,15 @@ export default function CustomerDetailPage() {
           </div>
 
           <div className="text-right">
-            <div className="text-sm text-gray-500">Total Outstanding</div>
-            <div className="text-xl font-bold">
+            <div className="text-sm text-muted-foreground">Total Outstanding</div>
+            <div className="font-mono text-xl font-bold text-foreground">
               KES {totalOwed.toLocaleString()}
             </div>
           </div>
 
           <div className="text-right">
-            <div className="text-sm text-gray-500">Available Credit</div>
-            <div className={`text-xl font-bold ${availableCredit > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+            <div className="text-sm text-muted-foreground">Available Credit</div>
+            <div className={`font-mono text-xl font-bold ${availableCredit > 0 ? 'text-success' : 'text-muted-foreground'}`}>
               KES {availableCredit.toLocaleString()}
             </div>
           </div>
@@ -305,8 +305,8 @@ export default function CustomerDetailPage() {
               disabled={updating}
               className={`rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
                 customer.is_blacklisted
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-red-600 text-white hover:bg-red-700'
+                  ? 'bg-success text-success-foreground hover:bg-success/90'
+                  : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
               }`}
             >
               {updating
@@ -319,58 +319,58 @@ export default function CustomerDetailPage() {
         </div>
 
         {availableCredit > 0 && (
-          <p className="mt-4 rounded-md bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm text-emerald-800">
+          <p className="mt-4 rounded-md bg-success/10 border border-success/30 px-4 py-2 text-sm text-success">
             This customer has KES {availableCredit.toLocaleString()} in available credit from a past overpayment. It can be applied automatically when you record a new debt for them.
           </p>
         )}
       </div>
 
-      <div className="rounded-lg border bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="font-semibold">Debts</h2>
+      <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <h2 className="font-semibold text-foreground">Debts</h2>
           <Link
             href="/debts/new"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             + New Debt
           </Link>
         </div>
 
         {debts.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-6 text-center text-muted-foreground">
             No debts for this customer.
           </div>
         ) : (
           <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-primary">
               <tr>
-                <th className="px-4 py-3 text-left">Description</th>
-                <th className="px-4 py-3 text-left">Amount</th>
-                <th className="px-4 py-3 text-left">Balance</th>
-                <th className="px-4 py-3 text-left">Due Date</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-center">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Description</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Balance</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Due Date</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-primary-foreground">Action</th>
               </tr>
             </thead>
 
             <tbody>
-              {debts.map((debt) => (
+              {debts.map((debt, i) => (
                 <>
-                  <tr key={debt.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">{debt.description}</td>
+                  <tr key={debt.id} className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
+                    <td className="px-4 py-3 text-muted-foreground">{debt.description}</td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-foreground">
                       KES {Number(debt.amount).toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-4 py-3 font-mono font-medium text-foreground">
                       KES{' '}
                       {Number(
                         debt.amount - debt.amount_paid
                       ).toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3">{debt.due_date}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{debt.due_date}</td>
 
                     <td className="px-4 py-3">
                       <span
@@ -385,7 +385,7 @@ export default function CustomerDetailPage() {
                     <td className="px-4 py-3 text-center space-x-3">
                       <Link
                         href={`/debts/${debt.id}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-info hover:underline"
                       >
                         View
                       </Link>
@@ -393,7 +393,7 @@ export default function CustomerDetailPage() {
                       {debt.status !== 'fully_paid' && (
                         <button
                           onClick={() => openTopUp(debt.id)}
-                          className="text-green-600 hover:underline"
+                          className="text-teal hover:underline"
                         >
                           Add to Debt
                         </button>
@@ -402,14 +402,14 @@ export default function CustomerDetailPage() {
                   </tr>
 
                   {topUpDebtId === debt.id && (
-                    <tr className="border-t bg-gray-50">
+                    <tr className="border-t border-border bg-table-stripe">
                       <td colSpan={6} className="px-4 py-4">
                         <form
                           onSubmit={handleTopUp}
                           className="flex flex-wrap items-end gap-3"
                         >
                           <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
                               Additional Amount (KES)
                             </label>
                             <input
@@ -420,13 +420,13 @@ export default function CustomerDetailPage() {
                               onChange={(e) =>
                                 setTopUpAmount(e.target.value)
                               }
-                              className="w-40 rounded-md border px-3 py-2"
+                              className="w-40 rounded-md border border-border bg-card px-3 py-2 text-foreground"
                               placeholder="500"
                             />
                           </div>
 
                           <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
                               New Due Date
                             </label>
                             <input
@@ -435,14 +435,14 @@ export default function CustomerDetailPage() {
                               onChange={(e) =>
                                 setTopUpDueDate(e.target.value)
                               }
-                              className="rounded-md border px-3 py-2"
+                              className="rounded-md border border-border bg-card px-3 py-2 text-foreground"
                             />
                           </div>
 
                           <button
                             type="submit"
                             disabled={topUpSaving}
-                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                            className="rounded-md bg-teal px-4 py-2 text-sm font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
                           >
                             {topUpSaving ? 'Saving...' : 'Confirm'}
                           </button>
@@ -450,13 +450,13 @@ export default function CustomerDetailPage() {
                           <button
                             type="button"
                             onClick={closeTopUp}
-                            className="rounded-md border px-4 py-2 text-sm hover:bg-gray-100"
+                            className="rounded-md border border-border px-4 py-2 text-sm text-foreground hover:bg-accent"
                           >
                             Cancel
                           </button>
 
                           {topUpError && (
-                            <p className="w-full text-sm text-red-600">
+                            <p className="w-full text-sm text-destructive">
                               {topUpError}
                             </p>
                           )}
@@ -471,32 +471,32 @@ export default function CustomerDetailPage() {
         )}
       </div>
 
-      <div className="rounded-lg border bg-white shadow-sm">
-        <div className="border-b p-4">
-          <h2 className="font-semibold">Financial Statement</h2>
-          <p className="text-sm text-gray-500">
+      <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="border-b border-border p-4">
+          <h2 className="font-semibold text-foreground">Financial Statement</h2>
+          <p className="text-sm text-muted-foreground">
             Full transaction history for this customer.
           </p>
         </div>
 
         {ledger.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-6 text-center text-muted-foreground">
             No transactions yet.
           </div>
         ) : (
           <table className="min-w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-primary">
               <tr>
-                <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Transaction</th>
-                <th className="px-4 py-3 text-left">Description</th>
-                <th className="px-4 py-3 text-right">Amount</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Transaction</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">Description</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-primary-foreground">Amount</th>
               </tr>
             </thead>
             <tbody>
-              {ledger.map((entry) => (
-                <tr key={entry.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-600">
+              {ledger.map((entry, i) => (
+                <tr key={entry.id} className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {new Date(entry.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
@@ -506,10 +506,10 @@ export default function CustomerDetailPage() {
                       {ledgerTypeLabel(entry.type)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {entry.description ?? '-'}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium">
+                  <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
                     KES {Number(entry.amount).toLocaleString()}
                   </td>
                 </tr>

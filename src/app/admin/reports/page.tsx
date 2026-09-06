@@ -41,20 +41,20 @@ export default async function ReportsPage() {
   if (errors.length > 0) {
     return (
       <main className="p-8">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-foreground">
           Reports
         </h1>
 
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-muted-foreground">
           Platform summary and analytics.
         </p>
 
-        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-6">
-          <h2 className="font-semibold text-red-800">
+        <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/10 p-6">
+          <h2 className="font-semibold text-destructive">
             Failed to load reports
           </h2>
 
-          <p className="mt-2 text-sm text-red-700">
+          <p className="mt-2 text-sm text-destructive">
             {errors[0]?.message ?? "An unexpected database error occurred."}
           </p>
         </div>
@@ -81,11 +81,11 @@ export default async function ReportsPage() {
   return (
     <main className="p-8">
       <div>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-foreground">
           Reports
         </h1>
 
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-muted-foreground">
           Platform summary and analytics.
         </p>
       </div>
@@ -133,12 +133,12 @@ function ReportCard({
   value: number;
 }) {
   return (
-    <div className="rounded-xl bg-white p-6 shadow">
-      <h2 className="text-gray-500">
+    <div className="rounded-xl bg-card border border-border p-6 shadow">
+      <h2 className="text-muted-foreground">
         {title}
       </h2>
 
-      <p className="mt-4 text-4xl font-bold text-blue-600">
+      <p className="mt-4 font-mono text-4xl font-bold text-primary">
         {value}
       </p>
     </div>

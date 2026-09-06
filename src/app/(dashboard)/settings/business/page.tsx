@@ -91,7 +91,7 @@ export default function BusinessSettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading business information...
       </div>
     );
@@ -99,7 +99,7 @@ export default function BusinessSettingsPage() {
 
   if (!business) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Business information not found.
       </div>
     );
@@ -109,28 +109,28 @@ export default function BusinessSettingsPage() {
     <div className="max-w-3xl p-6">
 
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-foreground">
           Business Settings
         </h1>
 
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Manage your business information.
         </p>
       </div>
 
       {message && (
-        <div className="mb-6 rounded-md border bg-gray-50 p-3 text-sm">
+        <div className="mb-6 rounded-md border border-border bg-muted p-3 text-sm text-foreground">
           {message}
         </div>
       )}
 
       <form
         onSubmit={saveBusiness}
-        className="space-y-6 rounded-lg border bg-white p-6 shadow-sm"
+        className="space-y-6 rounded-lg border border-border bg-card p-6 shadow-sm"
       >
 
         <div>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-foreground">
             Business Name
           </label>
 
@@ -143,13 +143,13 @@ export default function BusinessSettingsPage() {
                 business_name: e.target.value,
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-foreground">
             Phone Number
           </label>
 
@@ -162,13 +162,13 @@ export default function BusinessSettingsPage() {
                 phone: e.target.value,
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-foreground">
             Business Email
           </label>
 
@@ -181,13 +181,13 @@ export default function BusinessSettingsPage() {
                 email: e.target.value,
               })
             }
-            className="mt-1 w-full rounded-md border px-3 py-2"
+            className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-foreground">
             Status
           </label>
 
@@ -195,12 +195,12 @@ export default function BusinessSettingsPage() {
             type="text"
             value={business.status}
             readOnly
-            className="mt-1 w-full rounded-md border bg-gray-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
+          <label className="block text-sm font-medium text-foreground">
             Registered On
           </label>
 
@@ -210,14 +210,14 @@ export default function BusinessSettingsPage() {
               business.created_at
             ).toLocaleString()}
             readOnly
-            className="mt-1 w-full rounded-md border bg-gray-100 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-border bg-muted text-muted-foreground px-3 py-2"
           />
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="w-full rounded-md bg-blue-600 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="w-full rounded-md bg-primary py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           {saving
             ? 'Saving...'

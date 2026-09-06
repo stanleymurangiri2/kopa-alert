@@ -78,7 +78,7 @@ export default function Actions({
         <button
           onClick={() => updateBusiness("suspended")}
           disabled={loading}
-          className="rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Processing..." : "Suspend Business"}
         </button>
@@ -88,7 +88,7 @@ export default function Actions({
         <button
           onClick={() => updateBusiness("approved")}
           disabled={loading}
-          className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Processing..." : "Activate Business"}
         </button>

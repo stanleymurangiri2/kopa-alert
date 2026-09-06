@@ -125,11 +125,11 @@ export default function PaymentReportsPage() {
 
         <div>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             Payment Reports
           </h1>
 
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             View collections and payment history.
           </p>
 
@@ -137,7 +137,7 @@ export default function PaymentReportsPage() {
 
         <button
           onClick={loadReport}
-          className="rounded bg-blue-600 px-4 py-2 text-white"
+          className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Refresh
         </button>
@@ -177,12 +177,12 @@ export default function PaymentReportsPage() {
 
       )}
 
-      <div className="rounded-lg border bg-white p-5">
+      <div className="rounded-lg border border-border bg-card p-5">
 
         <div className="grid gap-4 md:grid-cols-4">
 
           <input
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             placeholder="Search customer..."
             value={search}
             onChange={(e) => {
@@ -192,7 +192,7 @@ export default function PaymentReportsPage() {
           />
 
           <select
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={methodFilter}
             onChange={(e) => {
               setMethodFilter(e.target.value);
@@ -216,7 +216,7 @@ export default function PaymentReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={startDate}
             onChange={(e) =>
               setStartDate(e.target.value)
@@ -225,7 +225,7 @@ export default function PaymentReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={endDate}
             onChange={(e) =>
               setEndDate(e.target.value)
@@ -236,7 +236,7 @@ export default function PaymentReportsPage() {
 
         <button
           onClick={loadReport}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-white"
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Apply Filters
         </button>
@@ -245,9 +245,9 @@ export default function PaymentReportsPage() {
 
       {summary && (
 
-        <div className="rounded-lg border bg-white p-5">
+        <div className="rounded-lg border border-border bg-card p-5">
 
-          <h2 className="mb-4 text-lg font-semibold">
+          <h2 className="mb-4 text-lg font-semibold text-foreground">
             Payment Method Breakdown
           </h2>
 
@@ -255,19 +255,19 @@ export default function PaymentReportsPage() {
 
             <table className="min-w-full">
 
-              <thead className="bg-gray-100">
+              <thead className="bg-primary">
 
                 <tr>
 
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                     Method
                   </th>
 
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                     Transactions
                   </th>
 
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                     Total
                   </th>
 
@@ -277,22 +277,22 @@ export default function PaymentReportsPage() {
 
               <tbody>
 
-                {summary.methods.map((method) => (
+                {summary.methods.map((method, i) => (
 
                   <tr
                     key={method.method}
-                    className="border-t"
+                    className={`border-t border-border ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                   >
 
-                    <td className="px-4 py-3 capitalize">
+                    <td className="px-4 py-3 capitalize text-foreground">
                       {method.method}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {method.count}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-foreground">
                       KES {method.total.toLocaleString()}
                     </td>
 
@@ -310,31 +310,31 @@ export default function PaymentReportsPage() {
 
       )}
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
 
         <table className="min-w-full">
 
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
 
             <tr>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Customer
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Method
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Amount
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Date
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Notes
               </th>
 
@@ -350,7 +350,7 @@ export default function PaymentReportsPage() {
 
                 <td
                   colSpan={5}
-                  className="py-8 text-center text-gray-500"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No payments found.
                 </td>
@@ -359,40 +359,40 @@ export default function PaymentReportsPage() {
 
             ) : (
 
-              paginated.map((payment) => (
+              paginated.map((payment, i) => (
 
                 <tr
                   key={payment.id}
-                  className="border-t"
+                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                 >
 
                   <td className="px-4 py-3">
 
-                    <div className="font-medium">
+                    <div className="text-[15px] font-semibold text-foreground">
                       {payment.customer_name}
                     </div>
 
-                    <div className="text-sm text-gray-500">
+                    <div className="font-mono text-sm text-muted-foreground">
                       {payment.phone}
                     </div>
 
                   </td>
 
-                  <td className="px-4 py-3 capitalize">
+                  <td className="px-4 py-3 capitalize text-muted-foreground">
                     {payment.payment_method}
                   </td>
 
-                  <td className="px-4 py-3 font-semibold">
+                  <td className="px-4 py-3 font-mono font-semibold text-success">
                     KES {payment.amount_paid.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {new Date(
                       payment.created_at
                     ).toLocaleDateString()}
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {payment.notes ?? "-"}
                   </td>
 
@@ -415,12 +415,12 @@ export default function PaymentReportsPage() {
           onClick={() =>
             setPage((p) => p - 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Previous
         </button>
 
-        <span>
+        <span className="text-muted-foreground">
           Page {page} of {totalPages}
         </span>
 
@@ -429,7 +429,7 @@ export default function PaymentReportsPage() {
           onClick={() =>
             setPage((p) => p + 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Next
         </button>
@@ -448,12 +448,12 @@ function SummaryCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-5 shadow-sm">
-      <p className="text-sm text-gray-500">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <p className="text-sm text-muted-foreground">
         {title}
       </p>
 
-      <h2 className="mt-2 text-2xl font-bold">
+      <h2 className="mt-2 font-mono text-2xl font-bold text-foreground">
         {value}
       </h2>
     </div>

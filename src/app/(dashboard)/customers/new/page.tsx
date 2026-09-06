@@ -74,40 +74,40 @@ export default function NewCustomerPage() {
     <div className="max-w-3xl mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">New Customer</h1>
-          <p className="text-sm text-gray-500">Add a new customer.</p>
+          <h1 className="text-2xl font-bold text-foreground">New Customer</h1>
+          <p className="text-sm text-muted-foreground">Add a new customer.</p>
         </div>
 
         <Link
           href="/customers"
-          className="rounded-md border px-4 py-2 hover:bg-gray-100"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent"
         >
           Back
         </Link>
       </div>
 
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-1 block text-sm font-medium">Full Name</label>
+            <label className="mb-1 block text-sm font-medium text-foreground">Full Name</label>
             <input
               type="text"
               required
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
               placeholder="Jane Wanjiru"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Phone Number
             </label>
             <input
@@ -115,20 +115,20 @@ export default function NewCustomerPage() {
               required
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
               placeholder="0712345678 or +254712345678"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Email (optional)
             </label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
               placeholder="jane@example.com"
             />
           </div>
@@ -136,7 +136,7 @@ export default function NewCustomerPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md bg-teal py-2.5 font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
           >
             {loading ? 'Saving...' : 'Add Customer'}
           </button>

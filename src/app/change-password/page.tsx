@@ -73,26 +73,26 @@ export default function ChangePasswordPage() {
   }
 
   if (checking) {
-    return <div className="p-6 text-gray-500">Loading...</div>;
+    return <div className="p-6 text-muted-foreground">Loading...</div>;
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-6">
-      <div className="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm">
-        <h1 className="mb-2 text-2xl font-bold">Set a New Password</h1>
-        <p className="mb-6 text-sm text-gray-500">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+      <div className="w-full max-w-md rounded-lg border border-border bg-card p-8 shadow-sm">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">Set a New Password</h1>
+        <p className="mb-6 text-sm text-muted-foreground">
           For your security, please set a new password before continuing.
         </p>
 
         {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               New Password
             </label>
             <input
@@ -101,13 +101,13 @@ export default function ChangePasswordPage() {
               minLength={8}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
               placeholder="At least 8 characters"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1 block text-sm font-medium text-foreground">
               Confirm Password
             </label>
             <input
@@ -116,7 +116,7 @@ export default function ChangePasswordPage() {
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full rounded-md border px-3 py-2"
+              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
               placeholder="Re-enter password"
             />
           </div>
@@ -124,7 +124,7 @@ export default function ChangePasswordPage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-md bg-blue-600 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md bg-primary py-2.5 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? 'Saving...' : 'Set New Password'}
           </button>

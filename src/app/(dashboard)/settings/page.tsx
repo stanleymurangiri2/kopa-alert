@@ -30,24 +30,24 @@ export default function SettingsHubPage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-500 mt-1">Configure your business account, team members, integrations, and automated alerts.</p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Configure your business account, team members, integrations, and automated alerts.</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {settingOptions.map((opt) => (
           <Link
             key={opt.href}
             href={opt.href}
-            className="group bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition hover:border-blue-500 flex flex-col justify-between"
+            className="group bg-card rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition hover:border-primary flex flex-col justify-between"
           >
             <div>
               <span className="text-3xl block mb-4">{opt.icon}</span>
-              <h2 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition">
+              <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition">
                 {opt.title}
               </h2>
-              <p className="text-sm text-slate-500 mt-2">{opt.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">{opt.description}</p>
             </div>
-            <div className="mt-6 flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
+            <div className="mt-6 flex items-center text-sm font-medium text-primary group-hover:translate-x-1 transition-transform">
               Manage &rarr;
             </div>
           </Link>

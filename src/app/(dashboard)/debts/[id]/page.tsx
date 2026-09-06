@@ -85,73 +85,73 @@ export default function EditDebtPage({
     router.refresh();
   };
 
-  if (loading) return <div className="p-6 text-gray-500">Loading debt record...</div>;
+  if (loading) return <div className="p-6 text-muted-foreground">Loading debt record...</div>;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Edit Debt Record</h1>
-        <Link href="/debts" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl font-bold text-foreground">Edit Debt Record</h1>
+        <Link href="/debts" className="text-sm text-muted-foreground hover:underline">
           ← Back to Debts
         </Link>
       </div>
 
       {debtDetails && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm space-y-1">
+        <div className="bg-muted p-4 rounded-lg border border-border text-sm space-y-1">
           <div>
-            <span className="text-gray-500">Customer:</span>{' '}
-            <span className="font-semibold text-gray-900">{debtDetails.customerName}</span>
+            <span className="text-muted-foreground">Customer:</span>{' '}
+            <span className="font-semibold text-foreground">{debtDetails.customerName}</span>
           </div>
           <div>
-            <span className="text-gray-500">Total Amount:</span>{' '}
-            <span className="font-mono text-gray-900">KES {debtDetails.amount.toLocaleString()}</span>
+            <span className="text-muted-foreground">Total Amount:</span>{' '}
+            <span className="font-mono text-foreground">KES {debtDetails.amount.toLocaleString()}</span>
           </div>
           <div>
-            <span className="text-gray-500">Remaining Balance:</span>{' '}
-            <span className="font-mono font-bold text-gray-900">
+            <span className="text-muted-foreground">Remaining Balance:</span>{' '}
+            <span className="font-mono font-bold text-foreground">
               KES {(debtDetails.amount - debtDetails.amountPaid).toLocaleString()}
             </span>
           </div>
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
+          <div className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-md">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Due Date</label>
+            <label className="block text-sm font-medium text-foreground">Due Date</label>
             <input
               type="date"
               required
               value={formData.due_date}
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <label className="block text-sm font-medium text-foreground">Description</label>
             <textarea
               required
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Payment Instructions</label>
+            <label className="block text-sm font-medium text-foreground">Payment Instructions</label>
             <input
               type="text"
               value={formData.payment_instructions}
               onChange={(e) => setFormData({ ...formData, payment_instructions: e.target.value })}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -159,7 +159,7 @@ export default function EditDebtPage({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
             >
               {saving ? 'Saving Updates...' : 'Update Debt Record'}
             </button>

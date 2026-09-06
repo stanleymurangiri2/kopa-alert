@@ -122,39 +122,39 @@ export default function NewDebtPage() {
   };
 
   if (loadingCustomers) {
-    return <div className="p-6 text-gray-500">Loading customers list...</div>;
+    return <div className="p-6 text-muted-foreground">Loading customers list...</div>;
   }
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Record New Debt</h1>
-        <Link href="/debts" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl font-bold text-foreground">Record New Debt</h1>
+        <Link href="/debts" className="text-sm text-muted-foreground hover:underline">
           Cancel
         </Link>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
+          <div className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-md">
             {error}
           </div>
         )}
 
         {creditNote && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-md">
+          <div className="mb-4 bg-success/10 border border-success/30 text-success text-sm p-3 rounded-md">
             {creditNote}
           </div>
         )}
 
         {customers.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-muted-foreground text-sm mb-4">
               You need at least one registered customer before recording a debt.
             </p>
             <Link
               href="/customers/new"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium"
+              className="px-4 py-2 bg-teal text-teal-foreground rounded-md text-sm font-medium"
             >
               + Add Customer First
             </Link>
@@ -162,14 +162,14 @@ export default function NewDebtPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Select Customer</label>
+              <label className="block text-sm font-medium text-foreground">Select Customer</label>
               <select
                 required
                 value={formData.customer_id}
                 onChange={(e) =>
                   setFormData({ ...formData, customer_id: e.target.value, apply_credit: false })
                 }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
               >
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -180,8 +180,8 @@ export default function NewDebtPage() {
             </div>
 
             {availableCredit > 0 && (
-              <div className="rounded-md border border-green-200 bg-green-50 p-3">
-                <label className="flex items-center gap-2 text-sm text-green-800">
+              <div className="rounded-md border border-success/30 bg-success/10 p-3">
+                <label className="flex items-center gap-2 text-sm text-success">
                   <input
                     type="checkbox"
                     checked={formData.apply_credit}
@@ -195,44 +195,44 @@ export default function NewDebtPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Debt Amount (KES)</label>
+              <label className="block text-sm font-medium text-foreground">Debt Amount (KES)</label>
               <input
                 type="number"
                 step="0.01"
                 required
                 value={formData.amount}
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
                 placeholder="5000"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Due Date</label>
+              <label className="block text-sm font-medium text-foreground">Due Date</label>
               <input
                 type="date"
                 required
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description / Items</label>
+              <label className="block text-sm font-medium text-foreground">Description / Items</label>
               <textarea
                 required
                 rows={3}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
                 placeholder="Goods taken on credit (e.g., 2 bags of cement)"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Payment Instructions <span className="text-gray-400 font-normal">(Optional)</span>
+              <label className="block text-sm font-medium text-foreground">
+                Payment Instructions <span className="text-muted-foreground font-normal">(Optional)</span>
               </label>
               <input
                 type="text"
@@ -240,7 +240,7 @@ export default function NewDebtPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, payment_instructions: e.target.value })
                 }
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
                 placeholder="Pay via M-Pesa Till 123456"
               />
             </div>
@@ -249,7 +249,7 @@ export default function NewDebtPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-teal hover:bg-teal/90 text-teal-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
               >
                 {submitting ? 'Recording Debt...' : 'Record Debt'}
               </button>

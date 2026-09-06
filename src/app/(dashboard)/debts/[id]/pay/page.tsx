@@ -131,37 +131,37 @@ export default function RecordPaymentPage({
     router.refresh();
   };
 
-  if (loading) return <div className="p-6 text-gray-500">Loading payment form...</div>;
+  if (loading) return <div className="p-6 text-muted-foreground">Loading payment form...</div>;
 
   const remainingBalance = debtDetails ? debtDetails.amount - debtDetails.amountPaid : 0;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Record Payment</h1>
-        <Link href="/debts" className="text-sm text-gray-500 hover:underline">
+        <h1 className="text-2xl font-bold text-foreground">Record Payment</h1>
+        <Link href="/debts" className="text-sm text-muted-foreground hover:underline">
           Cancel
         </Link>
       </div>
 
       {debtDetails && (
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg text-sm space-y-1">
+        <div className="bg-info/10 border border-info/30 p-4 rounded-lg text-sm space-y-1">
           <div>
-            <span className="text-blue-700 font-medium">Customer:</span>{' '}
-            <span className="font-semibold text-gray-900">{debtDetails.customerName}</span>
+            <span className="text-info font-medium">Customer:</span>{' '}
+            <span className="font-semibold text-foreground">{debtDetails.customerName}</span>
           </div>
           <div>
-            <span className="text-blue-700 font-medium">Description:</span>{' '}
-            <span className="text-gray-800">{debtDetails.description}</span>
+            <span className="text-info font-medium">Description:</span>{' '}
+            <span className="text-foreground">{debtDetails.description}</span>
           </div>
-          <div className="pt-2 border-t border-blue-200 flex justify-between">
+          <div className="pt-2 border-t border-info/30 flex justify-between">
             <div>
-              <span className="text-gray-500">Total Debt:</span>{' '}
-              <span className="font-mono text-gray-900">KES {debtDetails.amount.toLocaleString()}</span>
+              <span className="text-muted-foreground">Total Debt:</span>{' '}
+              <span className="font-mono text-foreground">KES {debtDetails.amount.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-gray-500">Remaining Balance:</span>{' '}
-              <span className="font-mono font-bold text-blue-900">
+              <span className="text-muted-foreground">Remaining Balance:</span>{' '}
+              <span className="font-mono font-bold text-info">
                 KES {remainingBalance.toLocaleString()}
               </span>
             </div>
@@ -169,40 +169,40 @@ export default function RecordPaymentPage({
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
+          <div className="mb-4 bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-md">
             {error}
           </div>
         )}
 
         {creditNote && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-md">
+          <div className="mb-4 bg-success/10 border border-success/30 text-success text-sm p-3 rounded-md">
             {creditNote}
           </div>
         )}
 
         {remainingBalance <= 0 ? (
           <div className="text-center py-4">
-            <p className="text-green-700 font-medium text-sm mb-4">
+            <p className="text-success font-medium text-sm mb-4">
               This debt record has already been fully settled!
             </p>
-            <Link href="/debts" className="text-sm text-blue-600 hover:underline">
+            <Link href="/debts" className="text-sm text-primary hover:underline">
               Return to Debts List
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Payment Type</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={selectFull}
                   className={`py-2.5 px-4 rounded-md text-sm font-medium border transition-colors ${
                     paymentType === 'full'
-                      ? 'bg-green-600 text-white border-green-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      ? 'bg-success text-success-foreground border-success'
+                      : 'bg-card text-foreground border-border hover:bg-accent'
                   }`}
                 >
                   Pay in Full
@@ -212,8 +212,8 @@ export default function RecordPaymentPage({
                   onClick={selectPartial}
                   className={`py-2.5 px-4 rounded-md text-sm font-medium border transition-colors ${
                     paymentType === 'partial'
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-foreground border-border hover:bg-accent'
                   }`}
                 >
                   Partial Payment
@@ -222,10 +222,10 @@ export default function RecordPaymentPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-foreground">
                 Amount Paid (KES)
                 {paymentType === 'full' && (
-                  <span className="ml-2 text-xs font-normal text-gray-400">Full balance</span>
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">Full balance</span>
                 )}
               </label>
               <input
@@ -235,19 +235,19 @@ export default function RecordPaymentPage({
                 value={paymentData.amount_paid}
                 onChange={(e) => setPaymentData({ ...paymentData, amount_paid: e.target.value })}
                 placeholder={paymentType === 'partial' ? 'Enter amount paid' : undefined}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
               />
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Paying more than the balance adds the extra amount to the customer's available credit.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+              <label className="block text-sm font-medium text-foreground">Payment Method</label>
               <select
                 value={paymentData.payment_method}
                 onChange={(e) => setPaymentData({ ...paymentData, payment_method: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
               >
                 <option value="mpesa">M-Pesa</option>
                 <option value="cash">Cash</option>
@@ -257,14 +257,14 @@ export default function RecordPaymentPage({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Notes / Reference <span className="text-gray-400 font-normal">(Optional)</span>
+              <label className="block text-sm font-medium text-foreground">
+                Notes / Reference <span className="text-muted-foreground font-normal">(Optional)</span>
               </label>
               <input
                 type="text"
                 value={paymentData.notes}
                 onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
                 placeholder="M-Pesa Code (e.g. QX78TY90) or Receipt #"
               />
             </div>
@@ -273,7 +273,7 @@ export default function RecordPaymentPage({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-success hover:bg-success/90 text-success-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
               >
                 {submitting ? 'Processing Payment...' : 'Confirm Payment'}
               </button>

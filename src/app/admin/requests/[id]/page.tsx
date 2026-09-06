@@ -39,58 +39,58 @@ export default async function BusinessRequestDetails({
 
   const statusClasses =
     request.status === "approved"
-      ? "bg-green-100 text-green-700"
+      ? "bg-success/10 text-success"
       : request.status === "rejected"
-        ? "bg-red-100 text-red-700"
-        : "bg-yellow-100 text-yellow-700";
+        ? "bg-destructive/10 text-destructive"
+        : "bg-warning/10 text-warning";
 
   return (
     <main className="max-w-4xl mx-auto p-8">
       <Link
         href="/admin/requests"
-        className="text-blue-600 hover:underline"
+        className="text-primary hover:underline"
       >
         Back to Requests
       </Link>
 
-      <div className="mt-6 rounded-xl border bg-white p-8 shadow">
-        <h1 className="text-3xl font-bold mb-8">
+      <div className="mt-6 rounded-xl border border-border bg-card p-8 shadow">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">
           Business Registration Review
         </h1>
 
         <div className="grid gap-6">
           <div>
-            <p className="text-sm text-gray-500">Business Name</p>
-            <p className="font-semibold">{request.business_name}</p>
+            <p className="text-sm text-muted-foreground">Business Name</p>
+            <p className="font-semibold text-foreground">{request.business_name}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Owner Name</p>
-            <p className="font-semibold">{request.owner_name}</p>
+            <p className="text-sm text-muted-foreground">Owner Name</p>
+            <p className="font-semibold text-foreground">{request.owner_name}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Email</p>
-            <p>{request.email}</p>
+            <p className="text-sm text-muted-foreground">Email</p>
+            <p className="text-foreground">{request.email}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Phone</p>
-            <p>{request.phone}</p>
+            <p className="text-sm text-muted-foreground">Phone</p>
+            <p className="font-mono text-foreground">{request.phone}</p>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Status</p>
+            <p className="text-sm text-muted-foreground">Status</p>
             <span
-              className={`inline-flex rounded-full px-3 py-1 ${statusClasses}`}
+              className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusClasses}`}
             >
               {request.status}
             </span>
           </div>
 
           <div>
-            <p className="text-sm text-gray-500">Submitted</p>
-            <p>
+            <p className="text-sm text-muted-foreground">Submitted</p>
+            <p className="text-foreground">
               {new Date(request.created_at).toLocaleString()}
             </p>
           </div>
@@ -105,7 +105,7 @@ export default async function BusinessRequestDetails({
               resendCount={request.resend_count ?? 0}
             />
           ) : (
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               This request has already been {request.status}.
             </p>
           )}

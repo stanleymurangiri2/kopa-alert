@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -115,7 +115,7 @@ export default function CustomerReportsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading customer reports...
       </div>
     );
@@ -128,11 +128,11 @@ export default function CustomerReportsPage() {
 
         <div>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             Customer Reports
           </h1>
 
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Customer debt performance and balances.
           </p>
 
@@ -140,7 +140,7 @@ export default function CustomerReportsPage() {
 
         <button
           onClick={loadReport}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Refresh
         </button>
@@ -190,12 +190,12 @@ export default function CustomerReportsPage() {
         </div>
       )}
 
-      <div className="rounded-lg border bg-white p-5">
+      <div className="rounded-lg border border-border bg-card p-5">
 
         <div className="grid gap-4 md:grid-cols-3">
 
           <input
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             placeholder="Search customer..."
             value={search}
             onChange={(e) => {
@@ -206,7 +206,7 @@ export default function CustomerReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={startDate}
             onChange={(e) =>
               setStartDate(e.target.value)
@@ -215,7 +215,7 @@ export default function CustomerReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={endDate}
             onChange={(e) =>
               setEndDate(e.target.value)
@@ -226,42 +226,42 @@ export default function CustomerReportsPage() {
 
         <button
           onClick={loadReport}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-white hover:bg-black"
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Apply Filters
         </button>
 
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
 
         <table className="min-w-full">
 
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
 
             <tr>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Customer
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Debts
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Total Debt
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Paid
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Outstanding
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Overdue
               </th>
 
@@ -277,7 +277,7 @@ export default function CustomerReportsPage() {
 
                 <td
                   colSpan={6}
-                  className="py-10 text-center text-gray-500"
+                  className="py-10 text-center text-muted-foreground"
                 >
                   No customers found.
                 </td>
@@ -287,46 +287,46 @@ export default function CustomerReportsPage() {
             ) : (
 
               paginatedCustomers.map(
-                (customer) => (
+                (customer, i) => (
 
                   <tr
                     key={customer.id}
-                    className="border-t hover:bg-gray-50"
+                    className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                   >
 
                     <td className="px-4 py-3">
 
-                      <div className="font-medium">
+                      <div className="text-[15px] font-semibold text-foreground">
                         {customer.full_name}
                       </div>
 
-                      <div className="text-sm text-gray-500">
+                      <div className="font-mono text-sm text-muted-foreground">
                         {customer.phone}
                       </div>
 
                       {customer.email && (
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-muted-foreground">
                           {customer.email}
                         </div>
                       )}
 
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {customer.totalDebts}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-foreground">
                       KES{" "}
                       {customer.totalDebtAmount.toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3 text-green-600">
+                    <td className="px-4 py-3 font-mono text-success">
                       KES{" "}
                       {customer.totalPaid.toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3 font-semibold text-red-600">
+                    <td className="px-4 py-3 font-mono font-semibold text-destructive">
                       KES{" "}
                       {customer.outstandingBalance.toLocaleString()}
                     </td>
@@ -334,11 +334,11 @@ export default function CustomerReportsPage() {
                     <td className="px-4 py-3">
 
                       {customer.overdueDebts > 0 ? (
-                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                        <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">
                           {customer.overdueDebts}
                         </span>
                       ) : (
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                        <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-semibold text-success">
                           None
                         </span>
                       )}
@@ -365,12 +365,12 @@ export default function CustomerReportsPage() {
           onClick={() =>
             setPage((p) => p - 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Previous
         </button>
 
-        <span>
+        <span className="text-muted-foreground">
           Page {page} of {totalPages}
         </span>
 
@@ -379,7 +379,7 @@ export default function CustomerReportsPage() {
           onClick={() =>
             setPage((p) => p + 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Next
         </button>
@@ -398,17 +398,16 @@ function SummaryCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-5 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         {title}
       </p>
 
-      <h2 className="mt-2 text-2xl font-bold">
+      <h2 className="mt-2 font-mono text-2xl font-bold text-foreground">
         {value}
       </h2>
 
     </div>
   );
 }
-

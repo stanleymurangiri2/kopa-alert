@@ -114,25 +114,25 @@ export default function DebtReportsPage() {
   function badge(status: string) {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-warning/10 text-warning";
 
       case "partially_paid":
-        return "bg-blue-100 text-blue-700";
+        return "bg-info/10 text-info";
 
       case "fully_paid":
-        return "bg-green-100 text-green-700";
+        return "bg-success/10 text-success";
 
       case "overdue":
-        return "bg-red-100 text-red-700";
+        return "bg-destructive/10 text-destructive";
 
       default:
-        return "bg-gray-100";
+        return "bg-muted text-muted-foreground";
     }
   }
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading debt reports...
       </div>
     );
@@ -145,11 +145,11 @@ export default function DebtReportsPage() {
 
         <div>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             Debt Reports
           </h1>
 
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Collection performance and outstanding balances.
           </p>
 
@@ -157,7 +157,7 @@ export default function DebtReportsPage() {
 
         <button
           onClick={loadReport}
-          className="rounded bg-blue-600 px-4 py-2 text-white"
+          className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Refresh
         </button>
@@ -192,12 +192,12 @@ export default function DebtReportsPage() {
 
       )}
 
-      <div className="rounded-lg border bg-white p-4">
+      <div className="rounded-lg border border-border bg-card p-4">
 
         <div className="grid gap-4 md:grid-cols-4">
 
           <input
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             placeholder="Search customer..."
             value={search}
             onChange={(e) => {
@@ -207,7 +207,7 @@ export default function DebtReportsPage() {
           />
 
           <select
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
@@ -238,7 +238,7 @@ export default function DebtReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={startDate}
             onChange={(e) =>
               setStartDate(e.target.value)
@@ -247,7 +247,7 @@ export default function DebtReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={endDate}
             onChange={(e) =>
               setEndDate(e.target.value)
@@ -258,42 +258,42 @@ export default function DebtReportsPage() {
 
         <button
           onClick={loadReport}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-white"
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Apply Filters
         </button>
 
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
 
         <table className="min-w-full">
 
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
 
             <tr>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Customer
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Amount
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Paid
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Balance
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Due Date
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
               </th>
 
@@ -309,7 +309,7 @@ export default function DebtReportsPage() {
 
                 <td
                   colSpan={6}
-                  className="py-8 text-center text-gray-500"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No debts found.
                 </td>
@@ -318,38 +318,38 @@ export default function DebtReportsPage() {
 
             ) : (
 
-              paginatedDebts.map((debt) => (
+              paginatedDebts.map((debt, i) => (
 
                 <tr
                   key={debt.id}
-                  className="border-t"
+                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                 >
 
                   <td className="px-4 py-3">
 
-                    <div className="font-medium">
+                    <div className="text-[15px] font-semibold text-foreground">
                       {debt.customer_name}
                     </div>
 
-                    <div className="text-sm text-gray-500">
+                    <div className="font-mono text-sm text-muted-foreground">
                       {debt.phone}
                     </div>
 
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 font-mono text-foreground">
                     KES {debt.amount.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 font-mono text-success">
                     KES {debt.amount_paid.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3 font-semibold">
+                  <td className="px-4 py-3 font-mono font-semibold text-foreground">
                     KES {debt.balance.toLocaleString()}
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {new Date(
                       debt.due_date
                     ).toLocaleDateString()}
@@ -389,12 +389,12 @@ export default function DebtReportsPage() {
           onClick={() =>
             setPage((p) => p - 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Previous
         </button>
 
-        <span>
+        <span className="text-muted-foreground">
           Page {page} of {totalPages}
         </span>
 
@@ -403,7 +403,7 @@ export default function DebtReportsPage() {
           onClick={() =>
             setPage((p) => p + 1)
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Next
         </button>
@@ -422,12 +422,12 @@ function Card({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-5 shadow-sm">
-      <p className="text-sm text-gray-500">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <p className="text-sm text-muted-foreground">
         {title}
       </p>
 
-      <h2 className="mt-2 text-2xl font-bold">
+      <h2 className="mt-2 font-mono text-2xl font-bold text-foreground">
         {value}
       </h2>
     </div>

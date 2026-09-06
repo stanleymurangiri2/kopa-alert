@@ -11,7 +11,7 @@ export default function MobileMenuButton() {
       type="button"
       onClick={openMobile}
       aria-label="Open sidebar"
-      className="rounded-lg p-2 text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 md:hidden"
+      className="rounded-lg p-2 text-foreground transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary md:hidden"
     >
       <Menu className="h-5 w-5" aria-hidden="true" />
     </button>

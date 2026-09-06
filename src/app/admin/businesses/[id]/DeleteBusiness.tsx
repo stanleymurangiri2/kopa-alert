@@ -114,12 +114,12 @@ export default function DeleteBusiness({
 
   if (step === "idle") {
     return (
-      <div className="mt-10 rounded-lg border border-red-200 bg-red-50 p-6">
-        <h3 className="text-lg font-semibold text-red-800">
+      <div className="mt-10 rounded-lg border border-destructive/30 bg-destructive/10 p-6">
+        <h3 className="text-lg font-semibold text-destructive">
           Danger Zone
         </h3>
 
-        <p className="mt-1 text-sm text-red-700">
+        <p className="mt-1 text-sm text-destructive">
           Permanently delete this business and all of its data.
           This action cannot be undone.
         </p>
@@ -127,13 +127,13 @@ export default function DeleteBusiness({
         <button
           onClick={loadPreview}
           disabled={loading}
-          className="mt-4 rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700 disabled:opacity-50"
+          className="mt-4 rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
         >
           {loading ? "Loading..." : "Delete Business"}
         </button>
 
         {error && (
-          <p className="mt-3 text-sm text-red-700">
+          <p className="mt-3 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -142,24 +142,24 @@ export default function DeleteBusiness({
   }
 
   return (
-    <div className="mt-10 rounded-lg border border-red-300 bg-red-50 p-6">
-      <h3 className="text-lg font-semibold text-red-800">
+    <div className="mt-10 rounded-lg border border-destructive/40 bg-destructive/10 p-6">
+      <h3 className="text-lg font-semibold text-destructive">
         Confirm permanent deletion
       </h3>
 
-      <p className="mt-2 text-sm text-red-700">
+      <p className="mt-2 text-sm text-destructive">
         This will permanently delete{" "}
         <strong>{businessName}</strong> and all associated
         business data. This cannot be undone.
       </p>
 
       {counts && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-white p-4">
-          <p className="mb-3 text-sm font-semibold text-red-800">
+        <div className="mt-4 rounded-lg border border-destructive/30 bg-card p-4">
+          <p className="mb-3 text-sm font-semibold text-destructive">
             Data that will be permanently deleted:
           </p>
 
-          <ul className="grid gap-2 text-sm text-red-800 sm:grid-cols-2">
+          <ul className="grid gap-2 text-sm text-destructive sm:grid-cols-2">
             <li>
               {counts.customers} customer
               {counts.customers === 1 ? "" : "s"}
@@ -223,12 +223,12 @@ export default function DeleteBusiness({
         </div>
       )}
 
-      <div className="mt-5 rounded-md border border-red-300 bg-white p-4">
-        <p className="text-sm font-semibold text-red-800">
+      <div className="mt-5 rounded-md border border-destructive/40 bg-card p-4">
+        <p className="text-sm font-semibold text-destructive">
           WARNING: Permanent deletion
         </p>
 
-        <p className="mt-1 text-sm text-red-700">
+        <p className="mt-1 text-sm text-destructive">
           This will permanently remove the business, its
           customers, debts, payments, notifications, queued
           notifications, financial records, team accounts,
@@ -237,7 +237,7 @@ export default function DeleteBusiness({
         </p>
       </div>
 
-      <label className="mt-5 block text-sm font-medium text-red-800">
+      <label className="mt-5 block text-sm font-medium text-destructive">
         Type <strong>{businessName}</strong> to confirm:
       </label>
 
@@ -245,14 +245,14 @@ export default function DeleteBusiness({
         type="text"
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
-        className="mt-1 w-full rounded-md border border-red-300 px-3 py-2 text-sm"
+        className="mt-1 w-full rounded-md border border-destructive/40 bg-card text-foreground px-3 py-2 text-sm"
         placeholder={businessName}
         disabled={loading}
         autoComplete="off"
       />
 
       {error && (
-        <p className="mt-3 text-sm text-red-700">
+        <p className="mt-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -264,7 +264,7 @@ export default function DeleteBusiness({
             loading ||
             confirmText.trim() !== businessName
           }
-          className="rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700 disabled:opacity-50"
+          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
         >
           {loading
             ? "Permanently Deleting..."
@@ -279,7 +279,7 @@ export default function DeleteBusiness({
             setError(null);
           }}
           disabled={loading}
-          className="rounded-lg border px-6 py-3 text-gray-700 hover:bg-gray-100"
+          className="rounded-lg border border-border px-6 py-3 text-foreground hover:bg-accent"
         >
           Cancel
         </button>

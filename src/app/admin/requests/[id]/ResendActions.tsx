@@ -55,7 +55,7 @@ export default function ResendActions({
 
   if (remaining <= 0) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Resend limit reached ({resendCount}/{MAX_RESENDS}).
       </p>
     );
@@ -66,7 +66,7 @@ export default function ResendActions({
       <button
         onClick={resendInvitation}
         disabled={loading}
-        className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-md border border-warning px-3 py-1.5 text-xs font-medium text-warning hover:bg-warning/10 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading
           ? "Sending..."

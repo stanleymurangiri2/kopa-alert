@@ -30,8 +30,8 @@ export default function ReportsHubPage() {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Reports & Analytics</h1>
-        <p className="text-slate-500 mt-1">Access detailed audit trails, summaries, and financial reports for your business.</p>
+        <h1 className="text-3xl font-bold text-foreground">Reports & Analytics</h1>
+        <p className="text-muted-foreground mt-1">Access detailed audit trails, summaries, and financial reports for your business.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -39,21 +39,21 @@ export default function ReportsHubPage() {
           <Link
             key={card.href}
             href={card.href}
-            className="group bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition hover:border-blue-500 flex flex-col justify-between"
+            className="group bg-card rounded-xl border border-border p-6 shadow-sm hover:shadow-md transition hover:border-primary flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-3xl">{card.icon}</span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
                   {card.badge}
                 </span>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 group-hover:text-blue-600 transition">
+              <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition">
                 {card.title}
               </h2>
-              <p className="text-sm text-slate-500 mt-2">{card.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">{card.description}</p>
             </div>
-            <div className="mt-6 flex items-center text-sm font-medium text-blue-600 group-hover:translate-x-1 transition-transform">
+            <div className="mt-6 flex items-center text-sm font-medium text-primary group-hover:translate-x-1 transition-transform">
               View Detailed Report &rarr;
             </div>
           </Link>

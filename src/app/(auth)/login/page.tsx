@@ -112,16 +112,16 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md bg-card rounded-xl shadow-lg border border-border p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">KopaAlert</h1>
+          <h1 className="text-3xl font-bold text-primary">KopaAlert</h1>
 
-          <p className="mt-2 text-gray-600">Sign in to continue</p>
+          <p className="mt-2 text-muted-foreground">Sign in to continue</p>
         </div>
 
         {error && (
-          <div className="mb-5 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          <div className="mb-5 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -130,7 +130,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Email Address
             </label>
@@ -142,7 +142,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="owner@business.com"
-              className="w-full rounded-md border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-md border border-border bg-card px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
               disabled={loading}
             />
           </div>
@@ -150,7 +150,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-foreground mb-1"
             >
               Password
             </label>
@@ -163,14 +163,14 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full rounded-md border border-gray-300 px-4 py-3 pr-20 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-border bg-card px-4 py-3 pr-20 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 disabled={loading}
               />
 
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-blue-600 hover:text-blue-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-primary hover:text-primary/80"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -180,7 +180,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-blue-600 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
@@ -189,17 +189,17 @@ export default function LoginPage() {
         <div className="text-right mt-4">
           <Link
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             Forgot Password?
           </Link>
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <Link
             href="/register"
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-primary hover:underline"
           >
             Create Account
           </Link>

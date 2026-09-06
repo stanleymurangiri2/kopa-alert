@@ -144,25 +144,25 @@ export default function SmsReportsPage() {
     switch (status) {
       case "delivered":
       case "sent":
-        return "bg-green-100 text-green-700";
+        return "bg-success/10 text-success";
 
       case "failed":
-        return "bg-red-100 text-red-700";
+        return "bg-destructive/10 text-destructive";
 
       case "pending":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-warning/10 text-warning";
 
       case "queued":
-        return "bg-blue-100 text-blue-700";
+        return "bg-info/10 text-info";
 
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-muted text-muted-foreground";
     }
   }
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading SMS reports...
       </div>
     );
@@ -175,11 +175,11 @@ export default function SmsReportsPage() {
 
         <div>
 
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold text-foreground">
             SMS Reports
           </h1>
 
-          <p className="text-gray-500">
+          <p className="text-muted-foreground">
             Delivery statistics and
             notification history.
           </p>
@@ -188,7 +188,7 @@ export default function SmsReportsPage() {
 
         <button
           onClick={loadReport}
-          className="rounded bg-blue-600 px-4 py-2 text-white"
+          className="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Refresh
         </button>
@@ -248,12 +248,12 @@ export default function SmsReportsPage() {
 
       )}
 
-      <div className="rounded-lg border bg-white p-5">
+      <div className="rounded-lg border border-border bg-card p-5">
 
         <div className="grid gap-4 md:grid-cols-4">
 
           <input
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             placeholder="Search..."
             value={search}
             onChange={(e) => {
@@ -265,7 +265,7 @@ export default function SmsReportsPage() {
           />
 
           <select
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(
@@ -302,7 +302,7 @@ export default function SmsReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={startDate}
             onChange={(e) =>
               setStartDate(
@@ -313,7 +313,7 @@ export default function SmsReportsPage() {
 
           <input
             type="date"
-            className="rounded border p-2"
+            className="rounded-md border border-border bg-card p-2 text-foreground"
             value={endDate}
             onChange={(e) =>
               setEndDate(
@@ -326,16 +326,16 @@ export default function SmsReportsPage() {
 
         <button
           onClick={loadReport}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-white"
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
         >
           Apply Filters
         </button>
 
       </div>
 
-      <div className="rounded-lg border bg-white p-5">
+      <div className="rounded-lg border border-border bg-card p-5">
 
-        <h2 className="mb-4 text-lg font-semibold">
+        <h2 className="mb-4 text-lg font-semibold text-foreground">
           Daily SMS Trends
         </h2>
 
@@ -345,34 +345,34 @@ export default function SmsReportsPage() {
 
             <div
               key={trend.date}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded border p-3"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border border-border p-3"
             >
 
-              <span>
+              <span className="text-foreground">
                 {trend.date}
               </span>
 
               <div className="flex flex-wrap gap-4 text-sm">
 
-                <span>
+                <span className="text-muted-foreground">
                   Total:
                   {" "}
                   {trend.total}
                 </span>
 
-                <span className="text-green-600">
+                <span className="text-success">
                   Delivered:
                   {" "}
                   {trend.delivered}
                 </span>
 
-                <span className="text-red-600">
+                <span className="text-destructive">
                   Failed:
                   {" "}
                   {trend.failed}
                 </span>
 
-                <span className="text-yellow-600">
+                <span className="text-warning">
                   Pending:
                   {" "}
                   {trend.pending}
@@ -388,35 +388,35 @@ export default function SmsReportsPage() {
 
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
 
         <table className="min-w-full">
 
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
 
             <tr>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Customer
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Phone
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Provider
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Cost
               </th>
 
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Sent
               </th>
 
@@ -433,7 +433,7 @@ export default function SmsReportsPage() {
 
                 <td
                   colSpan={6}
-                  className="py-8 text-center text-gray-500"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No SMS records found.
                 </td>
@@ -443,23 +443,23 @@ export default function SmsReportsPage() {
             ) : (
 
               paginatedMessages.map(
-                (sms) => (
+                (sms, i) => (
 
                   <tr
                     key={sms.id}
-                    className="border-t"
+                    className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                   >
 
                     <td className="px-4 py-3">
 
-                      <div className="font-medium">
+                      <div className="text-[15px] font-semibold text-foreground">
                         {sms.customer_name ??
                           "-"}
                       </div>
 
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-sm text-muted-foreground">
                       {sms.phone}
                     </td>
 
@@ -475,17 +475,17 @@ export default function SmsReportsPage() {
 
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {sms.provider ??
                         "-"}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 font-mono text-foreground">
                       KES{" "}
                       {sms.cost.toLocaleString()}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {sms.sent_at
                         ? new Date(
                             sms.sent_at
@@ -515,12 +515,12 @@ export default function SmsReportsPage() {
               (p) => p - 1
             )
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Previous
         </button>
 
-        <span>
+        <span className="text-muted-foreground">
           Page {page} of{" "}
           {totalPages}
         </span>
@@ -534,7 +534,7 @@ export default function SmsReportsPage() {
               (p) => p + 1
             )
           }
-          className="rounded border px-4 py-2 disabled:opacity-50"
+          className="rounded-md border border-border px-4 py-2 text-foreground hover:bg-accent disabled:opacity-50"
         >
           Next
         </button>
@@ -553,13 +553,13 @@ function SummaryCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-lg border bg-white p-5 shadow-sm">
+    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         {title}
       </p>
 
-      <h2 className="mt-2 text-2xl font-bold">
+      <h2 className="mt-2 font-mono text-2xl font-bold text-foreground">
         {value}
       </h2>
 

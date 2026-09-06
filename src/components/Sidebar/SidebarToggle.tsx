@@ -42,16 +42,16 @@ export function SidebarToggle() {
         justify-center
         rounded-lg
         border
-        border-gray-200
-        bg-white
-        text-gray-700
+        border-border
+        bg-card
+        text-foreground
         transition-all
         duration-200
-        hover:bg-gray-100
-        hover:text-blue-600
+        hover:bg-accent
+        hover:text-primary
         focus:outline-none
         focus:ring-2
-        focus:ring-blue-500
+        focus:ring-primary
         focus:ring-offset-2
         active:scale-95
       "

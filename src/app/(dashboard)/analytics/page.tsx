@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 text-muted-foreground">
         Loading analytics...
       </div>
     );
@@ -173,11 +173,11 @@ export default function AnalyticsPage() {
     <div className="p-6 space-y-6">
 
       <div>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-foreground">
           Analytics Dashboard
         </h1>
 
-        <p className="text-gray-500">
+        <p className="text-muted-foreground">
           Business performance overview
         </p>
       </div>
@@ -187,13 +187,13 @@ export default function AnalyticsPage() {
         {cards.map((card) => (
           <div
             key={card.title}
-            className="rounded-lg border bg-white p-6 shadow-sm"
+            className="rounded-lg border border-border bg-card p-6 shadow-sm"
           >
-            <h2 className="text-sm text-gray-500">
+            <h2 className="text-sm text-muted-foreground">
               {card.title}
             </h2>
 
-            <p className="mt-3 text-3xl font-bold">
+            <p className="mt-3 font-mono text-3xl font-bold text-foreground">
               {card.value}
             </p>
           </div>

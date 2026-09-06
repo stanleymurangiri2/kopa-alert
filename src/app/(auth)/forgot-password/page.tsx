@@ -55,15 +55,15 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-md rounded-xl bg-white shadow-lg border border-slate-200 p-8">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-md rounded-xl bg-card shadow-lg border border-border p-8">
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Forgot Password
           </h1>
 
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Enter your email address to receive a password reset link.
           </p>
         </div>
@@ -72,8 +72,8 @@ export default function ForgotPasswordPage() {
           <div
             className={`mb-5 rounded-lg border px-4 py-3 text-sm ${
               message.type === 'success'
-                ? 'border-green-200 bg-green-50 text-green-700'
-                : 'border-red-200 bg-red-50 text-red-700'
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-destructive/30 bg-destructive/10 text-destructive'
             }`}
           >
             {message.text}
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
           className="space-y-5"
         >
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-foreground">
               Email Address
             </label>
 
@@ -95,23 +95,23 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="owner@business.com"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-3 text-primary-foreground font-medium hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-slate-600">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           <Link
             href="/login"
-            className="text-blue-600 font-semibold hover:underline"
+            className="text-primary font-semibold hover:underline"
           >
             Back to Login
           </Link>

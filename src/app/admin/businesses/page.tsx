@@ -25,38 +25,38 @@ export default async function BusinessesPage() {
   return (
     <main className="p-8">
 
-      <h1 className="mb-8 text-3xl font-bold">
+      <h1 className="mb-8 text-3xl font-bold text-foreground">
         Business Management
       </h1>
 
-      <div className="overflow-x-auto rounded-xl bg-white shadow">
+      <div className="overflow-x-auto rounded-xl bg-card border border-border shadow">
 
         <table className="w-full">
 
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
             <tr>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Code
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Business
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Phone
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Email
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Action
               </th>
 
@@ -66,38 +66,38 @@ export default async function BusinessesPage() {
           <tbody>
 
             {businesses && businesses.length > 0 ? (
-              businesses.map((business) => (
+              businesses.map((business, i) => (
 
                 <tr
                   key={business.id}
-                  className="border-t"
+                  className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}
                 >
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                     {business.business_code}
                   </td>
 
-                  <td className="px-6 py-4 font-medium">
+                  <td className="px-6 py-4 text-[15px] font-semibold text-foreground">
                     {business.business_name}
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
                     {business.phone}
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-muted-foreground">
                     {business.email}
                   </td>
 
                   <td className="px-6 py-4">
 
                     <span
-                      className={`rounded-full px-3 py-1 ${
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
                         business.status === "active"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-success/10 text-success"
                           : business.status === "suspended"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {business.status}
@@ -109,7 +109,7 @@ export default async function BusinessesPage() {
 
                     <Link
                       href={`/admin/businesses/${business.id}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       View
                     </Link>
@@ -123,7 +123,7 @@ export default async function BusinessesPage() {
               <tr>
                 <td
                   colSpan={6}
-                  className="px-6 py-10 text-center text-gray-500"
+                  className="px-6 py-10 text-center text-muted-foreground"
                 >
                   No registered businesses found.
                 </td>

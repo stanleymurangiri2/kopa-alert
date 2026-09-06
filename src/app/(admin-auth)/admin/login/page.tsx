@@ -82,14 +82,14 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-lg">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-lg">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-blue-700">
+          <h1 className="text-3xl font-bold text-primary">
             KopaAlert
           </h1>
 
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-muted-foreground">
             Super Administrator Login
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
         {error && (
           <div
             role="alert"
-            className="mb-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+            className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
           >
             {error}
           </div>
@@ -107,7 +107,7 @@ export default function AdminLoginPage() {
           <div>
             <label
               htmlFor="admin-email"
-              className="mb-1 block text-sm font-medium"
+              className="mb-1 block text-sm font-medium text-foreground"
             >
               Email Address
             </label>
@@ -118,7 +118,7 @@ export default function AdminLoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none focus:border-primary"
               placeholder="admin@kopaalert.com"
               disabled={loading}
             />
@@ -127,7 +127,7 @@ export default function AdminLoginPage() {
           <div>
             <label
               htmlFor="admin-password"
-              className="mb-1 block text-sm font-medium"
+              className="mb-1 block text-sm font-medium text-foreground"
             >
               Password
             </label>
@@ -138,7 +138,7 @@ export default function AdminLoginPage() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none focus:border-primary"
               placeholder="Enter password"
               disabled={loading}
             />
@@ -147,7 +147,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Signing In..." : "Sign In as Super Admin"}
           </button>

@@ -83,14 +83,14 @@ export default function SummaryCards({
         return (
           <div
             key={card.key}
-            className="rounded-xl border bg-white p-6 shadow-sm transition hover:shadow-md"
+            className="rounded-xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {card.title}
                 </p>
-                <h3 className="mt-2 text-2xl font-bold">
+                <h3 className="mt-2 font-mono text-2xl font-bold text-foreground">
                   {card.currency
                     ? formatCurrency(Number(value))
                     : value}

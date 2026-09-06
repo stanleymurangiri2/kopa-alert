@@ -60,34 +60,34 @@ export default function AlertsPage() {
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Alerts & Notifications</h1>
-          <p className="text-slate-500 mt-1">Manage scheduled SMS alerts, view queue status, and trigger manual dispatches.</p>
+          <h1 className="text-3xl font-bold text-foreground">Alerts & Notifications</h1>
+          <p className="text-muted-foreground mt-1">Manage scheduled SMS alerts, view queue status, and trigger manual dispatches.</p>
         </div>
         <button
           onClick={handleDispatchAlerts}
           disabled={triggering}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
+          className="bg-teal hover:bg-teal/90 text-teal-foreground font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
         >
           {triggering ? "Dispatching..." : "⚡ Dispatch Pending Alerts"}
         </button>
       </div>
 
       {message && (
-        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-sm">
+        <div className="p-4 rounded-lg bg-info/10 border border-info/30 text-info text-sm">
           {message}
         </div>
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-slate-500">Loading alerts queue...</div>
+        <div className="p-8 text-center text-muted-foreground">Loading alerts queue...</div>
       ) : alerts.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
+        <div className="bg-card rounded-xl border border-border p-12 text-center text-muted-foreground">
           No alert notifications currently queued.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-sm">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
+        <div className="bg-card rounded-xl border border-border overflow-x-auto shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-primary text-primary-foreground font-bold uppercase tracking-wide text-xs">
               <tr>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Phone</th>
@@ -97,22 +97,22 @@ export default function AlertsPage() {
                 <th className="px-6 py-4">Scheduled / Sent At</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
-              {alerts.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 font-medium text-slate-900">{item.customers?.full_name || "N/A"}</td>
-                  <td className="px-6 py-4">{item.recipient_phone}</td>
-                  <td className="px-6 py-4 max-w-md whitespace-normal break-words">{item.message_body}</td>
-                  <td className="px-6 py-4 uppercase text-xs font-semibold tracking-wider text-slate-500">{item.channel}</td>
+            <tbody className="divide-y divide-border">
+              {alerts.map((item, i) => (
+                <tr key={item.id} className={`hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
+                  <td className="px-6 py-4 text-[15px] font-semibold text-foreground">{item.customers?.full_name || "N/A"}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{item.recipient_phone}</td>
+                  <td className="px-6 py-4 max-w-md whitespace-normal break-words text-muted-foreground">{item.message_body}</td>
+                  <td className="px-6 py-4 uppercase text-xs font-semibold tracking-wider text-muted-foreground">{item.channel}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      item.status === 'sent' ? 'bg-green-100 text-green-800' :
-                      item.status === 'failed' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                      item.status === 'sent' ? 'bg-success/10 text-success' :
+                      item.status === 'failed' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
                     }`}>
                       {item.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-xs text-slate-500">
+                  <td className="px-6 py-4 text-xs text-muted-foreground">
                     {new Date(item.sent_at || item.created_at).toLocaleString()}
                   </td>
                 </tr>

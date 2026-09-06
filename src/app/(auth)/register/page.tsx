@@ -89,14 +89,14 @@ export default function BusinessRegisterPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-lg border border-slate-200 p-8">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-lg rounded-xl bg-card shadow-lg border border-border p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-3xl font-bold text-foreground">
             Register Your Business
           </h1>
 
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Join KopaAlert and automate customer debt reminders through SMS
             notifications.
           </p>
@@ -106,8 +106,8 @@ export default function BusinessRegisterPage() {
           <div
             className={`mb-5 whitespace-pre-line rounded-lg border px-4 py-3 text-sm ${
               message.type === "success"
-                ? "border-green-200 bg-green-50 text-green-700"
-                : "border-red-200 bg-red-50 text-red-700"
+                ? "border-success/30 bg-success/10 text-success"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
             }`}
           >
             {message.text}
@@ -116,7 +116,7 @@ export default function BusinessRegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-foreground">
               Business Name
             </label>
 
@@ -127,12 +127,12 @@ export default function BusinessRegisterPage() {
               value={formData.business_name}
               onChange={handleChange}
               placeholder="ABC Electronics"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-foreground">
               Owner Name
             </label>
 
@@ -143,12 +143,12 @@ export default function BusinessRegisterPage() {
               value={formData.owner_name}
               onChange={handleChange}
               placeholder="John Doe"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-foreground">
               Phone Number
             </label>
 
@@ -159,12 +159,12 @@ export default function BusinessRegisterPage() {
               value={formData.phone}
               onChange={handleChange}
               placeholder="+254712345678"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 text-foreground">
               Email Address
             </label>
 
@@ -175,24 +175,24 @@ export default function BusinessRegisterPage() {
               value={formData.email}
               onChange={handleChange}
               placeholder="owner@business.com"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 focus:border-blue-600 focus:outline-none"
+              className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 text-white font-medium transition hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-primary py-3 text-primary-foreground font-medium transition hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? "Submitting..." : "Register Business"}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-slate-600">
+        <div className="mt-8 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-semibold text-blue-600 hover:underline"
+            className="font-semibold text-primary hover:underline"
           >
             Sign In
           </Link>

@@ -30,11 +30,11 @@ export default function AdminSettingsPage() {
   return (
     <main className="p-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">
+        <h1 className="text-3xl font-bold text-foreground">
           Platform Settings
         </h1>
 
-        <p className="mt-2 text-gray-500">
+        <p className="mt-2 text-muted-foreground">
           Platform-wide configuration and administration.
         </p>
       </div>
@@ -43,20 +43,20 @@ export default function AdminSettingsPage() {
         {settings.map((setting) => (
           <section
             key={setting.title}
-            className="rounded-xl bg-white p-6 shadow dark:bg-slate-900"
+            className="rounded-xl bg-card border border-border p-6 shadow"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100">
+                <h2 className="text-lg font-semibold text-foreground">
                   {setting.title}
                 </h2>
 
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {setting.description}
                 </p>
               </div>
 
-              <span className="shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-slate-800 dark:text-slate-300">
+              <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                 {setting.status}
               </span>
             </div>
@@ -64,12 +64,12 @@ export default function AdminSettingsPage() {
         ))}
       </div>
 
-      <div className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-6 dark:border-blue-900 dark:bg-blue-950/30">
-        <h2 className="font-semibold text-blue-900 dark:text-blue-200">
+      <div className="mt-8 rounded-xl border border-info/30 bg-info/10 p-6">
+        <h2 className="font-semibold text-info">
           Platform settings are not configurable yet
         </h2>
 
-        <p className="mt-2 text-sm text-blue-800 dark:text-blue-300">
+        <p className="mt-2 text-sm text-info">
           The settings displayed above are planned platform controls.
           No credentials, approval rules, or retention settings are
           changed from this page at the moment.
