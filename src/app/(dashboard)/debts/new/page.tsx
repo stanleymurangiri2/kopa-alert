@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Customer } from '@/types/database.types';
 import { useToast } from '@/components/ui/ToastProvider';
+import { Loader2 } from 'lucide-react';
 
 type CustomerWithCredit = Customer & { available_credit?: number };
 
@@ -261,8 +262,9 @@ export default function NewDebtPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 bg-teal hover:bg-teal/90 text-teal-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-teal hover:bg-teal/90 text-teal-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
               >
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? 'Recording Debt...' : 'Record Debt'}
               </button>
             </div>

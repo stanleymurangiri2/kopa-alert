@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/ToastProvider';
+import { Loader2 } from 'lucide-react';
 
 export default function RecordPaymentPage({
   params,
@@ -263,8 +264,9 @@ export default function RecordPaymentPage({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 px-4 bg-success hover:bg-success/90 text-success-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-success hover:bg-success/90 text-success-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
               >
+                {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? 'Processing Payment...' : 'Confirm Payment'}
               </button>
             </div>

@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Clock,
   Hourglass,
+  Loader2,
   Pencil,
   Trash2,
 } from 'lucide-react';
@@ -381,8 +382,9 @@ export default function DebtsPage() {
                 type="button"
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
               >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
 export default function EditDebtPage({
   params,
@@ -159,8 +160,9 @@ export default function EditDebtPage({
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-sm rounded-md shadow-sm disabled:opacity-50"
             >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {saving ? 'Saving Updates...' : 'Update Debt Record'}
             </button>
           </div>

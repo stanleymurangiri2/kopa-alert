@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Ban, Download, Eye, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { Ban, Download, Eye, Loader2, Pencil, Search, Star, Trash2 } from 'lucide-react';
 import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -484,8 +484,9 @@ export default function CustomersPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
@@ -516,8 +517,9 @@ export default function CustomersPage() {
                 type="button"
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
               >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Loader2, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastProvider';
 
@@ -279,7 +279,7 @@ export default function TeamPage() {
           disabled={inviting}
           className="mt-6 flex items-center gap-2 rounded-md bg-employee px-6 py-3 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
         >
-          <UserPlus className="h-4 w-4" />
+          {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
           {inviting ? 'Inviting...' : '+ Invite Employee'}
         </button>
       </div>
@@ -416,8 +416,9 @@ export default function TeamPage() {
                 type="button"
                 onClick={confirmRoleChange}
                 disabled={busyMemberId === memberPendingRoleChange.id}
-                className="rounded-md bg-employee px-4 py-2 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-employee px-4 py-2 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
               >
+                {busyMemberId === memberPendingRoleChange.id && <Loader2 className="h-4 w-4 animate-spin" />}
                 {busyMemberId === memberPendingRoleChange.id ? 'Updating...' : 'Confirm'}
               </button>
             </div>
@@ -447,8 +448,9 @@ export default function TeamPage() {
                 type="button"
                 onClick={confirmRemove}
                 disabled={busyMemberId === memberPendingRemoval.id}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
               >
+                {busyMemberId === memberPendingRemoval.id && <Loader2 className="h-4 w-4 animate-spin" />}
                 {busyMemberId === memberPendingRemoval.id ? 'Removing...' : 'Remove'}
               </button>
             </div>

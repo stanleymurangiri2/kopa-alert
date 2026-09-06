@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, Clock, FileText, Send, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, FileText, Loader2, Send, XCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getCustomers } from '@/lib/supabase/customers';
 import { useToast } from '@/components/ui/ToastProvider';
@@ -534,8 +534,9 @@ export default function NotificationsPage() {
                 type="button"
                 onClick={sendBulk}
                 disabled={bulkSending || bulkSelected.size === 0}
-                className="rounded-md bg-teal px-4 py-2 text-sm font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-teal px-4 py-2 text-sm font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
               >
+                {bulkSending && <Loader2 className="h-4 w-4 animate-spin" />}
                 {bulkSending
                   ? 'Sending...'
                   : `Send to ${bulkSelected.size} recipient${bulkSelected.size === 1 ? '' : 's'}`}

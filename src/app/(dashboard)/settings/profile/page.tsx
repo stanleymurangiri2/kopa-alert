@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastProvider';
+import { Loader2 } from 'lucide-react';
 
 type UserProfile = {
   id: string;
@@ -266,8 +267,9 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="w-full rounded-md bg-primary py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
 

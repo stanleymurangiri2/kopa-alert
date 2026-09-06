@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/ToastProvider';
+import { Loader2 } from 'lucide-react';
 
 type ReminderType = 'upcoming' | 'due_today' | 'overdue';
 
@@ -244,8 +245,9 @@ export default function NotificationTemplatesPage() {
           <button
             onClick={() => saveTemplate(template)}
             disabled={savingId === template.id}
-            className="rounded-md bg-primary px-5 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
+            {savingId === template.id && <Loader2 className="h-4 w-4 animate-spin" />}
             {savingId === template.id ? 'Saving...' : 'Save Template'}
           </button>
 

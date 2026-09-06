@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Loader2 } from "lucide-react";
 
 export default function AlertsPage() {
   const supabase = createClient();
@@ -66,8 +67,9 @@ export default function AlertsPage() {
         <button
           onClick={handleDispatchAlerts}
           disabled={triggering}
-          className="bg-teal hover:bg-teal/90 text-teal-foreground font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 bg-teal hover:bg-teal/90 text-teal-foreground font-medium px-5 py-2.5 rounded-lg transition disabled:opacity-50"
         >
+          {triggering && <Loader2 className="h-4 w-4 animate-spin" />}
           {triggering ? "Dispatching..." : "⚡ Dispatch Pending Alerts"}
         </button>
       </div>

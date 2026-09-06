@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createCustomer } from '@/lib/supabase/customers';
 import { createClient } from '@/lib/supabase/client';
 import { normalizeKenyanPhone } from '@/lib/utils/phone';
+import { Loader2 } from 'lucide-react';
 
 export default function NewCustomerPage() {
   const router = useRouter();
@@ -136,8 +137,9 @@ export default function NewCustomerPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-teal py-2.5 font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-teal py-2.5 font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
           >
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? 'Saving...' : 'Add Customer'}
           </button>
         </form>
