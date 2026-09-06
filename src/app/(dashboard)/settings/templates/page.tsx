@@ -20,8 +20,10 @@ export default function NotificationTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [businessId, setBusinessId] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
 
   useEffect(() => {
     loadTemplates();
@@ -64,8 +66,8 @@ export default function NotificationTemplatesPage() {
   }
 
   async function saveTemplate(template: Template) {
-    setSaving(true);
-    setMessage('');
+    setSavingId(template.id);
+    setMessage(null);
 
     const { error } = await supabase
       .from('notification_templates')
@@ -77,13 +79,13 @@ export default function NotificationTemplatesPage() {
       .eq('id', template.id);
 
     if (error) {
-      setMessage(error.message);
-      setSaving(false);
+      setMessage({ type: 'error', text: error.message });
+      setSavingId(null);
       return;
     }
 
-    setSaving(false);
-    setMessage('Template updated successfully.');
+    setSavingId(null);
+    setMessage({ type: 'success', text: 'Template updated successfully.' });
   }
 
   function updateTemplate(
@@ -125,8 +127,20 @@ export default function NotificationTemplatesPage() {
       </div>
 
       {message && (
-        <div className="rounded-md border border-success/30 bg-success/10 p-3 text-success">
-          {message}
+        <div
+          className={`rounded-md border p-3 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      {templates.length === 0 && (
+        <div className="rounded-lg border border-border bg-card p-6 text-muted-foreground shadow-sm">
+          No notification templates found for this business.
         </div>
       )}
 
@@ -139,9 +153,15 @@ export default function NotificationTemplatesPage() {
 
           <div className="flex items-center justify-between">
 
-            <h2 className="text-lg font-semibold capitalize text-foreground">
-              {template.type.replace('_', ' ')}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold capitalize text-foreground">
+                {template.type.replace('_', ' ')}
+              </h2>
+
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold uppercase text-muted-foreground">
+                {template.channel}
+              </span>
+            </div>
 
             <label className="flex items-center gap-2">
 
@@ -237,10 +257,10 @@ export default function NotificationTemplatesPage() {
 
           <button
             onClick={() => saveTemplate(template)}
-            disabled={saving}
+            disabled={savingId === template.id}
             className="rounded-md bg-primary px-5 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Template'}
+            {savingId === template.id ? 'Saving...' : 'Save Template'}
           </button>
 
         </div>
