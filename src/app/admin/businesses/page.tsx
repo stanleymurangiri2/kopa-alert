@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,12 +28,13 @@ const PAGE_SIZE = 15;
 
 export default function BusinessesPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
 
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [customerCounts, setCustomerCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [statusFilter, setStatusFilter] = useState<"all" | Business["status"]>("all");
   const [page, setPage] = useState(1);
 

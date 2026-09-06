@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Ban, Download, Eye, Pencil, Search, Star, Trash2 } from 'lucide-react';
 import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
@@ -110,11 +111,13 @@ function exportCsv(rows: (Customer & { outstanding: number; status: CustomerStat
 }
 
 export default function CustomersPage() {
+  const searchParams = useSearchParams();
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortByRating, setSortByRating] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [statusFilter, setStatusFilter] = useState<'All' | CustomerStatus>('All');
 
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);

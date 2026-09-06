@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/components/layout/sidebar-context';
 import IdleTimeout from '@/components/auth/IdleTimeout';
 import ThemeToggle from '@/components/layout/ThemeToggle';
 import UserAvatar from '@/components/layout/UserAvatar';
+import GlobalSearchBar from '@/components/layout/GlobalSearchBar';
 
 export default async function DashboardLayout({
   children,
@@ -42,6 +43,9 @@ export default async function DashboardLayout({
                 <p className="text-xs text-muted-foreground">{businessName}</p>
               </div>
             </div>
+
+            <GlobalSearchBar href="/customers" placeholder="Search customer, debt ID, or phone..." />
+
             <div className="flex items-center gap-3">
               <ThemeToggle />
               <UserAvatar name={profile?.name} />

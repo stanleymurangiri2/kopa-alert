@@ -9,6 +9,7 @@ import {
 import { sidebarMenus } from "@/sidebar-config";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import UserAvatar from "@/components/layout/UserAvatar";
+import GlobalSearchBar from "@/components/layout/GlobalSearchBar";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,8 @@ export default async function AdminLayout({
                 KopaAlert
               </span>
             </div>
+
+            <GlobalSearchBar href="/admin/businesses" placeholder="Search business, code, email, or phone..." />
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
