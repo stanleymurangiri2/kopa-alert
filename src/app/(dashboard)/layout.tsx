@@ -44,7 +44,7 @@ export default async function DashboardLayout({
               </div>
             </div>
 
-            <GlobalSearchBar href="/customers" placeholder="Search customer, debt ID, or phone..." />
+            <GlobalSearchBar href="/customers" placeholder="Search customer name, phone, or email..." />
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
