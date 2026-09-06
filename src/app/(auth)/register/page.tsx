@@ -25,6 +25,7 @@ export default function BusinessRegisterPage() {
     email: "",
   });
 
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -44,6 +45,14 @@ export default function BusinessRegisterPage() {
     e.preventDefault();
 
     setMessage(null);
+
+    if (!agreedToTerms) {
+      setMessage({
+        type: "error",
+        text: "You must agree to the Terms of Service and Privacy Policy to register.",
+      });
+      return;
+    }
 
     if (!isValidKenyanPhone(formData.phone)) {
       setMessage({
@@ -190,9 +199,37 @@ export default function BusinessRegisterPage() {
             />
           </div>
 
+          <label className="flex items-start gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              I agree to the{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                className="font-medium text-primary hover:underline"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="font-medium text-primary hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !agreedToTerms}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-primary-foreground font-medium transition hover:bg-primary/90 disabled:opacity-50"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}

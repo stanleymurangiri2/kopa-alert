@@ -4,6 +4,7 @@ import './globals.css';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/ToastProvider';
+import CookieConsentBanner from '@/components/layout/CookieConsentBanner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,7 +32,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            {children}
+            <CookieConsentBanner />
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
