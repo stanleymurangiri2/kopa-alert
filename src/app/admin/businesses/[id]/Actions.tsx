@@ -12,21 +12,9 @@ export default function Actions({
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   async function updateBusiness(nextStatus: string) {
-    if (loading) return;
-
-    const action =
-      nextStatus === "suspended"
-        ? "suspend"
-        : "activate";
-
-    const confirmed = confirm(
-      `Are you sure you want to ${action} this business?`
-    );
-
-    if (!confirmed) return;
-
     setLoading(true);
 
     try {
@@ -72,27 +60,75 @@ export default function Actions({
     }
   }
 
-  return (
-    <div className="flex gap-4">
-      {status === "approved" && (
-        <button
-          onClick={() => updateBusiness("suspended")}
-          disabled={loading}
-          className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? "Processing..." : "Suspend Business"}
-        </button>
-      )}
+  async function confirmPendingStatus() {
+    const nextStatus = pendingStatus;
+    setPendingStatus(null);
 
-      {status === "suspended" && (
-        <button
-          onClick={() => updateBusiness("approved")}
-          disabled={loading}
-          className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? "Processing..." : "Activate Business"}
-        </button>
+    if (nextStatus) {
+      await updateBusiness(nextStatus);
+    }
+  }
+
+  const isSuspending = pendingStatus === "suspended";
+
+  return (
+    <>
+      <div className="flex gap-4">
+        {status === "approved" && (
+          <button
+            onClick={() => setPendingStatus("suspended")}
+            disabled={loading}
+            className="rounded-lg bg-destructive px-6 py-3 text-destructive-foreground hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Processing..." : "Suspend Business"}
+          </button>
+        )}
+
+        {status === "suspended" && (
+          <button
+            onClick={() => setPendingStatus("approved")}
+            disabled={loading}
+            className="rounded-lg bg-success px-6 py-3 text-success-foreground hover:bg-success/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Processing..." : "Activate Business"}
+          </button>
+        )}
+      </div>
+
+      {pendingStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">
+              {isSuspending ? "Suspend this business?" : "Activate this business?"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {isSuspending
+                ? "The business owner and their team will lose access to their KopaAlert account until it's reactivated."
+                : "The business owner and their team will regain access to their KopaAlert account."}
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingStatus(null)}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmPendingStatus}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  isSuspending
+                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    : "bg-success text-success-foreground hover:bg-success/90"
+                }`}
+              >
+                {isSuspending ? "Suspend" : "Activate"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    </div>
+    </>
   );
 }
