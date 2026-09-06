@@ -30,8 +30,12 @@ export default function AdminRequestsPage() {
   const [requests, setRequests] = useState<BusinessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
   const [processing, setProcessing] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'all'>('pending');
 
   useEffect(() => {
     loadRequests();
@@ -64,9 +68,18 @@ export default function AdminRequestsPage() {
     [requests]
   );
 
+  const displayedRequests = useMemo(
+    () =>
+      statusFilter === 'pending'
+        ? requests.filter((r) => r.status === 'pending')
+        : requests,
+    [requests, statusFilter]
+  );
+
   async function approveRequest(requestId: string) {
     setProcessing(requestId);
     setError('');
+    setMessage(null);
 
     try {
       const response = await fetch('/api/admin/approve', {
@@ -83,19 +96,26 @@ export default function AdminRequestsPage() {
         throw new Error(result.error || 'Approval failed.');
       }
 
-      alert(
-        'Business approved successfully. The owner can now access the KopaAlert account.'
-      );
+      if (result.emailSent === false) {
+        setMessage({
+          type: 'error',
+          text: 'Business approved, but the approval email failed to send. The owner won’t have their login details — open this request and use Resend Invitation, or share credentials manually.',
+        });
+      } else {
+        setMessage({
+          type: 'success',
+          text: 'Business approved successfully. The owner can now access the KopaAlert account.',
+        });
+      }
 
       await loadRequests();
     } catch (err) {
       console.error('Approval error:', err);
 
-      alert(
-        err instanceof Error
-          ? err.message
-          : 'Approval failed. Please try again.'
-      );
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Approval failed. Please try again.',
+      });
     } finally {
       setProcessing(null);
     }
@@ -104,6 +124,7 @@ export default function AdminRequestsPage() {
   async function rejectRequest(requestId: string) {
     setProcessing(requestId);
     setError('');
+    setMessage(null);
 
     try {
       const response = await fetch(
@@ -122,17 +143,23 @@ export default function AdminRequestsPage() {
         throw new Error(result.error || 'Rejection failed.');
       }
 
-      alert('Business request rejected successfully.');
+      if (result.emailSent === false) {
+        setMessage({
+          type: 'error',
+          text: 'Registration rejected, but the notification email failed to send. The applicant won’t be told automatically — consider contacting them directly.',
+        });
+      } else {
+        setMessage({ type: 'success', text: 'Business request rejected successfully.' });
+      }
 
       await loadRequests();
     } catch (err) {
       console.error('Rejection error:', err);
 
-      alert(
-        err instanceof Error
-          ? err.message
-          : 'Rejection failed. Please try again.'
-      );
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Rejection failed. Please try again.',
+      });
     } finally {
       setProcessing(null);
     }
@@ -182,6 +209,29 @@ export default function AdminRequestsPage() {
         </div>
       )}
 
+      {message && (
+        <div
+          className={`rounded-lg border p-4 text-sm ${
+            message.type === 'success'
+              ? 'border-success/30 bg-success/10 text-success'
+              : 'border-destructive/30 bg-destructive/10 text-destructive'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as 'pending' | 'all')}
+          className="rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+        >
+          <option value="pending">Pending only</option>
+          <option value="all">All requests</option>
+        </select>
+      </div>
+
       <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="bg-primary">
@@ -211,17 +261,19 @@ export default function AdminRequestsPage() {
           </thead>
 
           <tbody>
-            {requests.length === 0 ? (
+            {displayedRequests.length === 0 ? (
               <tr>
                 <td
                   colSpan={7}
                   className="px-4 py-8 text-center text-muted-foreground"
                 >
-                  No business requests found.
+                  {statusFilter === 'pending'
+                    ? 'No pending requests.'
+                    : 'No business requests found.'}
                 </td>
               </tr>
             ) : (
-              requests.map((request, i) => {
+              displayedRequests.map((request, i) => {
                 const isProcessing = processing === request.id;
 
                 return (
