@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,8 +57,8 @@ export async function POST(request: NextRequest) {
       html: passwordResetEmail({
         name: userRow.name ?? "there",
         reset_url: linkData.properties.action_link,
-        support_email: "solutiontechcampany@gmail.com",
-        support_phone: "+254740305253",
+        support_email: SUPPORT_EMAIL,
+        support_phone: SUPPORT_PHONE,
       }),
     });
 

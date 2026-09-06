@@ -5,6 +5,7 @@ import {
   Bell,
   CreditCard,
   FileText,
+  HelpCircle,
   LayoutDashboard,
   Receipt,
   Settings,
@@ -21,6 +22,7 @@ const allItems: (NavItem & { adminOnly?: boolean })[] = [
   { name: "Analytics", href: "/analytics", icon: BarChart3, adminOnly: true },
   { name: "Reports", href: "/reports/debts", icon: FileText, adminOnly: true },
   { name: "Settings", href: "/settings/profile", icon: Settings, adminOnly: true },
+  { name: "Help & Support", href: "/help", icon: HelpCircle },
 ];
 
 export default function DashboardSidebar({

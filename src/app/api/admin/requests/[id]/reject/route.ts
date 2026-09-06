@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 export async function POST(
   request: Request,
@@ -73,8 +74,8 @@ export async function POST(
           owner_name: requestData.owner_name,
           business_name: requestData.business_name,
           reason,
-          support_email: "solutiontechcampany@gmail.com",
-          support_phone: "+254740305253",
+          support_email: SUPPORT_EMAIL,
+          support_phone: SUPPORT_PHONE,
         }),
       });
     } catch (emailErr) {

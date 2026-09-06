@@ -1,3 +1,5 @@
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/constants/support';
+
 export default function RegistrationSuccessPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background px-4">
@@ -68,12 +70,12 @@ export default function RegistrationSuccessPage() {
 
         <p className="mt-8 text-sm text-muted-foreground">
           Questions? Contact us at{' '}
-          <a href="mailto:solutiontechcampany@gmail.com" className="font-medium text-primary hover:underline">
-            solutiontechcampany@gmail.com
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-primary hover:underline">
+            {SUPPORT_EMAIL}
           </a>
           {' '}or{' '}
-          <a href="tel:+254740305253" className="font-medium text-primary hover:underline">
-            +254 740 305253
+          <a href={`tel:${SUPPORT_PHONE}`} className="font-medium text-primary hover:underline">
+            {SUPPORT_PHONE}
           </a>
         </p>
 

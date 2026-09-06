@@ -1,5 +1,6 @@
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { generateTemporaryPassword } from "@/lib/utils/generate-password";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 export interface InviteMemberInput {
   businessId: string;
@@ -92,8 +93,8 @@ export async function inviteMember({
         login_email: email,
         temporary_password: temporaryPassword,
         login_url: 'https://kopa-alert.vercel.app/login',
-        support_email: 'solutiontechcampany@gmail.com',
-        support_phone: '+254740305253',
+        support_email: SUPPORT_EMAIL,
+        support_phone: SUPPORT_PHONE,
       }),
     });
 

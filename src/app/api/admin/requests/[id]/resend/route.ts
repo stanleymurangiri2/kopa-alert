@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { generateTemporaryPassword } from "@/lib/utils/generate-password";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 const MAX_RESENDS = 3;
 
@@ -225,8 +226,8 @@ export async function POST(
           business_code: businessRow?.business_code ?? "",
           temporary_password: newPassword,
           login_url: "https://kopa-alert.vercel.app/login",
-          support_email: "solutiontechcampany@gmail.com",
-          support_phone: "+254740305253",
+          support_email: SUPPORT_EMAIL,
+          support_phone: SUPPORT_PHONE,
         }),
       });
     } catch (emailError) {

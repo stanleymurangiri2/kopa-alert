@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { generateTemporaryPassword } from "@/lib/utils/generate-password";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 export async function POST(request: NextRequest) {
   try {
@@ -126,8 +127,8 @@ export async function POST(request: NextRequest) {
           business_code: approvedBusiness.business_code,
           temporary_password: password,
           login_url: "https://kopa-alert.vercel.app/login",
-          support_email: "solutiontechcampany@gmail.com",
-          support_phone: "+254740305253",
+          support_email: SUPPORT_EMAIL,
+          support_phone: SUPPORT_PHONE,
         }),
       });
 
