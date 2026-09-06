@@ -16,13 +16,17 @@ export default async function UserPage({ params }: PageProps) {
 
   const { data: user, error } = await supabase
     .from("users")
-    .select("id,name,email,role,business_id,created_at")
+    .select(
+      "id,name,email,role,business_id,created_at,must_change_password,businesses(business_name)"
+    )
     .eq("id", id)
     .single();
 
   if (error || !user) {
     notFound();
   }
+
+  const business = Array.isArray(user.businesses) ? user.businesses[0] : user.businesses;
 
   return (
     <main className="max-w-3xl mx-auto p-8">
@@ -44,8 +48,8 @@ export default async function UserPage({ params }: PageProps) {
             </p>
           </div>
 
-          <span className="rounded-full bg-info/10 px-3 py-1 text-sm font-medium text-info">
-            {user.role}
+          <span className="rounded-full bg-info/10 px-3 py-1 text-sm font-medium capitalize text-info">
+            {user.role.replace("_", " ")}
           </span>
         </div>
 
@@ -62,7 +66,29 @@ export default async function UserPage({ params }: PageProps) {
 
           <div>
             <p className="text-sm font-medium text-muted-foreground">Role</p>
-            <p className="mt-1 capitalize text-foreground">{user.role || "-"}</p>
+            <p className="mt-1 capitalize text-foreground">{user.role.replace("_", " ") || "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Status</p>
+            <div className="mt-1">
+              {user.must_change_password ? (
+                <span className="rounded-full bg-warning/10 px-3 py-1 text-sm font-medium text-warning">
+                  Invite sent
+                </span>
+              ) : (
+                <span className="rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">
+                  Active
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Business</p>
+            <p className="mt-1 text-foreground">
+              {business?.business_name ?? "—"}
+            </p>
           </div>
 
           <div>
