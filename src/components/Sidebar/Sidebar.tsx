@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Circle, Zap } from "lucide-react";
+import { Circle } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 
 export type MenuItem = {
@@ -39,9 +39,11 @@ export function Sidebar({ menu, title, subtitle }: SidebarProps) {
     >
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-sidebar-border px-4 py-5">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent shadow-lg shadow-black/20">
-          <Zap className="h-5 w-5 text-sidebar" fill="currentColor" />
-        </div>
+        <img
+          src="/logo.svg"
+          alt="KopaAlert"
+          className="h-9 w-9 shrink-0 rounded-xl shadow-lg shadow-black/20"
+        />
         {showLabel && (
           <div className="min-w-0">
             <h1 className="truncate text-base font-extrabold uppercase tracking-wide">{title}</h1>

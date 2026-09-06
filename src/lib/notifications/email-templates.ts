@@ -1,3 +1,5 @@
+const LOGO_HEADER = `<div style="text-align:center; margin-bottom:16px;"><img src="https://kopaalert.shop/logo.png" width="56" height="56" alt="KopaAlert" style="border-radius:12px;" /></div>`;
+
 export function invitationEmail(params: {
   name: string;
   business_name: string;
@@ -10,6 +12,7 @@ export function invitationEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">You've been added to ${params.business_name} on KopaAlert</h2>
       <p>Hi ${params.name},</p>
       <p>You've been added as a <strong>${params.role.replace('_', ' ')}</strong> for "<strong>${params.business_name}</strong>" on KopaAlert.</p>
@@ -37,6 +40,7 @@ export function approvalEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Your KopaAlert Business Account is Approved!</h2>
       <p>Hi ${params.owner_name},</p>
       <p>Great news! Your business "<strong>${params.business_name}</strong>" has been approved on KopaAlert.</p>
@@ -63,6 +67,7 @@ export function rejectionEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #dc2626;">Update on Your KopaAlert Business Registration</h2>
       <p>Hi ${params.owner_name},</p>
       <p>Thank you for registering "<strong>${params.business_name}</strong>" with KopaAlert.</p>
@@ -85,6 +90,7 @@ export function businessSuspendedEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #dc2626;">Your KopaAlert Account Has Been Suspended</h2>
       <p>Hi ${params.name},</p>
       <p>Your business "<strong>${params.business_name}</strong>" and its team no longer have access to KopaAlert. This account has been suspended by KopaAlert administration.</p>
@@ -106,6 +112,7 @@ export function businessActivatedEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Your KopaAlert Account Is Active Again</h2>
       <p>Hi ${params.name},</p>
       <p>Good news - your business "<strong>${params.business_name}</strong>" and its team have regained full access to KopaAlert.</p>
@@ -127,6 +134,7 @@ export function passwordResetEmail(params: {
 }) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Reset your KopaAlert password</h2>
       <p>Hi ${params.name},</p>
       <p>We received a request to reset your KopaAlert account password. Click the button below to choose a new password.</p>
@@ -160,6 +168,7 @@ export function subscriptionInvoiceReceiptEmail(params: {
 
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Payment Received - Invoice &amp; Receipt</h2>
       <p>Hi ${params.name},</p>
       <p>We've recorded your KopaAlert subscription payment for "<strong>${params.business_name}</strong>".</p>
@@ -191,6 +200,7 @@ export function subscriptionRenewalReminderEmail(params: {
 
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Your KopaAlert subscription renews soon</h2>
       <p>Hi ${params.name},</p>
       <p>Your KopaAlert subscription for "<strong>${params.business_name}</strong>" renews on <strong>${expiresAt}</strong>.</p>
@@ -218,6 +228,7 @@ export function subscriptionLockedNoticeEmail(params: {
 
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
       <h2 style="color: #dc2626;">Your KopaAlert Account Has Been Locked</h2>
       <p>Hi ${params.name},</p>
       <p>Your KopaAlert subscription for "<strong>${params.business_name}</strong>" lapsed on <strong>${expiresAt}</strong> and your team no longer has access to the dashboard.</p>

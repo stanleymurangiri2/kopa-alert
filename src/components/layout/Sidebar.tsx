@@ -75,6 +75,12 @@ export default function Sidebar({ title, subtitle, items }: SidebarProps) {
             <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
 
+          <img
+            src="/logo.svg"
+            alt="KopaAlert"
+            className="h-8 w-8 shrink-0 rounded-lg"
+          />
+
           <div
             className={`min-w-0 overflow-hidden transition-all duration-300 ${
               collapsed ? "md:w-0 md:opacity-0" : "w-auto opacity-100"
