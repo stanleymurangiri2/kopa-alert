@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type Business = {
   id: string;
@@ -18,13 +19,11 @@ type Business = {
 
 export default function BusinessSettingsPage() {
   const supabase = createClient();
+  const { showToast } = useToast();
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
 
   useEffect(() => {
     loadBusiness();
@@ -74,7 +73,6 @@ export default function BusinessSettingsPage() {
     if (!business) return;
 
     setSaving(true);
-    setMessage(null);
 
     const { error } = await supabase
       .from('businesses')
@@ -86,12 +84,12 @@ export default function BusinessSettingsPage() {
       .eq('id', business.id);
 
     if (error) {
-      setMessage({ type: 'error', text: error.message });
+      showToast('error', error.message);
       setSaving(false);
       return;
     }
 
-    setMessage({ type: 'success', text: 'Business information updated successfully.' });
+    showToast('success', 'Business information updated successfully.');
     setSaving(false);
   }
 
@@ -123,18 +121,6 @@ export default function BusinessSettingsPage() {
           Manage your business information.
         </p>
       </div>
-
-      {message && (
-        <div
-          className={`mb-6 rounded-md border p-3 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <form
         onSubmit={saveBusiness}

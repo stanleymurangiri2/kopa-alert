@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/ToastProvider';
 
 type UserProfile = {
   id: string;
@@ -20,6 +21,7 @@ function businessName(profile: UserProfile) {
 
 export default function ProfilePage() {
   const supabase = createClient();
+  const { showToast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -29,10 +31,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   const [saving, setSaving] = useState(false);
-
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
 
   useEffect(() => {
     loadProfile();
@@ -60,7 +58,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error(error);
-      setMessage({ type: 'error', text: 'Failed to load profile.' });
+      showToast('error', 'Failed to load profile.');
     } finally {
       setLoading(false);
     }
@@ -73,18 +71,17 @@ export default function ProfilePage() {
 
     if (password.trim() !== '') {
       if (password.length < 8) {
-        setMessage({ type: 'error', text: 'New password must be at least 8 characters.' });
+        showToast('error', 'New password must be at least 8 characters.');
         return;
       }
 
       if (password !== confirmPassword) {
-        setMessage({ type: 'error', text: 'New password and confirmation do not match.' });
+        showToast('error', 'New password and confirmation do not match.');
         return;
       }
     }
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const { error } = await supabase
@@ -95,7 +92,7 @@ export default function ProfilePage() {
         .eq('id', profile.id);
 
       if (error) {
-        setMessage({ type: 'error', text: error.message });
+        showToast('error', error.message);
         setSaving(false);
         return;
       }
@@ -107,7 +104,7 @@ export default function ProfilePage() {
           });
 
         if (passwordError) {
-          setMessage({ type: 'error', text: passwordError.message });
+          showToast('error', passwordError.message);
           setSaving(false);
           return;
         }
@@ -116,10 +113,10 @@ export default function ProfilePage() {
         setConfirmPassword('');
       }
 
-      setMessage({ type: 'success', text: 'Profile updated successfully.' });
+      showToast('success', 'Profile updated successfully.');
     } catch (error) {
       console.error(error);
-      setMessage({ type: 'error', text: 'Something went wrong.' });
+      showToast('error', 'Something went wrong.');
     } finally {
       setSaving(false);
     }
@@ -153,18 +150,6 @@ export default function ProfilePage() {
           Manage your account information.
         </p>
       </div>
-
-      {message && (
-        <div
-          className={`mb-6 rounded-md border p-3 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <form
         onSubmit={handleSave}

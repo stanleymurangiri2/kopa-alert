@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface TeamMember {
   id: string;
@@ -45,6 +46,7 @@ function StatusBadge({ mustChangePassword }: { mustChangePassword: boolean | nul
 
 export default function TeamPage() {
   const supabase = createClient();
+  const { showToast } = useToast();
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,9 +55,6 @@ export default function TeamPage() {
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [memberPendingRemoval, setMemberPendingRemoval] = useState<TeamMember | null>(null);
   const [memberPendingRoleChange, setMemberPendingRoleChange] = useState<TeamMember | null>(null);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null
-  );
 
   const [form, setForm] = useState({
     name: '',
@@ -111,12 +110,11 @@ export default function TeamPage() {
 
   async function inviteMember() {
     if (!form.name || !form.email) {
-      setMessage({ type: 'error', text: 'Please complete all required fields.' });
+      showToast('error', 'Please complete all required fields.');
       return;
     }
 
     setInviting(true);
-    setMessage(null);
 
     const token = await getToken();
 
@@ -138,17 +136,17 @@ export default function TeamPage() {
     setInviting(false);
 
     if (!response.ok) {
-      setMessage({ type: 'error', text: result.message || 'Unable to invite member.' });
+      showToast('error', result.message || 'Unable to invite member.');
       return;
     }
 
     if (result.emailSent === false) {
-      setMessage({
-        type: 'error',
-        text: `${form.name}'s account was created, but the invitation email failed to send. They won't be able to log in until they receive their credentials — use "Forgot Password" from the login page to send a fresh reset link, or contact support.`,
-      });
+      showToast(
+        'error',
+        `${form.name}'s account was created, but the invitation email failed to send. They won't be able to log in until they receive their credentials — use "Forgot Password" from the login page to send a fresh reset link, or contact support.`
+      );
     } else {
-      setMessage({ type: 'success', text: 'Invitation sent successfully.' });
+      showToast('success', 'Invitation sent successfully.');
     }
 
     setForm({ name: '', email: '', role: 'employee' });
@@ -163,7 +161,6 @@ export default function TeamPage() {
     const newRole = memberPendingRoleChange.role === 'business_admin' ? 'employee' : 'business_admin';
 
     setBusyMemberId(memberId);
-    setMessage(null);
 
     const token = await getToken();
 
@@ -185,11 +182,11 @@ export default function TeamPage() {
     setMemberPendingRoleChange(null);
 
     if (!response.ok || !result.success) {
-      setMessage({ type: 'error', text: result.message || 'Unable to update role.' });
+      showToast('error', result.message || 'Unable to update role.');
       return;
     }
 
-    setMessage({ type: 'success', text: 'Role updated successfully.' });
+    showToast('success', 'Role updated successfully.');
 
     loadMembers();
   }
@@ -199,7 +196,6 @@ export default function TeamPage() {
 
     const memberId = memberPendingRemoval.id;
     setBusyMemberId(memberId);
-    setMessage(null);
 
     const token = await getToken();
 
@@ -220,11 +216,11 @@ export default function TeamPage() {
     setMemberPendingRemoval(null);
 
     if (!response.ok || !result.success) {
-      setMessage({ type: 'error', text: result.message || 'Unable to remove member.' });
+      showToast('error', result.message || 'Unable to remove member.');
       return;
     }
 
-    setMessage({ type: 'success', text: 'Team member removed successfully.' });
+    showToast('success', 'Team member removed successfully.');
 
     loadMembers();
   }
@@ -243,18 +239,6 @@ export default function TeamPage() {
           </p>
         </div>
       </div>
-
-      {message && (
-        <div
-          className={`rounded-md border p-3 text-sm ${
-            message.type === 'success'
-              ? 'border-success/30 bg-success/10 text-success'
-              : 'border-destructive/30 bg-destructive/10 text-destructive'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
         <h2 className="mb-4 text-xl font-semibold text-foreground">Invite Team Member</h2>
