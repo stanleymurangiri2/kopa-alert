@@ -70,7 +70,9 @@ export async function getPaymentReports(
     }
 
     if (endDate) {
-      query = query.lte("created_at", endDate);
+      const endOfDay = new Date(`${endDate}T00:00:00`);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query = query.lt("created_at", endOfDay.toISOString());
     }
 
     const { data, error } = await query;

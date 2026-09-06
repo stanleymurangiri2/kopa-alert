@@ -17,7 +17,7 @@ const allItems: (NavItem & { adminOnly?: boolean })[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Debts", href: "/debts", icon: Receipt },
-  { name: "Payments", href: "/payments", icon: CreditCard },
+  { name: "Payments", href: "/payments", icon: CreditCard, adminOnly: true },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Analytics", href: "/analytics", icon: BarChart3, adminOnly: true },
   { name: "Reports", href: "/reports/debts", icon: FileText, adminOnly: true },

@@ -52,8 +52,12 @@ export default function PaymentReportsPage() {
 
   const [page, setPage] = useState(1);
 
+  const [error, setError] = useState("");
+
   async function loadReport() {
     setLoading(true);
+    setError("");
+    setPage(1);
 
     try {
       const params = new URLSearchParams();
@@ -70,7 +74,11 @@ export default function PaymentReportsPage() {
       if (result.success) {
         setPayments(result.payments);
         setSummary(result.summary);
+      } else {
+        setError(result.message || "Failed to load payment reports.");
       }
+    } catch {
+      setError("Unable to connect to the server.");
     } finally {
       setLoading(false);
     }
@@ -143,6 +151,12 @@ export default function PaymentReportsPage() {
         </button>
 
       </div>
+
+      {error && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {summary && (
 
