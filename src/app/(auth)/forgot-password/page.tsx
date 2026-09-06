@@ -10,6 +10,7 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
+    notFound?: boolean;
   } | null>(null);
 
   const handleSubmit = async (
@@ -39,9 +40,18 @@ export default function ForgotPasswordPage() {
         return;
       }
 
+      if (result.notFound) {
+        setMessage({
+          type: 'error',
+          text: result.message ?? 'No account found for that email.',
+          notFound: true,
+        });
+        return;
+      }
+
       setMessage({
         type: 'success',
-        text: 'If an account exists for that email, a reset link has been sent.',
+        text: result.message ?? 'A reset link has been sent to your email.',
       });
 
       setEmail('');
@@ -78,6 +88,14 @@ export default function ForgotPasswordPage() {
             }`}
           >
             {message.text}
+            {message.notFound && (
+              <>
+                {' '}
+                <Link href="/register" className="font-semibold underline">
+                  Register your business
+                </Link>
+              </>
+            )}
           </div>
         )}
 

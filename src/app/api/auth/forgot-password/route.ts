@@ -21,13 +21,11 @@ export async function POST(request: NextRequest) {
       .eq("email", email.trim())
       .maybeSingle();
 
-    // Always return a generic success message, whether or not the email
-    // exists, so this endpoint can't be used to check which emails are
-    // registered.
     if (!userRow) {
       return NextResponse.json({
-        success: true,
-        message: "If an account exists for that email, a reset link has been sent.",
+        success: false,
+        notFound: true,
+        message: "No KopaAlert account found for that email. Register your business to get started.",
       });
     }
 
@@ -64,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "If an account exists for that email, a reset link has been sent.",
+      message: "A reset link has been sent to your email.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
