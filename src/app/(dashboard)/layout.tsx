@@ -29,6 +29,13 @@ export default async function DashboardLayout({
   if (profile?.must_change_password) {
     redirect('/change-password');
   }
+  if (
+    profile?.role !== 'super_admin' &&
+    profile?.businesses?.subscription_tier !== 'free' &&
+    profile?.businesses?.subscription_status === 'locked'
+  ) {
+    redirect('/account-locked');
+  }
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">

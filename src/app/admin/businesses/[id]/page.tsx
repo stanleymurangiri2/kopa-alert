@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Actions from "./Actions";
 import DeleteBusiness from "./DeleteBusiness";
 import SmsBalanceControl from "./SmsBalanceControl";
+import SubscriptionControl from "./SubscriptionControl";
 
 interface BusinessPageProps {
   params: Promise<{
@@ -22,7 +23,7 @@ export default async function BusinessPage({
   const { data: business, error } = await supabase
     .from("businesses")
     .select(
-      "id, business_code, business_name, email, phone, status, subscription_tier, subscription_status, sms_balance, created_at"
+      "id, business_code, business_name, email, phone, status, subscription_tier, subscription_status, subscription_price, subscription_expires_at, subscription_locked_at, sms_balance, created_at"
     )
     .eq("id", id)
     .single();
@@ -86,6 +87,22 @@ export default async function BusinessPage({
             label="Subscription Status"
             value={business.subscription_status}
           />
+
+          <div>
+            <p className="text-sm text-muted-foreground">Subscription Billing</p>
+            <p className="font-semibold text-foreground">
+              {business.subscription_tier === "free"
+                ? "Free tier"
+                : `KES ${Number(business.subscription_price ?? 0).toLocaleString()} / month`}
+            </p>
+            <SubscriptionControl
+              businessId={business.id}
+              tier={business.subscription_tier}
+              status={business.subscription_status}
+              price={business.subscription_price}
+              expiresAt={business.subscription_expires_at}
+            />
+          </div>
 
           <div>
             <p className="text-sm text-muted-foreground">SMS Balance</p>

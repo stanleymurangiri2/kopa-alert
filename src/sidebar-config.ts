@@ -13,6 +13,10 @@ export const sidebarMenus = {
       href: "/admin/businesses",
     },
     {
+      name: "Subscriptions",
+      href: "/admin/subscriptions",
+    },
+    {
       name: "Users",
       href: "/admin/users",
     },
