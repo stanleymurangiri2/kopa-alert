@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const { data: existingBusiness, error: existingBusinessError } =
       await supabase
         .from("businesses")
-        .select("id, business_name, status, email")
+        .select("id, business_name, status")
         .eq("id", id)
         .single();
 
@@ -98,40 +98,52 @@ export async function POST(request: NextRequest) {
         ? "ACTIVATE_BUSINESS"
         : "SUSPEND_BUSINESS";
 
+    const { data: businessAdmins } = await supabase
+      .from("users")
+      .select("name, email")
+      .eq("business_id", id)
+      .eq("role", "business_admin");
+
     let emailSent = false;
 
-    if (existingBusiness.email) {
-      try {
-        const { sendEmail } = await import("@/lib/notifications/resend");
-        const { businessSuspendedEmail, businessActivatedEmail } = await import(
-          "@/lib/notifications/email-templates"
-        );
+    if (businessAdmins && businessAdmins.length > 0) {
+      const { sendEmail } = await import("@/lib/notifications/resend");
+      const { businessSuspendedEmail, businessActivatedEmail } = await import(
+        "@/lib/notifications/email-templates"
+      );
 
-        const html =
-          status === "suspended"
-            ? businessSuspendedEmail({
-                business_name: business.business_name,
-                support_email: SUPPORT_EMAIL,
-                support_phone: SUPPORT_PHONE,
-              })
-            : businessActivatedEmail({
-                business_name: business.business_name,
-                support_email: SUPPORT_EMAIL,
-                support_phone: SUPPORT_PHONE,
-              });
+      for (const admin of businessAdmins) {
+        if (!admin.email) continue;
 
-        await sendEmail({
-          to: existingBusiness.email,
-          subject:
+        try {
+          const html =
             status === "suspended"
-              ? "Your KopaAlert Account Has Been Suspended"
-              : "Your KopaAlert Account Is Active Again",
-          html,
-        });
+              ? businessSuspendedEmail({
+                  name: admin.name ?? "there",
+                  business_name: business.business_name,
+                  support_email: SUPPORT_EMAIL,
+                  support_phone: SUPPORT_PHONE,
+                })
+              : businessActivatedEmail({
+                  name: admin.name ?? "there",
+                  business_name: business.business_name,
+                  support_email: SUPPORT_EMAIL,
+                  support_phone: SUPPORT_PHONE,
+                });
 
-        emailSent = true;
-      } catch (emailErr) {
-        console.error("Business status email failed:", emailErr);
+          await sendEmail({
+            to: admin.email,
+            subject:
+              status === "suspended"
+                ? "Your KopaAlert Account Has Been Suspended"
+                : "Your KopaAlert Account Is Active Again",
+            html,
+          });
+
+          emailSent = true;
+        } catch (emailErr) {
+          console.error(`Business status email failed for ${admin.email}:`, emailErr);
+        }
       }
     }
 
