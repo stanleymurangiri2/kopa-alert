@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface TeamMember {
@@ -9,6 +10,37 @@ interface TeamMember {
   email: string;
   role: 'business_admin' | 'employee';
   created_at: string;
+  must_change_password: boolean | null;
+}
+
+function RoleBadge({ role }: { role: TeamMember['role'] }) {
+  const isAdmin = role === 'business_admin';
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+        isAdmin ? 'bg-employee/10 text-employee' : 'bg-info/10 text-info'
+      }`}
+    >
+      {isAdmin ? 'Admin' : 'Employee'}
+    </span>
+  );
+}
+
+function StatusBadge({ mustChangePassword }: { mustChangePassword: boolean | null }) {
+  if (mustChangePassword) {
+    return (
+      <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-medium text-warning">
+        Invite sent
+      </span>
+    );
+  }
+
+  return (
+    <span className="rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
+      Active
+    </span>
+  );
 }
 
 export default function TeamPage() {
@@ -19,6 +51,7 @@ export default function TeamPage() {
   const [inviting, setInviting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
+  const [memberPendingRemoval, setMemberPendingRemoval] = useState<TeamMember | null>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -68,7 +101,7 @@ export default function TeamPage() {
       .eq('business_id', profile.business_id)
       .order('created_at', { ascending: true });
 
-    setMembers(data ?? []);
+    setMembers((data ?? []) as TeamMember[]);
     setLoading(false);
   }
 
@@ -140,11 +173,10 @@ export default function TeamPage() {
     loadMembers();
   }
 
-  async function removeMember(memberId: string) {
-    if (!confirm('Remove this team member? This cannot be undone.')) {
-      return;
-    }
+  async function confirmRemove() {
+    if (!memberPendingRemoval) return;
 
+    const memberId = memberPendingRemoval.id;
     setBusyMemberId(memberId);
 
     const token = await getToken();
@@ -163,6 +195,7 @@ export default function TeamPage() {
     const result = await response.json();
 
     setBusyMemberId(null);
+    setMemberPendingRemoval(null);
 
     if (!response.ok || !result.success) {
       alert(result.message || 'Unable to remove member.');
@@ -173,31 +206,33 @@ export default function TeamPage() {
   }
 
   if (loading) {
-    return <div className="p-6">Loading team...</div>;
+    return <div className="p-6 text-muted-foreground">Loading team...</div>;
   }
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-6">
-      <div>
-        <h1 className="text-3xl font-bold">Team Management</h1>
-        <p className="text-gray-500">
-          Invite employees and manage your business team.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Employee Management</h1>
+          <p className="text-muted-foreground">
+            Invite employees and manage your business team.
+          </p>
+        </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-6">
-        <h2 className="mb-4 text-xl font-semibold">Invite Team Member</h2>
+      <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">Invite Team Member</h2>
 
         <div className="grid gap-4 md:grid-cols-3">
           <input
-            className="rounded border p-3"
+            className="rounded-md border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
             placeholder="Full Name"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
 
           <input
-            className="rounded border p-3"
+            className="rounded-md border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
             placeholder="Email"
             type="email"
             value={form.email}
@@ -205,7 +240,7 @@ export default function TeamPage() {
           />
 
           <select
-            className="rounded border p-3"
+            className="rounded-md border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
             value={form.role}
             onChange={(e) =>
               setForm({
@@ -222,56 +257,78 @@ export default function TeamPage() {
         <button
           onClick={inviteMember}
           disabled={inviting}
-          className="mt-6 rounded bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+          className="mt-6 flex items-center gap-2 rounded-md bg-employee px-6 py-3 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
         >
-          {inviting ? 'Inviting...' : 'Invite Member'}
+          <UserPlus className="h-4 w-4" />
+          {inviting ? 'Inviting...' : '+ Invite Employee'}
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="min-w-full">
-          <thead className="bg-gray-100">
+          <thead className="bg-primary">
             <tr>
-              <th className="px-4 py-3 text-left">Name</th>
-              <th className="px-4 py-3 text-left">Email</th>
-              <th className="px-4 py-3 text-left">Role</th>
-              <th className="px-4 py-3 text-left">Joined</th>
-              <th className="px-4 py-3 text-center">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Name
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Email
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Role
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Joined
+              </th>
+              <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {members.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-10 text-center text-gray-500">
+                <td colSpan={6} className="py-10 text-center text-muted-foreground">
                   No team members found.
                 </td>
               </tr>
             ) : (
-              members.map((member) => (
-                <tr key={member.id} className="border-t">
-                  <td className="px-4 py-3">{member.name}</td>
-                  <td className="px-4 py-3">{member.email}</td>
+              members.map((member, i) => (
+                <tr
+                  key={member.id}
+                  className={`border-t border-border transition-colors hover:bg-accent ${
+                    i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'
+                  }`}
+                >
+                  <td className="px-4 py-3 text-[15px] font-semibold text-foreground">
+                    {member.name}
+                    {member.id === currentUserId && (
+                      <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+                        You
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{member.email}</td>
 
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        member.role === 'business_admin'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {member.role}
-                    </span>
+                    <RoleBadge role={member.role} />
                   </td>
 
                   <td className="px-4 py-3">
+                    <StatusBadge mustChangePassword={member.must_change_password} />
+                  </td>
+
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {new Date(member.created_at).toLocaleDateString()}
                   </td>
 
-                  <td className="px-4 py-3 text-center space-x-3">
+                  <td className="px-4 py-3">
                     {member.id !== currentUserId && (
-                      <>
+                      <div className="flex items-center justify-center gap-1">
                         <button
                           disabled={busyMemberId === member.id}
                           onClick={() =>
@@ -282,22 +339,23 @@ export default function TeamPage() {
                                 : 'business_admin'
                             )
                           }
-                          className="text-sm text-blue-600 hover:underline disabled:opacity-50"
+                          aria-label={`Make ${member.name} ${
+                            member.role === 'business_admin' ? 'an Employee' : 'an Admin'
+                          }`}
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-info hover:bg-info/10 disabled:opacity-50"
                         >
-                          Make{' '}
-                          {member.role === 'business_admin'
-                            ? 'Employee'
-                            : 'Admin'}
+                          <Pencil className="h-4 w-4" />
                         </button>
 
                         <button
                           disabled={busyMemberId === member.id}
-                          onClick={() => removeMember(member.id)}
-                          className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                          onClick={() => setMemberPendingRemoval(member)}
+                          aria-label={`Remove ${member.name}`}
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-destructive hover:bg-destructive/10 disabled:opacity-50"
                         >
-                          Remove
+                          <Trash2 className="h-4 w-4" />
                         </button>
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -306,6 +364,37 @@ export default function TeamPage() {
           </tbody>
         </table>
       </div>
+
+      {memberPendingRemoval && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+            <h2 className="text-lg font-bold text-foreground">Remove team member?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Are you sure you want to remove{' '}
+              <span className="font-medium text-foreground">{memberPendingRemoval.name}</span>{' '}
+              ({memberPendingRemoval.email})? This cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setMemberPendingRemoval(null)}
+                disabled={busyMemberId === memberPendingRemoval.id}
+                className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                disabled={busyMemberId === memberPendingRemoval.id}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {busyMemberId === memberPendingRemoval.id ? 'Removing...' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
