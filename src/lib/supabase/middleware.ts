@@ -96,5 +96,17 @@ export async function updateSession(
     return NextResponse.redirect(url);
   }
 
+  if (user && pathname.startsWith("/admin/login")) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    const url = request.nextUrl.clone();
+    url.pathname = profile?.role === "super_admin" ? "/admin" : "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   return response;
 }
