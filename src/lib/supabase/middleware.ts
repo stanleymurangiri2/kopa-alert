@@ -64,7 +64,12 @@ export async function updateSession(
     return response;
   }
 
-  const publicRoutes = [
+  // Routes anyone (signed in or not) can view without being bounced away.
+  const alwaysAccessibleRoutes = ["/terms", "/privacy"];
+
+  // Routes only relevant to signed-out visitors — a signed-in user hitting
+  // one of these gets sent to their dashboard instead.
+  const authOnlyRoutes = [
     "/login",
     "/register",
     "/forgot-password",
@@ -72,9 +77,9 @@ export async function updateSession(
   ];
 
   const isPublicRoute =
-    publicRoutes.some((route) =>
-      pathname.startsWith(route)
-    ) || pathname.startsWith("/admin/login");
+    alwaysAccessibleRoutes.some((route) => pathname.startsWith(route)) ||
+    authOnlyRoutes.some((route) => pathname.startsWith(route)) ||
+    pathname.startsWith("/admin/login");
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
@@ -84,9 +89,7 @@ export async function updateSession(
 
   if (
     user &&
-    publicRoutes.some((route) =>
-      pathname.startsWith(route)
-    )
+    authOnlyRoutes.some((route) => pathname.startsWith(route))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
