@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Loader2, Search, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/ui/ToastProvider";
 
 type Role = "super_admin" | "business_admin" | "employee";
 
@@ -33,6 +34,7 @@ function businessName(user: UserRow) {
 
 export default function UsersPage() {
   const supabase = createClient();
+  const { showToast } = useToast();
 
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,9 @@ export default function UsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [page, setPage] = useState(1);
+
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", email: "" });
 
   useEffect(() => {
     loadUsers();
@@ -94,6 +99,47 @@ export default function UsersPage() {
     setPage(1);
   }
 
+  async function createSuperAdmin() {
+    if (!createForm.name.trim() || !createForm.email.trim()) {
+      showToast("error", "Please provide both a name and an email.");
+      return;
+    }
+
+    setCreating(true);
+
+    try {
+      const response = await fetch("/api/admin/users/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        showToast("error", result.error || "Unable to create super admin.");
+        return;
+      }
+
+      if (result.emailSent === false) {
+        showToast(
+          "error",
+          `${createForm.name}'s account was created, but the invitation email failed to send. They won't be able to log in until they receive their credentials — use "Forgot Password" from the admin login page to send a fresh reset link, or contact support.`
+        );
+      } else {
+        showToast("success", "Super admin created successfully.");
+      }
+
+      setCreateForm({ name: "", email: "" });
+      loadUsers();
+    } catch (err) {
+      console.error("Create super admin failed:", err);
+      showToast("error", "Unable to create super admin. Please try again.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   if (loading) {
     return <main className="p-8 text-muted-foreground">Loading users...</main>;
   }
@@ -122,6 +168,36 @@ export default function UsersPage() {
         <div className="rounded-lg bg-muted px-4 py-2 text-sm text-muted-foreground">
           {filteredUsers.length} user{filteredUsers.length === 1 ? "" : "s"}
         </div>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-border bg-card p-6 shadow-sm">
+        <h2 className="mb-4 text-xl font-semibold text-foreground">Create Super Admin</h2>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <input
+            className="rounded-md border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
+            placeholder="Full Name"
+            value={createForm.name}
+            onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+          />
+
+          <input
+            className="rounded-md border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
+            placeholder="Email"
+            type="email"
+            value={createForm.email}
+            onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+          />
+        </div>
+
+        <button
+          onClick={createSuperAdmin}
+          disabled={creating}
+          className="mt-6 flex items-center gap-2 rounded-md bg-employee px-6 py-3 text-sm font-medium text-employee-foreground hover:bg-employee/90 disabled:opacity-50"
+        >
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+          {creating ? "Creating..." : "+ Create Super Admin"}
+        </button>
       </div>
 
       <div className="my-6 flex flex-wrap items-center gap-3">

@@ -29,6 +29,39 @@ export function invitationEmail(params: {
   `;
 }
 
+export function superAdminInvitationEmail(params: {
+  name: string;
+  login_email: string;
+  temporary_password: string;
+  login_url: string;
+  support_email: string;
+  support_phone: string;
+}) {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      ${LOGO_HEADER}
+      <h2 style="color: #2563eb;">You've been granted KopaAlert Super Admin access</h2>
+      <p>Hi ${params.name},</p>
+      <p>
+        You've been given a <strong>Super Administrator</strong> account on KopaAlert, with full
+        access to every business, the platform settings, and administrative tools.
+      </p>
+      <p><strong>Login Email:</strong> ${params.login_email}</p>
+      <p><strong>Temporary Password:</strong> <code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">${params.temporary_password}</code></p>
+      <p style="color:#b91c1c; font-size: 14px;">
+        For your security, please log in and change this password immediately. Keep these
+        credentials confidential - this account has full platform access.
+      </p>
+      <p><a href="${params.login_url}" style="color: #2563eb;">Log in here</a></p>
+      <hr />
+      <p>Need help? Contact support:<br/>
+      Email: ${params.support_email}<br/>
+      Phone: ${params.support_phone}</p>
+      <p>— The KopaAlert Team</p>
+    </div>
+  `;
+}
+
 export function approvalEmail(params: {
   owner_name: string;
   business_name: string;

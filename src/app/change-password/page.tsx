@@ -64,14 +64,20 @@ export default function ChangePasswordPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
+    let role: string | null = null;
+
     if (user) {
-      await supabase
+      const { data: profile } = await supabase
         .from('users')
         .update({ must_change_password: false })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select('role')
+        .single();
+
+      role = profile?.role ?? null;
     }
 
-    router.push('/dashboard');
+    router.push(role === 'super_admin' ? '/admin' : '/dashboard');
     router.refresh();
   }
 
