@@ -29,7 +29,9 @@ export default function SubscriptionControl({
   const { showToast } = useToast();
 
   const locked = status === "locked";
+  const isLifetime = tier === "lifetime";
 
+  const [paymentType, setPaymentType] = useState<"monthly" | "one_time">("monthly");
   const [amount, setAmount] = useState(String(price ?? 1500));
   const [paymentMethod, setPaymentMethod] = useState("mpesa");
   const [reference, setReference] = useState("");
@@ -56,6 +58,7 @@ export default function SubscriptionControl({
           body: JSON.stringify({
             amount: parsed,
             payment_method: paymentMethod,
+            payment_type: paymentType,
             reference: reference.trim() || undefined,
           }),
         }
@@ -72,6 +75,8 @@ export default function SubscriptionControl({
           "error",
           "Payment recorded, but the invoice/receipt email failed to send."
         );
+      } else if (paymentType === "one_time") {
+        showToast("success", "One-time payment recorded — business now has lifetime access.");
       } else {
         showToast("success", "Payment recorded and invoice/receipt emailed.");
       }
@@ -137,66 +142,86 @@ export default function SubscriptionControl({
         </div>
       )}
 
-      {tier !== "free" && expiresAt && !locked && (
+      {!isLifetime && tier !== "free" && expiresAt && !locked && (
         <p className="text-xs text-muted-foreground">
           Renews on {new Date(expiresAt).toLocaleDateString()}.
         </p>
       )}
 
-      <form onSubmit={recordPayment} className="flex flex-wrap items-end gap-2">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Amount (KES)
-          </label>
-          <input
-            type="number"
-            min="1"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-28 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
+      {isLifetime ? (
+        <p className="rounded-md border border-success/30 bg-success/10 p-3 text-sm font-medium text-success">
+          Lifetime access granted — no further subscription payments required.
+        </p>
+      ) : (
+        <form onSubmit={recordPayment} className="flex flex-wrap items-end gap-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              Payment Type
+            </label>
+            <select
+              value={paymentType}
+              onChange={(e) => setPaymentType(e.target.value as "monthly" | "one_time")}
+              className="rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="monthly">Monthly Subscription</option>
+              <option value="one_time">One-Time (Lifetime)</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Method
-          </label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              Amount (KES)
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-28 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              Method
+            </label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            >
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              Reference (optional)
+            </label>
+            <input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="M-Pesa code, slip #..."
+              className="w-40 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-md bg-teal px-3 py-1.5 text-xs font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
           >
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Reference (optional)
-          </label>
-          <input
-            type="text"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            placeholder="M-Pesa code, slip #..."
-            className="w-40 rounded-md border border-border bg-card px-2 py-1.5 text-sm text-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-md bg-teal px-3 py-1.5 text-xs font-medium text-teal-foreground hover:bg-teal/90 disabled:opacity-50"
-        >
-          {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          Record Payment
-        </button>
-      </form>
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {paymentType === "one_time" ? "Record One-Time Payment" : "Record Payment"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }

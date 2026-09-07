@@ -93,7 +93,9 @@ export default async function BusinessPage({
             <p className="font-semibold text-foreground">
               {business.subscription_tier === "free"
                 ? "Free tier"
-                : `KES ${Number(business.subscription_price ?? 0).toLocaleString()} / month`}
+                : business.subscription_tier === "lifetime"
+                  ? "Lifetime access (one-time payment)"
+                  : `KES ${Number(business.subscription_price ?? 0).toLocaleString()} / month`}
             </p>
             <SubscriptionControl
               businessId={business.id}

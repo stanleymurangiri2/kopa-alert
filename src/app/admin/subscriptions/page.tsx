@@ -175,7 +175,9 @@ export default function SubscriptionsPage() {
                   </td>
 
                   <td className="px-6 py-4 text-right font-mono text-foreground">
-                    KES {Number(business.subscription_price ?? 0).toLocaleString()}
+                    {business.subscription_tier === "lifetime"
+                      ? "Lifetime"
+                      : `KES ${Number(business.subscription_price ?? 0).toLocaleString()}`}
                   </td>
 
                   <td className="px-6 py-4">

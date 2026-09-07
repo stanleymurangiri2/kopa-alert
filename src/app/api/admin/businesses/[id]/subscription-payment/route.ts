@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 const ALLOWED_METHODS = ["cash", "mpesa", "bank", "other"] as const;
+const ALLOWED_PAYMENT_TYPES = ["monthly", "one_time"] as const;
 const BILLING_PERIOD_DAYS = 30;
 
 function generateInvoiceNumber(businessCode: string) {
@@ -43,6 +44,7 @@ export async function POST(
     const body = await request.json();
     const amount = Number(body?.amount);
     const paymentMethod = String(body?.payment_method ?? "");
+    const paymentType = String(body?.payment_type ?? "monthly");
     const reference = body?.reference ? String(body.reference).trim() : null;
     const notes = body?.notes ? String(body.notes).trim() : null;
 
@@ -59,6 +61,15 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    if (!ALLOWED_PAYMENT_TYPES.includes(paymentType as (typeof ALLOWED_PAYMENT_TYPES)[number])) {
+      return NextResponse.json(
+        { error: "Invalid payment type." },
+        { status: 400 }
+      );
+    }
+
+    const isLifetime = paymentType === "one_time";
 
     const { data: business, error: businessError } = await supabase
       .from("businesses")
@@ -80,8 +91,10 @@ export async function POST(
     const baseDate =
       currentExpiresAt && currentExpiresAt > now ? currentExpiresAt : now;
 
-    const newExpiresAt = new Date(baseDate);
-    newExpiresAt.setDate(newExpiresAt.getDate() + BILLING_PERIOD_DAYS);
+    const newExpiresAt = isLifetime ? null : new Date(baseDate);
+    if (newExpiresAt) {
+      newExpiresAt.setDate(newExpiresAt.getDate() + BILLING_PERIOD_DAYS);
+    }
 
     const periodStart = currentExpiresAt ?? now;
 
@@ -91,10 +104,10 @@ export async function POST(
     const { data: updatedBusiness, error: updateError } = await supabase
       .from("businesses")
       .update({
-        subscription_tier: "paid",
+        subscription_tier: isLifetime ? "lifetime" : "paid",
         subscription_status: "active",
-        subscription_price: amount,
-        subscription_expires_at: newExpiresAt.toISOString(),
+        subscription_price: isLifetime ? 0 : amount,
+        subscription_expires_at: newExpiresAt ? newExpiresAt.toISOString() : null,
         subscription_locked_at: null,
         subscription_reminder_sent_at: null,
         subscription_final_notice_sent_at: null,
@@ -118,7 +131,7 @@ export async function POST(
       .from("subscription_payments")
       .insert({
         business_id: id,
-        payment_type: "monthly",
+        payment_type: paymentType,
         amount,
         payment_method: paymentMethod,
         mpesa_reference: reference,
@@ -127,7 +140,7 @@ export async function POST(
         admin_notes: notes,
         invoice_number: invoiceNumber,
         period_start: periodStart.toISOString(),
-        period_end: newExpiresAt.toISOString(),
+        period_end: newExpiresAt ? newExpiresAt.toISOString() : null,
         recorded_by: adminUser.id,
       })
       .select("id, invoice_number")
@@ -165,8 +178,9 @@ export async function POST(
             currency: "KES",
             payment_method: paymentMethod,
             reference,
+            payment_type: paymentType as "monthly" | "one_time",
             period_start: periodStart.toISOString(),
-            period_end: newExpiresAt.toISOString(),
+            period_end: newExpiresAt ? newExpiresAt.toISOString() : null,
             support_email: SUPPORT_EMAIL,
             support_phone: SUPPORT_PHONE,
           }),
@@ -183,15 +197,16 @@ export async function POST(
       user_id: adminUser.id,
       action: "RECORD_SUBSCRIPTION_PAYMENT",
       target_type: "business",
-      description: `Recorded KES ${amount.toLocaleString()} subscription payment for ${updatedBusiness.business_name} (invoice ${invoiceNumber})`,
+      description: `Recorded KES ${amount.toLocaleString()} ${isLifetime ? "one-time (lifetime)" : "monthly subscription"} payment for ${updatedBusiness.business_name} (invoice ${invoiceNumber})`,
       details: {
         amount,
         payment_method: paymentMethod,
+        payment_type: paymentType,
         reference,
         previous_tier: previousTier,
-        new_tier: "paid",
+        new_tier: isLifetime ? "lifetime" : "paid",
         previous_expires_at: business.subscription_expires_at,
-        new_expires_at: newExpiresAt.toISOString(),
+        new_expires_at: newExpiresAt ? newExpiresAt.toISOString() : null,
         was_locked: wasLocked,
         invoice_number: invoiceNumber,
         email_sent: emailSent,
