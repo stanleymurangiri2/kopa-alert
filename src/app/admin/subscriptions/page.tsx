@@ -14,6 +14,7 @@ type Business = {
   subscription_status: string;
   subscription_expires_at: string | null;
   subscription_last_payment_at: string | null;
+  onetime_fee_paid_at: string | null;
 };
 
 const PAGE_SIZE = 15;
@@ -39,7 +40,7 @@ export default function SubscriptionsPage() {
     const { data, error: loadError } = await supabase
       .from("businesses")
       .select(
-        "id, business_code, business_name, subscription_tier, subscription_price, subscription_status, subscription_expires_at, subscription_last_payment_at"
+        "id, business_code, business_name, subscription_tier, subscription_price, subscription_status, subscription_expires_at, subscription_last_payment_at, onetime_fee_paid_at"
       )
       .neq("subscription_tier", "free")
       .order("subscription_expires_at", { ascending: true, nullsFirst: false });
@@ -140,6 +141,9 @@ export default function SubscriptionsPage() {
                 Price
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                One-Time Fee
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
                 Status
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
@@ -175,9 +179,19 @@ export default function SubscriptionsPage() {
                   </td>
 
                   <td className="px-6 py-4 text-right font-mono text-foreground">
-                    {business.subscription_tier === "lifetime"
-                      ? "Lifetime"
-                      : `KES ${Number(business.subscription_price ?? 0).toLocaleString()}`}
+                    KES {Number(business.subscription_price ?? 0).toLocaleString()}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                        business.onetime_fee_paid_at
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning"
+                      }`}
+                    >
+                      {business.onetime_fee_paid_at ? "Paid" : "Not paid"}
+                    </span>
                   </td>
 
                   <td className="px-6 py-4">
@@ -216,7 +230,7 @@ export default function SubscriptionsPage() {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground">
+                <td colSpan={7} className="px-6 py-10 text-center text-muted-foreground">
                   No paid subscriptions yet.
                 </td>
               </tr>

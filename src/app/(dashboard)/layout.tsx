@@ -59,6 +59,9 @@ export default async function DashboardLayout({
   if (profile?.role !== 'super_admin' && profile?.businesses?.status === 'suspended') {
     redirect('/account-suspended');
   }
+  if (profile?.role !== 'super_admin' && !profile?.businesses?.onetime_fee_paid_at) {
+    redirect('/account-pending-activation');
+  }
   if (
     profile?.role !== 'super_admin' &&
     profile?.businesses?.subscription_tier !== 'free' &&

@@ -200,21 +200,21 @@ export function subscriptionInvoiceReceiptEmail(params: {
   const periodStart = new Date(params.period_start).toLocaleDateString();
   const periodEnd = params.period_end ? new Date(params.period_end).toLocaleDateString() : null;
 
-  const isLifetime = params.payment_type === 'one_time';
+  const isOneTime = params.payment_type === 'one_time';
 
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       ${LOGO_HEADER}
       <h2 style="color: #2563eb;">Payment Received - Invoice &amp; Receipt</h2>
       <p>Hi ${params.name},</p>
-      <p>We've recorded your KopaAlert ${isLifetime ? 'one-time' : 'subscription'} payment for "<strong>${params.business_name}</strong>".</p>
+      <p>We've recorded your KopaAlert ${isOneTime ? 'one-time system fee' : 'monthly subscription'} payment for "<strong>${params.business_name}</strong>".</p>
       <p><strong>Invoice Number:</strong> <code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">${params.invoice_number}</code></p>
       <p><strong>Amount Paid:</strong> <code style="background:#f3f4f6; padding:2px 6px; border-radius:4px;">${params.currency} ${params.amount.toLocaleString()}</code></p>
       <p><strong>Payment Method:</strong> ${params.payment_method}</p>
       ${params.reference ? `<p><strong>Reference:</strong> ${params.reference}</p>` : ''}
       ${
-        isLifetime
-          ? `<p style="color:#64748b; font-size: 13px;">This was a one-time payment. Your account now has lifetime access - no further subscription payments are required.</p>`
+        isOneTime
+          ? `<p style="color:#64748b; font-size: 13px;">This is the one-time system fee for using KopaAlert. It's separate from your monthly subscription, which continues to cover maintenance and services like SMS.</p>`
           : `<p><strong>Billing Period:</strong> ${periodStart} - ${periodEnd}</p>
       <p style="color:#64748b; font-size: 13px;">Your account is active and your next renewal is due on ${periodEnd}.</p>`
       }

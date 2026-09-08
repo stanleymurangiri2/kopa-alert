@@ -1,0 +1,12 @@
+-- subscription_payments.payment_type is a real Postgres enum (subscription_type),
+-- currently limited to 'monthly' and 'topup' - it does not include 'one_time'.
+-- The already-shipped one-time/lifetime payment feature has therefore been
+-- silently failing to insert its subscription_payments row in production ever
+-- since it shipped (the insert error is only logged server-side, never
+-- surfaced to the caller). 'topup' is unused anywhere in the app - safe to
+-- extend the enum rather than repurpose it.
+--
+-- Must be its own migration: Postgres does not allow a newly added enum
+-- value to be referenced in the same transaction that adds it, and each
+-- Supabase migration file runs in its own transaction.
+ALTER TYPE public.subscription_type ADD VALUE IF NOT EXISTS 'one_time';

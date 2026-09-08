@@ -23,7 +23,7 @@ export default async function BusinessPage({
   const { data: business, error } = await supabase
     .from("businesses")
     .select(
-      "id, business_code, business_name, email, phone, status, subscription_tier, subscription_status, subscription_price, subscription_expires_at, subscription_locked_at, sms_balance, created_at"
+      "id, business_code, business_name, email, phone, status, subscription_tier, subscription_status, subscription_price, subscription_expires_at, subscription_locked_at, onetime_fee_paid_at, onetime_fee_amount, sms_balance, created_at"
     )
     .eq("id", id)
     .single();
@@ -89,13 +89,24 @@ export default async function BusinessPage({
           />
 
           <div>
-            <p className="text-sm text-muted-foreground">Subscription Billing</p>
+            <p className="text-sm text-muted-foreground">One-Time System Fee</p>
+            <p className="font-semibold text-foreground">
+              {business.onetime_fee_paid_at
+                ? `Paid on ${new Date(business.onetime_fee_paid_at).toLocaleDateString()}${
+                    business.onetime_fee_amount != null
+                      ? ` — KES ${Number(business.onetime_fee_amount).toLocaleString()}`
+                      : ""
+                  }`
+                : "Not paid"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Monthly Subscription</p>
             <p className="font-semibold text-foreground">
               {business.subscription_tier === "free"
                 ? "Free tier"
-                : business.subscription_tier === "lifetime"
-                  ? "Lifetime access (one-time payment)"
-                  : `KES ${Number(business.subscription_price ?? 0).toLocaleString()} / month`}
+                : `KES ${Number(business.subscription_price ?? 0).toLocaleString()} / month`}
             </p>
             <SubscriptionControl
               businessId={business.id}
@@ -103,6 +114,8 @@ export default async function BusinessPage({
               status={business.subscription_status}
               price={business.subscription_price}
               expiresAt={business.subscription_expires_at}
+              onetimeFeePaidAt={business.onetime_fee_paid_at}
+              onetimeFeeAmount={business.onetime_fee_amount}
             />
           </div>
 

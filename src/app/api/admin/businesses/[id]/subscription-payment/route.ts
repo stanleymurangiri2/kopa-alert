@@ -69,12 +69,12 @@ export async function POST(
       );
     }
 
-    const isLifetime = paymentType === "one_time";
+    const isOneTime = paymentType === "one_time";
 
     const { data: business, error: businessError } = await supabase
       .from("businesses")
       .select(
-        "id, business_code, business_name, email, subscription_tier, subscription_status, subscription_expires_at"
+        "id, business_code, business_name, email, subscription_tier, subscription_status, subscription_expires_at, onetime_fee_paid_at"
       )
       .eq("id", id)
       .single();
@@ -91,8 +91,8 @@ export async function POST(
     const baseDate =
       currentExpiresAt && currentExpiresAt > now ? currentExpiresAt : now;
 
-    const newExpiresAt = isLifetime ? null : new Date(baseDate);
-    if (newExpiresAt) {
+    const newExpiresAt = isOneTime ? currentExpiresAt : new Date(baseDate);
+    if (!isOneTime && newExpiresAt) {
       newExpiresAt.setDate(newExpiresAt.getDate() + BILLING_PERIOD_DAYS);
     }
 
@@ -101,20 +101,31 @@ export async function POST(
     const previousTier = business.subscription_tier;
     const wasLocked = business.subscription_status === "locked";
 
+    // The one-time system fee and the monthly subscription are independent:
+    // recording one never touches the other's tier/price/expiry/lock state.
+    const updatePayload = isOneTime
+      ? {
+          onetime_fee_paid_at: now.toISOString(),
+          onetime_fee_amount: amount,
+        }
+      : {
+          subscription_tier: "paid",
+          subscription_status: "active",
+          subscription_price: amount,
+          subscription_expires_at: newExpiresAt ? newExpiresAt.toISOString() : null,
+          subscription_locked_at: null,
+          subscription_reminder_sent_at: null,
+          subscription_final_notice_sent_at: null,
+          subscription_last_payment_at: now.toISOString(),
+        };
+
     const { data: updatedBusiness, error: updateError } = await supabase
       .from("businesses")
-      .update({
-        subscription_tier: isLifetime ? "lifetime" : "paid",
-        subscription_status: "active",
-        subscription_price: isLifetime ? 0 : amount,
-        subscription_expires_at: newExpiresAt ? newExpiresAt.toISOString() : null,
-        subscription_locked_at: null,
-        subscription_reminder_sent_at: null,
-        subscription_final_notice_sent_at: null,
-        subscription_last_payment_at: now.toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", id)
-      .select("id, business_name, email, subscription_tier, subscription_price, subscription_expires_at")
+      .select(
+        "id, business_name, email, subscription_tier, subscription_price, subscription_expires_at, onetime_fee_paid_at, onetime_fee_amount"
+      )
       .single();
 
     if (updateError || !updatedBusiness) {
@@ -139,8 +150,8 @@ export async function POST(
         status: "approved",
         admin_notes: notes,
         invoice_number: invoiceNumber,
-        period_start: periodStart.toISOString(),
-        period_end: newExpiresAt ? newExpiresAt.toISOString() : null,
+        period_start: isOneTime ? null : periodStart.toISOString(),
+        period_end: isOneTime ? null : newExpiresAt ? newExpiresAt.toISOString() : null,
         recorded_by: adminUser.id,
       })
       .select("id, invoice_number")
@@ -180,7 +191,7 @@ export async function POST(
             reference,
             payment_type: paymentType as "monthly" | "one_time",
             period_start: periodStart.toISOString(),
-            period_end: newExpiresAt ? newExpiresAt.toISOString() : null,
+            period_end: isOneTime ? null : newExpiresAt ? newExpiresAt.toISOString() : null,
             support_email: SUPPORT_EMAIL,
             support_phone: SUPPORT_PHONE,
           }),
@@ -197,16 +208,16 @@ export async function POST(
       user_id: adminUser.id,
       action: "RECORD_SUBSCRIPTION_PAYMENT",
       target_type: "business",
-      description: `Recorded KES ${amount.toLocaleString()} ${isLifetime ? "one-time (lifetime)" : "monthly subscription"} payment for ${updatedBusiness.business_name} (invoice ${invoiceNumber})`,
+      description: `Recorded KES ${amount.toLocaleString()} ${isOneTime ? "one-time system fee" : "monthly subscription"} payment for ${updatedBusiness.business_name} (invoice ${invoiceNumber})`,
       details: {
         amount,
         payment_method: paymentMethod,
         payment_type: paymentType,
         reference,
         previous_tier: previousTier,
-        new_tier: isLifetime ? "lifetime" : "paid",
+        new_tier: isOneTime ? previousTier : "paid",
         previous_expires_at: business.subscription_expires_at,
-        new_expires_at: newExpiresAt ? newExpiresAt.toISOString() : null,
+        new_expires_at: isOneTime ? business.subscription_expires_at : newExpiresAt ? newExpiresAt.toISOString() : null,
         was_locked: wasLocked,
         invoice_number: invoiceNumber,
         email_sent: emailSent,
