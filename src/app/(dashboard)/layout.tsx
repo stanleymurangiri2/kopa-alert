@@ -80,7 +80,7 @@ export default async function DashboardLayout({
           <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)] sm:px-6">
             <div className="flex items-center gap-2">
               <MobileMenuButton />
-              <div>
+              <div className="md:hidden">
                 <h2 className="text-lg font-bold text-foreground">KopaAlert</h2>
                 <p className="text-xs text-muted-foreground">{businessName}</p>
               </div>
