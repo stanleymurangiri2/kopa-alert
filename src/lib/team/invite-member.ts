@@ -37,11 +37,25 @@ export async function inviteMember({
   const { data: existingUser } = await supabase
     .from('users')
     .select('id')
-    .eq('email', email)
+    .ilike('email', email)
     .maybeSingle();
 
   if (existingUser) {
     return { success: false, message: 'A user with this email already exists.' };
+  }
+
+  const { data: existingCustomer } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('business_id', businessId)
+    .ilike('email', email)
+    .maybeSingle();
+
+  if (existingCustomer) {
+    return {
+      success: false,
+      message: 'This email belongs to one of your customers and cannot be used for a team account.',
+    };
   }
 
   const { data: authData, error: authError } =

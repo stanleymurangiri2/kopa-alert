@@ -60,6 +60,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (user.email && email.toLowerCase() === user.email.toLowerCase()) {
+      return NextResponse.json(
+        { success: false, message: 'You cannot invite yourself.' },
+        { status: 400 }
+      );
+    }
+
     const result = await inviteMember({
       businessId: requester.business_id,
       name,
