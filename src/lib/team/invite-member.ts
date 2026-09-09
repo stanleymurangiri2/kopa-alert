@@ -106,7 +106,7 @@ export async function inviteMember({
         role,
         login_email: email,
         temporary_password: temporaryPassword,
-        login_url: 'https://kopaalert.shop/login',
+        login_url: 'https://www.kopaalert.shop/login',
         support_email: SUPPORT_EMAIL,
         support_phone: SUPPORT_PHONE,
       }),

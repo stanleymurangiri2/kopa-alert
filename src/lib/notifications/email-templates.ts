@@ -1,4 +1,4 @@
-const LOGO_HEADER = `<div style="text-align:center; margin-bottom:16px;"><img src="https://kopaalert.shop/logo.png" width="56" height="56" alt="KopaAlert" style="border-radius:12px;" /></div>`;
+const LOGO_HEADER = `<div style="text-align:center; margin-bottom:16px;"><img src="https://www.kopaalert.shop/logo.png" width="56" height="56" alt="KopaAlert" style="border-radius:12px;" /></div>`;
 
 export function invitationEmail(params: {
   name: string;

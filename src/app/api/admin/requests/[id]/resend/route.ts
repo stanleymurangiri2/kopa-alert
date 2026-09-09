@@ -226,7 +226,7 @@ export async function POST(
           business_name: requestData.business_name,
           business_code: businessRow?.business_code ?? "",
           temporary_password: newPassword,
-          login_url: "https://kopaalert.shop/login",
+          login_url: "https://www.kopaalert.shop/login",
           support_email: SUPPORT_EMAIL,
           support_phone: SUPPORT_PHONE,
         }),

@@ -76,7 +76,7 @@ export async function createSuperAdmin({
         name,
         login_email: email,
         temporary_password: temporaryPassword,
-        login_url: 'https://kopaalert.shop/admin/login',
+        login_url: 'https://www.kopaalert.shop/admin/login',
         support_email: SUPPORT_EMAIL,
         support_phone: SUPPORT_PHONE,
       }),
