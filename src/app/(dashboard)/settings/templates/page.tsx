@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useToast } from '@/components/ui/ToastProvider';
-import { Loader2 } from 'lucide-react';
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_WHATSAPP_URL } from '@/lib/constants/support';
 
 type ReminderType = 'upcoming' | 'due_today' | 'overdue';
 
@@ -18,12 +17,9 @@ type Template = {
 
 export default function NotificationTemplatesPage() {
   const supabase = createClient();
-  const { showToast } = useToast();
 
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [businessId, setBusinessId] = useState('');
   const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -52,8 +48,6 @@ export default function NotificationTemplatesPage() {
       return;
     }
 
-    setBusinessId(profile.business_id);
-
     const { data } = await supabase
       .from('notification_templates')
       .select('*')
@@ -63,43 +57,6 @@ export default function NotificationTemplatesPage() {
     setTemplates(data ?? []);
 
     setLoading(false);
-  }
-
-  async function saveTemplate(template: Template) {
-    setSavingId(template.id);
-
-    const { error } = await supabase
-      .from('notification_templates')
-      .update({
-        message_template: template.message_template,
-        days_offset: template.days_offset,
-        is_active: template.is_active,
-      })
-      .eq('id', template.id);
-
-    if (error) {
-      showToast('error', error.message);
-      setSavingId(null);
-      return;
-    }
-
-    setSavingId(null);
-    showToast('success', 'Template updated successfully.');
-  }
-
-  function updateTemplate(
-    index: number,
-    field: keyof Template,
-    value: any
-  ) {
-    const copy = [...templates];
-
-    copy[index] = {
-      ...copy[index],
-      [field]: value,
-    };
-
-    setTemplates(copy);
   }
 
   if (loading) {
@@ -120,9 +77,26 @@ export default function NotificationTemplatesPage() {
         </h1>
 
         <p className="text-muted-foreground">
-          Customize automatic SMS reminders.
+          Your automatic SMS reminders. These are managed by KopaAlert support to keep
+          them consistent and reliable.
         </p>
 
+      </div>
+
+      <div className="rounded-lg border border-info/30 bg-info/10 p-4 text-sm text-info">
+        Want different wording? Contact customer support -{' '}
+        <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+          {SUPPORT_EMAIL}
+        </a>
+        {', '}
+        <a href={`tel:${SUPPORT_PHONE}`} className="underline">
+          {SUPPORT_PHONE}
+        </a>
+        {', or '}
+        <a href={SUPPORT_WHATSAPP_URL} target="_blank" rel="noreferrer" className="underline">
+          WhatsApp
+        </a>
+        .
       </div>
 
       {templates.length === 0 && (
@@ -131,7 +105,7 @@ export default function NotificationTemplatesPage() {
         </div>
       )}
 
-      {templates.map((template, index) => (
+      {templates.map((template) => (
 
         <div
           key={template.id}
@@ -150,106 +124,49 @@ export default function NotificationTemplatesPage() {
               </span>
             </div>
 
-            <label className="flex items-center gap-2">
-
-              <input
-                type="checkbox"
-                checked={template.is_active}
-                onChange={(e) =>
-                  updateTemplate(
-                    index,
-                    'is_active',
-                    e.target.checked
-                  )
-                }
-              />
-
-              Active
-
-            </label>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                template.is_active
+                  ? 'bg-success/10 text-success'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {template.is_active ? 'Active' : 'Inactive'}
+            </span>
 
           </div>
 
           <div>
 
-            <label className="block mb-2 text-sm font-medium text-foreground">
+            <p className="mb-2 text-sm font-medium text-foreground">
               Days Offset
-            </label>
+            </p>
 
-            <input
-              type="number"
-              value={template.days_offset}
-              onChange={(e) =>
-                updateTemplate(
-                  index,
-                  'days_offset',
-                  Number(e.target.value)
-                )
-              }
-              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-            />
-
-            <p className="mt-1 text-xs text-muted-foreground">
-              Example: -2 = two days before due date, 0 = due date, 3 = three days after.
+            <p className="text-sm text-muted-foreground">
+              {template.days_offset}
+              {' '}
+              <span className="text-xs">
+                ({template.days_offset < 0
+                  ? `${Math.abs(template.days_offset)} day(s) before due date`
+                  : template.days_offset === 0
+                    ? 'on the due date'
+                    : `${template.days_offset} day(s) after due date`})
+              </span>
             </p>
 
           </div>
 
           <div>
 
-            <label className="block mb-2 text-sm font-medium text-foreground">
+            <p className="mb-2 text-sm font-medium text-foreground">
               SMS Message
-            </label>
-
-            <textarea
-              rows={7}
-              value={template.message_template}
-              onChange={(e) =>
-                updateTemplate(
-                  index,
-                  'message_template',
-                  e.target.value
-                )
-              }
-              className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-            />
-
-          </div>
-
-          <div className="rounded-md bg-muted p-3 text-sm">
-
-            <p className="font-semibold mb-2 text-foreground">
-              Available Variables
             </p>
 
-            <div className="grid grid-cols-2 gap-2 text-muted-foreground font-mono">
-
-              <span>{'{customer_name}'}</span>
-
-              <span>{'{business_name}'}</span>
-
-              <span>{'{balance}'}</span>
-
-              <span>{'{amount}'}</span>
-
-              <span>{'{description}'}</span>
-
-              <span>{'{due_date}'}</span>
-
-              <span>{'{payment_instructions}'}</span>
-
-            </div>
+            <p className="whitespace-pre-wrap rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground">
+              {template.message_template}
+            </p>
 
           </div>
-
-          <button
-            onClick={() => saveTemplate(template)}
-            disabled={savingId === template.id}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {savingId === template.id && <Loader2 className="h-4 w-4 animate-spin" />}
-            {savingId === template.id ? 'Saving...' : 'Save Template'}
-          </button>
 
         </div>
 

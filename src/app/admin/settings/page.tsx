@@ -2,22 +2,31 @@ import { createClient } from "@/lib/supabase/server";
 import { getPlatformSetting } from "@/lib/supabase/platform-settings";
 import ApprovalRulesControl from "./ApprovalRulesControl";
 import AuditRetentionControl from "./AuditRetentionControl";
+import SmsTemplatesControl, { type PlatformTemplate } from "./SmsTemplatesControl";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
   const supabase = await createClient();
 
-  const [{ data: superAdmins }, { data: businesses }, { count: auditLogCount }] =
-    await Promise.all([
-      supabase
-        .from("users")
-        .select("id, name, email, created_at")
-        .eq("role", "super_admin")
-        .order("created_at"),
-      supabase.from("businesses").select("sms_balance"),
-      supabase.from("audit_logs").select("id", { count: "exact", head: true }),
-    ]);
+  const [
+    { data: superAdmins },
+    { data: businesses },
+    { count: auditLogCount },
+    { data: platformTemplates },
+  ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, name, email, created_at")
+      .eq("role", "super_admin")
+      .order("created_at"),
+    supabase.from("businesses").select("sms_balance"),
+    supabase.from("audit_logs").select("id", { count: "exact", head: true }),
+    supabase
+      .from("platform_notification_templates")
+      .select("type, channel, message_template, days_offset, is_active")
+      .order("days_offset"),
+  ]);
 
   const resendLimit = await getPlatformSetting(supabase, "resend_limit", 3);
   const autoExpireDays = await getPlatformSetting<number | null>(
@@ -159,6 +168,20 @@ export default async function AdminSettingsPage() {
           <AuditRetentionControl retentionDays={auditRetentionDays} />
         </section>
       </div>
+
+      <section className="mt-6 rounded-xl bg-card border border-border p-6 shadow">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">SMS Reminder Templates</h2>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            The wording every business's automated debt reminders use. Businesses can view
+            their active templates but can no longer edit them here - changes made below
+            apply to every business immediately.
+          </p>
+        </div>
+
+        <SmsTemplatesControl templates={(platformTemplates ?? []) as PlatformTemplate[]} />
+      </section>
 
       <div className="mt-8 rounded-xl border border-info/30 bg-info/10 p-6">
         <h2 className="font-semibold text-info">Some platform settings are still not configurable</h2>
