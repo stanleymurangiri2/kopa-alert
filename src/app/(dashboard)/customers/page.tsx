@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Ban, Download, Eye, Loader2, Pencil, Search, Star, Trash2 } from 'lucide-react';
+import { Ban, Download, Eye, Loader2, Pencil, Search, Star, Trash2, Upload } from 'lucide-react';
 import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/customers';
 import { getDebts } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
 import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
+import ImportCsvModal from './ImportCsvModal';
 
 type Customer = {
   id: string;
@@ -130,6 +131,8 @@ export default function CustomersPage() {
 
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     loadCustomers();
@@ -321,9 +324,18 @@ export default function CustomersPage() {
 
         <button
           type="button"
+          onClick={() => setShowImportModal(true)}
+          className="ml-auto flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+        >
+          <Upload className="h-4 w-4" />
+          Import CSV
+        </button>
+
+        <button
+          type="button"
           onClick={() => exportCsv(displayedCustomers)}
           disabled={displayedCustomers.length === 0}
-          className="ml-auto flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Download className="h-4 w-4" />
           Export CSV
@@ -535,6 +547,16 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showImportModal && (
+        <ImportCsvModal
+          onClose={() => setShowImportModal(false)}
+          onImported={() => {
+            setShowImportModal(false);
+            loadCustomers();
+          }}
+        />
       )}
     </div>
   );
