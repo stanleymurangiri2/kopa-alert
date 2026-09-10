@@ -2,15 +2,13 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase/admin';
 import { getPlatformSetting } from '@/lib/supabase/platform-settings';
 import { SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/constants/support';
+import { verifyCronSecret } from '@/lib/utils/verify-cron-secret';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!verifyCronSecret(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

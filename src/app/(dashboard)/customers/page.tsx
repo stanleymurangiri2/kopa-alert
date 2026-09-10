@@ -8,6 +8,7 @@ import { getCustomers, updateCustomer, deleteCustomer } from '@/lib/supabase/cus
 import { getDebts } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
 import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
+import { toCsvCell } from '@/lib/utils/csv';
 import ImportCsvModal from './ImportCsvModal';
 
 type Customer = {
@@ -99,7 +100,7 @@ function exportCsv(rows: (Customer & { outstanding: number; status: CustomerStat
   const header = ['Name', 'Phone', 'Email', 'Total Debt (KES)', 'Rating', 'Status'];
   const lines = rows.map((c) =>
     [c.full_name, c.phone, c.email ?? '', c.outstanding, c.rating ?? '', c.status]
-      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+      .map(toCsvCell)
       .join(',')
   );
 

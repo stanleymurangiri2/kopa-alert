@@ -10,7 +10,6 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
-    notFound?: boolean;
   } | null>(null);
 
   const handleSubmit = async (
@@ -36,15 +35,6 @@ export default function ForgotPasswordPage() {
         setMessage({
           type: 'error',
           text: result.error ?? 'Unable to send reset link.',
-        });
-        return;
-      }
-
-      if (result.notFound) {
-        setMessage({
-          type: 'error',
-          text: result.message ?? 'No account found for that email.',
-          notFound: true,
         });
         return;
       }
@@ -88,14 +78,6 @@ export default function ForgotPasswordPage() {
             }`}
           >
             {message.text}
-            {message.notFound && (
-              <>
-                {' '}
-                <Link href="/register" className="font-semibold underline">
-                  Register your business
-                </Link>
-              </>
-            )}
           </div>
         )}
 
@@ -135,6 +117,13 @@ export default function ForgotPasswordPage() {
           >
             Back to Login
           </Link>
+
+          <p className="mt-2">
+            New to KopaAlert?{' '}
+            <Link href="/register" className="font-semibold text-primary hover:underline">
+              Register your business
+            </Link>
+          </p>
         </div>
       </div>
     </main>

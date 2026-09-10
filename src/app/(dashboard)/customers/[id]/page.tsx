@@ -7,6 +7,7 @@ import { getCustomerById } from '@/lib/supabase/customers';
 import { getDebts, addToDebt } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
 import { Download, Loader2 } from 'lucide-react';
+import { toCsvCell } from '@/lib/utils/csv';
 
 type Customer = {
   id: string;
@@ -92,7 +93,7 @@ function exportLedgerCsv(customerName: string, entries: LedgerEntry[]) {
       entry.description ?? '',
       entry.amount,
     ]
-      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+      .map(toCsvCell)
       .join(',')
   );
 

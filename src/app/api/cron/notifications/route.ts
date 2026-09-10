@@ -10,6 +10,7 @@ import {
 } from '@/lib/supabase/notifications';
 import { sendSMS } from '@/lib/sms/africastalking';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { verifyCronSecret } from '@/lib/utils/verify-cron-secret';
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,7 @@ const MAX_ATTEMPTS = 3;
 
 export async function GET(request: Request) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!verifyCronSecret(request)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
