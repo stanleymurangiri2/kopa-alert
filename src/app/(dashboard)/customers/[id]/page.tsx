@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { getCustomerById } from '@/lib/supabase/customers';
 import { getDebts, addToDebt } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
-import { Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 
 type Customer = {
   id: string;
@@ -81,6 +81,31 @@ function ledgerTypeLabel(type: string) {
     .split('_')
     .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
     .join(' ');
+}
+
+function exportLedgerCsv(customerName: string, entries: LedgerEntry[]) {
+  const header = ['Date', 'Transaction', 'Description', 'Amount (KES)'];
+  const lines = entries.map((entry) =>
+    [
+      new Date(entry.created_at).toLocaleDateString(),
+      ledgerTypeLabel(entry.type),
+      entry.description ?? '',
+      entry.amount,
+    ]
+      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+      .join(',')
+  );
+
+  const csv = [header.join(','), ...lines].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${customerName.trim().replace(/\s+/g, '-').toLowerCase()}-statement-${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function CustomerDetailPage() {
@@ -495,11 +520,23 @@ export default function CustomerDetailPage() {
       </div>
 
       <div className="rounded-lg border border-border bg-card shadow-sm">
-        <div className="border-b border-border p-4">
-          <h2 className="font-semibold text-foreground">Financial Statement</h2>
-          <p className="text-sm text-muted-foreground">
-            Full transaction history for this customer.
-          </p>
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <div>
+            <h2 className="font-semibold text-foreground">Financial Statement</h2>
+            <p className="text-sm text-muted-foreground">
+              Full transaction history for this customer.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => customer && exportLedgerCsv(customer.full_name, ledger)}
+            disabled={ledger.length === 0}
+            className="flex shrink-0 items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </button>
         </div>
 
         {ledger.length === 0 ? (
