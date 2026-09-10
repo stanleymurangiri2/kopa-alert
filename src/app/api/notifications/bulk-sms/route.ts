@@ -60,11 +60,18 @@ export async function POST(request: NextRequest) {
 
     const { data: business } = await supabaseAdmin
       .from("businesses")
-      .select("sms_balance")
+      .select("sms_balance, business_name")
       .eq("id", profile.business_id)
       .single();
 
     const balance = business?.sms_balance ?? 0;
+
+    // Outbound SMS is sent from the owner's own phone number, not a
+    // registered alphanumeric sender ID, so lead with the business name
+    // (capitalized - plain SMS has no bold) so recipients know who it's from.
+    const finalMessage = business?.business_name
+      ? `${business.business_name.toUpperCase()}\n${message}`
+      : message;
 
     if (balance < customerIds.length) {
       return NextResponse.json(
@@ -98,7 +105,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await sendBulkSMS(phones, message);
+    const result = await sendBulkSMS(phones, finalMessage);
 
     const sentCount = result.sentCount ?? 0;
     const failedCount = result.failedCount ?? phones.length;
@@ -117,7 +124,7 @@ export async function POST(request: NextRequest) {
         recipient_count: phones.length,
         sent_count: sentCount,
         failed_count: failedCount,
-        message_preview: message.slice(0, 200),
+        message_preview: finalMessage.slice(0, 200),
       },
     });
 
