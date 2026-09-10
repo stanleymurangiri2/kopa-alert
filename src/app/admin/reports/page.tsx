@@ -22,6 +22,21 @@ const NOTIFICATION_STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-muted-foreground",
 };
 
+const MAX_NOTIFICATION_ATTEMPTS = 3;
+const DORMANT_AFTER_DAYS = 30;
+
+function daysSince(dateString: string): number {
+  const ms = Date.now() - new Date(dateString).getTime();
+  return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
+function formatAge(dateString: string): string {
+  const days = daysSince(dateString);
+  if (days <= 0) return "today";
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
 function startOfDay(date: Date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
@@ -58,11 +73,13 @@ export default async function ReportsPage() {
   const [requestsResult, businessesResult, usersResult, customersResult, debtsResult, notificationsResult] =
     await Promise.all([
       supabase.from("business_requests").select("id, status, created_at"),
-      supabase.from("businesses").select("id, status, subscription_tier"),
+      supabase.from("businesses").select("id, business_name, status, subscription_tier, created_at"),
       supabase.from("users").select("id, role"),
       supabase.from("customers").select("id", { count: "exact", head: true }),
-      supabase.from("debts").select("amount, amount_paid, due_date"),
-      supabase.from("notification_queue").select("status"),
+      supabase.from("debts").select("business_id, amount, amount_paid, due_date, created_at"),
+      supabase
+        .from("notification_queue")
+        .select("status, attempts, created_at, sent_at"),
     ]);
 
   const error =
@@ -110,11 +127,36 @@ export default async function ReportsPage() {
   }
 
   const notificationsByStatus: Record<string, number> = {};
+  let gaveUpCount = 0;
+  let oldestPendingCreatedAt: string | null = null;
+  let lastReminderBatchSentAt: string | null = null;
+
   for (const notification of notifications) {
     const status = notification.status ?? "unknown";
     notificationsByStatus[status] = (notificationsByStatus[status] ?? 0) + 1;
+
+    if (status === "failed" && (notification.attempts ?? 0) >= MAX_NOTIFICATION_ATTEMPTS) {
+      gaveUpCount++;
+    }
+
+    if (
+      status === "pending" &&
+      (!oldestPendingCreatedAt || notification.created_at < oldestPendingCreatedAt)
+    ) {
+      oldestPendingCreatedAt = notification.created_at;
+    }
+
+    if (
+      notification.sent_at &&
+      (!lastReminderBatchSentAt || notification.sent_at > lastReminderBatchSentAt)
+    ) {
+      lastReminderBatchSentAt = notification.sent_at;
+    }
   }
+
   const smsSent = notificationsByStatus.sent ?? 0;
+  const smsDeliveryRate =
+    smsSent + gaveUpCount > 0 ? Math.round((smsSent / (smsSent + gaveUpCount)) * 100) : null;
 
   const totalRequests = requests.length;
   const pendingRequests = requests.filter((r) => r.status === "pending").length;
@@ -130,6 +172,40 @@ export default async function ReportsPage() {
     const tier = business.subscription_tier ?? "none";
     businessesByTier[tier] = (businessesByTier[tier] ?? 0) + 1;
   }
+
+  const lastDebtActivityByBusiness = new Map<string, string>();
+  for (const debt of debts) {
+    if (!debt.business_id) continue;
+    const existing = lastDebtActivityByBusiness.get(debt.business_id);
+    if (!existing || debt.created_at > existing) {
+      lastDebtActivityByBusiness.set(debt.business_id, debt.created_at);
+    }
+  }
+
+  const approvedBusinesses = businesses.filter((b) => b.status === "approved");
+
+  const businessEngagement = approvedBusinesses.map((business) => {
+    const lastActivity = lastDebtActivityByBusiness.get(business.id) ?? null;
+    const everUsed = lastActivity !== null;
+    const referenceDate = lastActivity ?? business.created_at;
+    const dormant = daysSince(referenceDate) > DORMANT_AFTER_DAYS;
+
+    return {
+      id: business.id,
+      business_name: business.business_name,
+      everUsed,
+      dormant,
+      referenceDate,
+    };
+  });
+
+  const activeBusinessCount = businessEngagement.filter((b) => !b.dormant).length;
+  const dormantBusinessCount = businessEngagement.filter((b) => b.dormant && b.everUsed).length;
+  const neverUsedCount = businessEngagement.filter((b) => !b.everUsed).length;
+
+  const atRiskBusinesses = businessEngagement
+    .filter((b) => b.dormant)
+    .sort((a, b) => (a.referenceDate < b.referenceDate ? -1 : 1));
 
   const usersByRole: Record<string, number> = {};
   for (const user of users) {
@@ -193,6 +269,88 @@ export default async function ReportsPage() {
           <MoneyCard title="Total Collected" value={totalCollected} tone="success" />
           <MoneyCard title="Total Outstanding" value={totalOutstanding} tone="destructive" />
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Platform Health</h2>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <ReportCard
+            title="SMS Delivery Rate"
+            value={smsDeliveryRate === null ? "-" : `${smsDeliveryRate}%`}
+            tone={smsDeliveryRate === null || smsDeliveryRate >= 90 ? "success" : smsDeliveryRate >= 70 ? "warning" : "destructive"}
+          />
+          <ReportCard title="Permanently Failed" value={gaveUpCount} tone={gaveUpCount > 0 ? "destructive" : "success"} />
+          <TextCard
+            title="Oldest Pending Reminder"
+            value={oldestPendingCreatedAt ? formatAge(oldestPendingCreatedAt) : "None pending"}
+            tone={oldestPendingCreatedAt && daysSince(oldestPendingCreatedAt) >= 1 ? "warning" : "success"}
+          />
+          <TextCard
+            title="Last Reminder Sent"
+            value={lastReminderBatchSentAt ? formatAge(lastReminderBatchSentAt) : "Never"}
+            tone={
+              lastReminderBatchSentAt && daysSince(lastReminderBatchSentAt) >= 2
+                ? "warning"
+                : "success"
+            }
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-1 text-lg font-semibold text-foreground">Business Engagement</h2>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Among approved businesses - who&apos;s actually recording debts, and who&apos;s gone quiet.
+        </p>
+        <div className="grid gap-6 md:grid-cols-3">
+          <ReportCard title="Active (last 30 days)" value={activeBusinessCount} tone="success" />
+          <ReportCard title="Dormant (30+ days quiet)" value={dormantBusinessCount} tone="warning" />
+          <ReportCard title="Never Recorded a Debt" value={neverUsedCount} tone="destructive" />
+        </div>
+
+        {atRiskBusinesses.length > 0 && (
+          <div className="mt-6 max-h-96 overflow-y-auto rounded-xl border border-border bg-card shadow">
+            <table className="w-full">
+              <thead className="sticky top-0 bg-primary">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                    Business
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold uppercase tracking-wide text-primary-foreground">
+                    Last Activity
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {atRiskBusinesses.map((business, i) => (
+                  <tr
+                    key={business.id}
+                    className={`border-t border-border ${i % 2 === 1 ? "bg-table-stripe" : "bg-card"}`}
+                  >
+                    <td className="px-6 py-2 text-sm text-foreground">{business.business_name}</td>
+                    <td className="px-6 py-2 text-sm">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          business.everUsed
+                            ? "bg-warning/10 text-warning"
+                            : "bg-destructive/10 text-destructive"
+                        }`}
+                      >
+                        {business.everUsed ? "Dormant" : "Never used"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-2 text-right text-sm text-muted-foreground">
+                      {business.everUsed ? formatAge(business.referenceDate) : "Since signup"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -281,7 +439,7 @@ function ReportCard({
   tone,
 }: {
   title: string;
-  value: number;
+  value: number | string;
   tone?: "warning" | "success" | "destructive";
 }) {
   const toneClasses: Record<string, string> = {
@@ -295,6 +453,30 @@ function ReportCard({
     <div className="rounded-xl bg-card border border-border p-6 shadow">
       <h3 className="text-muted-foreground">{title}</h3>
       <p className={`mt-4 font-mono text-4xl font-bold ${toneClass}`}>{value}</p>
+    </div>
+  );
+}
+
+function TextCard({
+  title,
+  value,
+  tone,
+}: {
+  title: string;
+  value: string;
+  tone?: "warning" | "success" | "destructive";
+}) {
+  const toneClasses: Record<string, string> = {
+    warning: "text-warning",
+    success: "text-success",
+    destructive: "text-destructive",
+  };
+  const toneClass = tone ? toneClasses[tone] : "text-foreground";
+
+  return (
+    <div className="rounded-xl bg-card border border-border p-6 shadow">
+      <h3 className="text-muted-foreground">{title}</h3>
+      <p className={`mt-4 text-xl font-semibold ${toneClass}`}>{value}</p>
     </div>
   );
 }
