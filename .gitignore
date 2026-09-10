@@ -32,3 +32,9 @@ Thumbs.db
 tests/*.mp4
 .vercel
 .env*
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Supabase CLI local state
+supabase/.temp/
