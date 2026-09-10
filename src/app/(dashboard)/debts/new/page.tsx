@@ -5,10 +5,14 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Customer } from '@/types/database.types';
+import { createCustomer } from '@/lib/supabase/customers';
+import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
 import { useToast } from '@/components/ui/ToastProvider';
 import { Loader2 } from 'lucide-react';
 
 type CustomerWithCredit = Customer & { available_credit?: number };
+
+const NEW_CUSTOMER_VALUE = '__new__';
 
 export default function NewDebtPage() {
   const [customers, setCustomers] = useState<CustomerWithCredit[]>([]);
@@ -20,6 +24,7 @@ export default function NewDebtPage() {
     due_date: '',
     apply_credit: false,
   });
+  const [newCustomer, setNewCustomer] = useState({ full_name: '', phone: '', email: '' });
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,9 +66,10 @@ export default function NewDebtPage() {
         setError('Failed to fetch customers.');
       } else if (data) {
         setCustomers(data);
-        if (data.length > 0) {
-          setFormData((prev) => ({ ...prev, customer_id: data[0].id }));
-        }
+        setFormData((prev) => ({
+          ...prev,
+          customer_id: data.length > 0 ? data[0].id : NEW_CUSTOMER_VALUE,
+        }));
       }
       setLoadingCustomers(false);
     }
@@ -82,6 +88,16 @@ export default function NewDebtPage() {
     const numericAmount = parseFloat(formData.amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       setError('Please enter a valid debt amount greater than 0.');
+      setSubmitting(false);
+      return;
+    }
+
+    const isNewCustomer = formData.customer_id === NEW_CUSTOMER_VALUE;
+
+    if (isNewCustomer && !isValidKenyanPhone(newCustomer.phone)) {
+      setError(
+        "Enter the customer's real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000."
+      );
       setSubmitting(false);
       return;
     }
@@ -108,11 +124,30 @@ export default function NewDebtPage() {
       return;
     }
 
+    let customerId = formData.customer_id;
+
+    if (isNewCustomer) {
+      const { data: createdCustomer, error: createError } = await createCustomer({
+        business_id: profile.business_id,
+        full_name: newCustomer.full_name.trim(),
+        phone: normalizeKenyanPhone(newCustomer.phone),
+        email: newCustomer.email.trim() || null,
+      });
+
+      if (createError || !createdCustomer) {
+        setError(createError?.message ?? 'Failed to create customer.');
+        setSubmitting(false);
+        return;
+      }
+
+      customerId = createdCustomer.id;
+    }
+
     const { data: result, error: rpcError } = await supabase.rpc(
       'create_debt_with_credit',
       {
         p_business_id: profile.business_id,
-        p_customer_id: formData.customer_id,
+        p_customer_id: customerId,
         p_amount: numericAmount,
         p_due_date: formData.due_date,
         p_description: formData.description.trim(),
@@ -160,20 +195,7 @@ export default function NewDebtPage() {
           </div>
         )}
 
-        {customers.length === 0 ? (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground text-sm mb-4">
-              You need at least one registered customer before recording a debt.
-            </p>
-            <Link
-              href="/customers/new"
-              className="px-4 py-2 bg-teal text-teal-foreground rounded-md text-sm font-medium"
-            >
-              + Add Customer First
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-foreground">Select Customer</label>
               <select
@@ -184,13 +206,62 @@ export default function NewDebtPage() {
                 }
                 className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
               >
+                {customers.length === 0 && (
+                  <option value="" disabled>
+                    No customers yet
+                  </option>
+                )}
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.full_name} ({c.phone})
                   </option>
                 ))}
+                <option value={NEW_CUSTOMER_VALUE}>+ Add New Customer</option>
               </select>
             </div>
+
+            {formData.customer_id === NEW_CUSTOMER_VALUE && (
+              <div className="space-y-4 rounded-md border border-border bg-accent/30 p-3">
+                <div>
+                  <label className="block text-sm font-medium text-foreground">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCustomer.full_name}
+                    onChange={(e) =>
+                      setNewCustomer({ ...newCustomer, full_name: e.target.value })
+                    }
+                    className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
+                    placeholder="Jane Wanjiru"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground">Phone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
+                    placeholder="0712345678 or +254712345678"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground">
+                    Email <span className="text-muted-foreground font-normal">(Optional)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                    className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
+                    placeholder="jane@example.com"
+                  />
+                </div>
+              </div>
+            )}
 
             {availableCredit > 0 && (
               <div className="rounded-md border border-success/30 bg-success/10 p-3">
@@ -269,7 +340,6 @@ export default function NewDebtPage() {
               </button>
             </div>
           </form>
-        )}
       </div>
     </div>
   );
