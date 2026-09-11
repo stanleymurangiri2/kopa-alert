@@ -65,11 +65,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await supabase
-      .from("users")
-      .update({ last_password_reset_request_at: new Date().toISOString() })
-      .eq("id", userRow.id);
-
     const { sendEmail } = await import("@/lib/notifications/resend");
     const { passwordResetEmail } = await import(
       "@/lib/notifications/email-templates"
@@ -111,6 +106,15 @@ export async function POST(request: NextRequest) {
         { status: 502 }
       );
     }
+
+    // Only stamp the cooldown once the email genuinely went out - stamping
+    // it earlier meant a real send failure followed by a quick retry hit
+    // the cooldown short-circuit above and reported false success, with no
+    // email ever having been sent either time.
+    await supabase
+      .from("users")
+      .update({ last_password_reset_request_at: new Date().toISOString() })
+      .eq("id", userRow.id);
 
     return NextResponse.json({ success: true, message: SENT_MESSAGE });
   } catch (error) {
