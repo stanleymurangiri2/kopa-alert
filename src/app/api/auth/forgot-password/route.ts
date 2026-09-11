@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     const emailResult = await sendEmail({
       to: userRow.email,
-      subject: "Reset your KopaAlert password",
+      subject: "Set a new KopaAlert password",
       html: passwordResetEmail({
         name: userRow.name ?? "there",
         reset_url: resetUrl,

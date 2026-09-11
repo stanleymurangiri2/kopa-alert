@@ -168,12 +168,11 @@ export function passwordResetEmail(params: {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       ${LOGO_HEADER}
-      <h2 style="color: #2563eb;">Reset your KopaAlert password</h2>
+      <h2 style="color: #2563eb;">Set a new KopaAlert password</h2>
       <p>Hi ${params.name},</p>
-      <p>We received a request to reset your KopaAlert account password. Click the button below to choose a new password.</p>
-      <p><a href="${params.reset_url}" style="display:inline-block; background:#2563eb; color:#ffffff; padding:10px 20px; border-radius:6px; text-decoration:none;">Reset password</a></p>
-      <p style="color:#64748b; font-size: 13px;">If you didn't request this, you can safely ignore this email - your password will remain unchanged.</p>
-      <p style="color:#64748b; font-size: 13px;">This link expires shortly for your security.</p>
+      <p>Someone requested to change the password on your KopaAlert account. Follow this link to continue:</p>
+      <p><a href="${params.reset_url}">${params.reset_url}</a></p>
+      <p>If this wasn't you, no action is needed - your password stays the same.</p>
       <hr />
       <p>Need help? Contact support:<br/>
       Email: ${params.support_email}<br/>
