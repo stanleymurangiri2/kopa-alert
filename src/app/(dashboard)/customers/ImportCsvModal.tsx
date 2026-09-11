@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, Download, Loader2, Upload, XCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { normalizeKenyanPhone, isValidKenyanPhone } from '@/lib/utils/phone';
+import type ExcelJS from 'exceljs';
 
 type ParsedRow = {
   line: number;
@@ -89,14 +90,203 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((cell) => cell.trim() !== ''));
 }
 
-function downloadTemplate() {
-  const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv;charset=utf-8;' });
+const INSTRUCTIONS =
+  '1. Do not change the grey column titles in row 3.\n' +
+  "2. Row 4 is an example - replace it with your own customer's details, or delete it.\n" +
+  '3. Click a cell in the "type" or "payment_method" column to pick from a list instead of typing.\n' +
+  '4. One row = one debt or one payment. Add as many rows as you need below.\n' +
+  '5. When you are done, save this file and upload it back into KopaAlert.';
+
+const TYPE_OPTIONS = ['DEBT', 'PAYMENT'];
+const PAYMENT_METHOD_OPTIONS = ['mpesa', 'cash', 'bank_transfer', 'cheque'];
+const TEMPLATE_DATA_ROW_COUNT = 200;
+
+/**
+ * A plain .csv file can't lock or freeze anything - there's no formatting or
+ * protection metadata in the CSV format at all. Building the downloadable
+ * template as a real .xlsx instead lets the header row be frozen in view and
+ * locked from accidental edits, and lets "type"/"payment_method" be picked
+ * from a dropdown instead of typed - both aimed at someone who isn't
+ * comfortable with spreadsheets or with English column names.
+ */
+async function buildTemplateWorkbook() {
+  const ExcelJS = (await import('exceljs')).default;
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Import', {
+    views: [{ state: 'frozen', ySplit: 3 }],
+  });
+
+  sheet.columns = REQUIRED_HEADERS.map((key) => ({
+    key,
+    width: key === 'description' ? 28 : key === 'customer_email' ? 24 : 18,
+  }));
+
+  const titleRow = sheet.getRow(1);
+  titleRow.getCell(1).value = 'KopaAlert Import Template';
+  sheet.mergeCells(1, 1, 1, REQUIRED_HEADERS.length);
+  titleRow.getCell(1).font = { bold: true, size: 14 };
+  titleRow.height = 22;
+
+  const instructionsRow = sheet.getRow(2);
+  instructionsRow.getCell(1).value = INSTRUCTIONS;
+  sheet.mergeCells(2, 1, 2, REQUIRED_HEADERS.length);
+  instructionsRow.getCell(1).alignment = { wrapText: true, vertical: 'top' };
+  instructionsRow.height = 80;
+
+  const headerRow = sheet.getRow(3);
+  REQUIRED_HEADERS.forEach((key, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = key;
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F4C75' } };
+  });
+
+  const exampleRow = sheet.getRow(4);
+  const example = [
+    'Stanley Murangiri',
+    '0740305253',
+    'stanleymurangiri2@gmail.com',
+    'DEBT',
+    5000,
+    '2 bags of cement',
+    '2026-08-15',
+    '',
+    '2026-08-01',
+  ];
+  example.forEach((value, i) => {
+    const cell = exampleRow.getCell(i + 1);
+    cell.value = value;
+    cell.font = { italic: true, color: { argb: 'FF6B7280' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF9C3' } };
+  });
+
+  const typeColIndex = REQUIRED_HEADERS.indexOf('type') + 1;
+  const paymentMethodColIndex = REQUIRED_HEADERS.indexOf('payment_method') + 1;
+  const dueDateColIndex = REQUIRED_HEADERS.indexOf('due_date') + 1;
+  const dateColIndex = REQUIRED_HEADERS.indexOf('date') + 1;
+  const amountColIndex = REQUIRED_HEADERS.indexOf('amount') + 1;
+
+  const firstDataRow = 5;
+  const lastDataRow = firstDataRow + TEMPLATE_DATA_ROW_COUNT - 1;
+
+  for (let r = firstDataRow; r <= lastDataRow; r++) {
+    const row = sheet.getRow(r);
+
+    row.getCell(typeColIndex).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [`"${TYPE_OPTIONS.join(',')}"`],
+      showErrorMessage: true,
+      errorStyle: 'error',
+      errorTitle: 'Invalid type',
+      error: 'Please pick DEBT or PAYMENT from the dropdown.',
+    };
+
+    row.getCell(paymentMethodColIndex).dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [`"${PAYMENT_METHOD_OPTIONS.join(',')}"`],
+    };
+
+    row.getCell(dueDateColIndex).numFmt = 'yyyy-mm-dd';
+    row.getCell(dateColIndex).numFmt = 'yyyy-mm-dd';
+    row.getCell(amountColIndex).numFmt = '#,##0.00';
+
+    // Sheet protection locks every cell by default once enabled below -
+    // explicitly unlock every column on every data row so it stays a normal,
+    // freely-editable spreadsheet from row 4 down. Only the title,
+    // instructions and header rows (1-3) keep the default locked state.
+    REQUIRED_HEADERS.forEach((_, i) => {
+      row.getCell(i + 1).protection = { locked: false };
+    });
+  }
+
+  REQUIRED_HEADERS.forEach((_, i) => {
+    exampleRow.getCell(i + 1).protection = { locked: false };
+  });
+
+  // No password - this isn't a security boundary, it's a guardrail against
+  // someone accidentally typing over the column titles they need to leave
+  // alone. Excel still shows "Unprotect Sheet" for anyone who wants it off.
+  sheet.protect('', {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    insertRows: true,
+    deleteRows: false,
+  });
+
+  return workbook;
+}
+
+async function downloadTemplate() {
+  const workbook = await buildTemplateWorkbook();
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'kopaalert-import-template.csv';
+  link.download = 'kopaalert-import-template.xlsx';
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Reads an uploaded .xlsx back into the same string[][] shape parseCsv()
+ * produces, so every downstream step (header check, validateRow, preview,
+ * import) is shared code - the file format is the only thing that differs.
+ * The header row isn't assumed to be row 1: the template puts a title and
+ * instructions above it, so this scans for whichever row actually contains
+ * the column titles.
+ */
+async function parseXlsxFile(file: File): Promise<string[][]> {
+  const ExcelJS = (await import('exceljs')).default;
+  const workbook = new ExcelJS.Workbook();
+  const buffer = await file.arrayBuffer();
+  await workbook.xlsx.load(buffer);
+
+  const sheet = workbook.worksheets[0];
+  if (!sheet) return [];
+
+  const allRows: string[][] = [];
+  sheet.eachRow({ includeEmpty: false }, (row) => {
+    const cells: string[] = [];
+    const cellCount = Math.max(row.cellCount, REQUIRED_HEADERS.length);
+    for (let c = 1; c <= cellCount; c++) {
+      cells.push(cellToString(row.getCell(c).value));
+    }
+    if (cells.some((cell) => cell.trim() !== '')) {
+      allRows.push(cells);
+    }
+  });
+
+  const headerRowIndex = allRows.findIndex((row) =>
+    row.some((cell) => cell.trim().toLowerCase() === 'customer_name')
+  );
+
+  return headerRowIndex === -1 ? allRows : allRows.slice(headerRowIndex);
+}
+
+function cellToString(value: ExcelJS.CellValue): string {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) {
+    // ExcelJS parses date-formatted cells as UTC-based Dates - use the UTC
+    // getters, not local ones, or this shifts by a day near midnight
+    // depending on the machine's timezone.
+    const y = value.getUTCFullYear();
+    const m = String(value.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(value.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof value === 'object' && 'text' in value) return String(value.text ?? '');
+  if (typeof value === 'object' && 'richText' in value) {
+    return value.richText.map((t) => t.text).join('');
+  }
+  return String(value);
 }
 
 function validateRow(raw: Record<string, string>, line: number): ParsedRow {
@@ -160,6 +350,8 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
 
   const [step, setStep] = useState<'upload' | 'preview' | 'result'>('upload');
   const [fileError, setFileError] = useState<string | null>(null);
+  const [parsingFile, setParsingFile] = useState(false);
+  const [templateDownloading, setTemplateDownloading] = useState(false);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState<ImportRowResult[] | null>(null);
@@ -168,37 +360,49 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidRows = rows.filter((r) => r.errors.length > 0);
 
+  function applyParsedTable(table: string[][]) {
+    if (table.length === 0) {
+      setFileError('The file is empty.');
+      return;
+    }
+
+    const header = table[0].map((h) => h.trim().toLowerCase());
+    const missing = REQUIRED_HEADERS.filter((h) => !header.includes(h));
+    if (missing.length > 0) {
+      setFileError(`Missing column(s): ${missing.join(', ')}. Download the template to see the expected format.`);
+      return;
+    }
+
+    const dataRows = table.slice(1).map((cells, i) => {
+      const raw: Record<string, string> = {};
+      header.forEach((h, colIndex) => {
+        raw[h] = cells[colIndex] ?? '';
+      });
+      return validateRow(raw, i + 2);
+    });
+
+    setRows(dataRows);
+    setStep('preview');
+  }
+
   function handleFile(file: File) {
     setFileError(null);
 
+    const isXlsx =
+      file.name.toLowerCase().endsWith('.xlsx') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+    if (isXlsx) {
+      setParsingFile(true);
+      parseXlsxFile(file)
+        .then((table) => applyParsedTable(table))
+        .catch(() => setFileError('Could not read this Excel file. Make sure it was saved as .xlsx.'))
+        .finally(() => setParsingFile(false));
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
-      const text = String(reader.result ?? '');
-      const table = parseCsv(text);
-
-      if (table.length === 0) {
-        setFileError('The file is empty.');
-        return;
-      }
-
-      const header = table[0].map((h) => h.trim().toLowerCase());
-      const missing = REQUIRED_HEADERS.filter((h) => !header.includes(h));
-      if (missing.length > 0) {
-        setFileError(`Missing column(s): ${missing.join(', ')}. Download the template to see the expected format.`);
-        return;
-      }
-
-      const dataRows = table.slice(1).map((cells, i) => {
-        const raw: Record<string, string> = {};
-        header.forEach((h, colIndex) => {
-          raw[h] = cells[colIndex] ?? '';
-        });
-        return validateRow(raw, i + 2);
-      });
-
-      setRows(dataRows);
-      setStep('preview');
-    };
+    reader.onload = () => applyParsedTable(parseCsv(String(reader.result ?? '')));
     reader.onerror = () => setFileError('Could not read the file.');
     reader.readAsText(file);
   }
@@ -256,23 +460,53 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
 
         {step === 'upload' && (
           <div className="mt-4 space-y-4">
-            <button
-              type="button"
-              onClick={downloadTemplate}
-              className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              <Download className="h-4 w-4" />
-              Download CSV Template
-            </button>
+            <div className="rounded-md border border-primary/30 bg-primary/5 p-4">
+              <p className="text-sm font-semibold text-foreground">New here? Start with the template.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                It&apos;s a ready-to-fill spreadsheet: the column titles are locked so they can&apos;t be
+                changed by accident, and you pick &quot;type&quot; and &quot;payment method&quot; from a list
+                instead of typing them.
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  setTemplateDownloading(true);
+                  try {
+                    await downloadTemplate();
+                  } finally {
+                    setTemplateDownloading(false);
+                  }
+                }}
+                disabled={templateDownloading}
+                className="mt-3 flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {templateDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download Template (Excel)
+              </button>
+            </div>
 
             <div className="rounded-md border border-dashed border-border p-6 text-center">
               <Upload className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-                className="mx-auto block text-sm text-foreground"
-              />
+              <p className="mb-2 text-sm text-muted-foreground">
+                Upload the filled-in template, or any .csv/.xlsx file with the same columns.
+              </p>
+              {parsingFile ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Reading file...
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                  className="mx-auto block text-sm text-foreground"
+                />
+              )}
             </div>
 
             {fileError && (
