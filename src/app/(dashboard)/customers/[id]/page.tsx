@@ -12,11 +12,18 @@ import CreditRiskCard from '@/components/customers/CreditRiskCard';
 
 type Customer = {
   id: string;
+  business_id: string;
   full_name: string;
   phone: string;
   email: string | null;
   is_blacklisted?: boolean | null;
   available_credit?: number | null;
+};
+
+type StatementBusiness = {
+  business_name: string;
+  phone: string | null;
+  email: string | null;
 };
 
 type Debt = {
@@ -110,18 +117,83 @@ function exportLedgerCsv(customerName: string, entries: LedgerEntry[]) {
   URL.revokeObjectURL(url);
 }
 
+async function exportLedgerPdf(
+  business: StatementBusiness | null,
+  customer: Customer,
+  entries: LedgerEntry[],
+  totalOwed: number
+) {
+  const [{ default: jsPDF }, { autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(business?.business_name ?? 'KopaAlert', 14, 18);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const contactLine = [business?.phone, business?.email].filter(Boolean).join('  •  ');
+  if (contactLine) {
+    doc.text(contactLine, 14, 24);
+  }
+
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Customer Statement', 14, 36);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(customer.full_name, 14, 43);
+  const customerContact = [customer.phone, customer.email].filter(Boolean).join('  •  ');
+  if (customerContact) {
+    doc.text(customerContact, 14, 48);
+  }
+  doc.text(`Generated ${new Date().toLocaleDateString()}`, 14, 53);
+
+  autoTable(doc, {
+    startY: 60,
+    head: [['Date', 'Transaction', 'Description', 'Amount (KES)']],
+    body: entries.map((entry) => [
+      new Date(entry.created_at).toLocaleDateString(),
+      ledgerTypeLabel(entry.type),
+      entry.description ?? '-',
+      Number(entry.amount).toLocaleString(),
+    ]),
+    headStyles: { fillColor: [15, 76, 117] },
+    columnStyles: { 3: { halign: 'right' } },
+    styles: { fontSize: 9 },
+  });
+
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Total Outstanding: KES ${totalOwed.toLocaleString()}`, 14, finalY + 10);
+
+  doc.save(
+    `${customer.full_name.trim().replace(/\s+/g, '-').toLowerCase()}-statement-${new Date()
+      .toISOString()
+      .slice(0, 10)}.pdf`
+  );
+}
+
 export default function CustomerDetailPage() {
   const params = useParams();
   const customerId = params.id as string;
   const { showToast } = useToast();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [business, setBusiness] = useState<StatementBusiness | null>(null);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
 
   // Top-up form state
   const [topUpDebtId, setTopUpDebtId] = useState<string | null>(null);
@@ -165,6 +237,14 @@ export default function CustomerDetailPage() {
     }
 
     setCustomer(customerData as Customer);
+
+    const { data: businessData } = await supabase
+      .from('businesses')
+      .select('business_name, phone, email')
+      .eq('id', (customerData as Customer).business_id)
+      .single();
+
+    setBusiness((businessData as StatementBusiness) ?? null);
 
     const { data: allDebts } = await getDebts();
 
@@ -536,15 +616,39 @@ export default function CustomerDetailPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => customer && exportLedgerCsv(customer.full_name, ledger)}
-            disabled={ledger.length === 0}
-            className="flex shrink-0 items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => customer && exportLedgerCsv(customer.full_name, ledger)}
+              disabled={ledger.length === 0}
+              className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (!customer) return;
+                setPdfExporting(true);
+                try {
+                  await exportLedgerPdf(business, customer, ledger, totalOwed);
+                } finally {
+                  setPdfExporting(false);
+                }
+              }}
+              disabled={ledger.length === 0 || pdfExporting}
+              className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {pdfExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Export PDF
+            </button>
+          </div>
         </div>
 
         {ledger.length === 0 ? (
