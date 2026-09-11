@@ -43,8 +43,12 @@ export async function GET(request: Request) {
 
         const name = businessAdmin?.name ?? 'there';
 
+        // locked/reminded count the DB-side action the RPC already took
+        // (row presence means that already happened), not email success -
+        // email failures are logged separately so a send failure doesn't
+        // make the response under-report what actually changed in the DB.
         if (row.out_action === 'locked') {
-          await sendEmail({
+          const emailResult = await sendEmail({
             to: row.out_email,
             subject: 'Your KopaAlert Account Has Been Locked',
             html: subscriptionLockedNoticeEmail({
@@ -57,9 +61,12 @@ export async function GET(request: Request) {
               support_phone: SUPPORT_PHONE,
             }),
           });
+          if (!emailResult.success) {
+            console.error(`Locked-notice email failed for business ${row.out_business_id}:`, emailResult.error);
+          }
           locked++;
         } else {
-          await sendEmail({
+          const emailResult = await sendEmail({
             to: row.out_email,
             subject: 'Your KopaAlert subscription renews soon',
             html: subscriptionRenewalReminderEmail({
@@ -72,6 +79,9 @@ export async function GET(request: Request) {
               support_phone: SUPPORT_PHONE,
             }),
           });
+          if (!emailResult.success) {
+            console.error(`Renewal-reminder email failed for business ${row.out_business_id}:`, emailResult.error);
+          }
           reminded++;
         }
       } catch (emailErr) {

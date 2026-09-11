@@ -217,7 +217,7 @@ export async function POST(
         "@/lib/notifications/email-templates"
       );
 
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: requestData.email,
         subject:
           "Your KopaAlert Business Account is Approved!",
@@ -231,6 +231,14 @@ export async function POST(
           support_phone: SUPPORT_PHONE,
         }),
       });
+
+      // sendEmail() never throws - it returns { success: false } on failure -
+      // so a real failure must be turned into a thrown error here, otherwise
+      // the catch block below (and its "don't increment resend_count" logic)
+      // never runs.
+      if (!emailResult.success) {
+        throw new Error(emailResult.error ?? "Unknown send failure");
+      }
     } catch (emailError) {
       console.error(
         "Resend approval email failed:",

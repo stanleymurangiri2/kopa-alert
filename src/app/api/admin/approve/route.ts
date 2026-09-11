@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       const { sendEmail } = await import("@/lib/notifications/resend");
       const { approvalEmail } = await import("@/lib/notifications/email-templates");
 
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: registration.email,
         subject: "Your KopaAlert Business Account is Approved!",
         html: approvalEmail({
@@ -132,7 +132,13 @@ export async function POST(request: NextRequest) {
         }),
       });
 
-      emailSent = true;
+      // sendEmail() never throws - it returns { success: false } on failure -
+      // so emailSent must reflect that, not just "the call didn't throw".
+      if (emailResult.success) {
+        emailSent = true;
+      } else {
+        console.error("Approval email failed:", emailResult.error);
+      }
     } catch (emailErr) {
       console.error("Approval email failed:", emailErr);
     }

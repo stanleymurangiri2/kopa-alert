@@ -97,7 +97,7 @@ export async function inviteMember({
     const { sendEmail } = await import('@/lib/notifications/resend');
     const { invitationEmail } = await import('@/lib/notifications/email-templates');
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: email,
       subject: `You've been added to ${business.business_name} on KopaAlert`,
       html: invitationEmail({
@@ -112,7 +112,11 @@ export async function inviteMember({
       }),
     });
 
-    emailSent = true;
+    if (emailResult.success) {
+      emailSent = true;
+    } else {
+      console.error(`[inviteMember] Email failed for ${email}: ${emailResult.error}`);
+    }
   } catch (emailErr) {
     const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
     console.error(`[inviteMember] Email failed for ${email}: ${msg}`);

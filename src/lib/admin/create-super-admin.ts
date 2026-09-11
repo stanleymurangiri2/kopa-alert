@@ -69,7 +69,7 @@ export async function createSuperAdmin({
     const { sendEmail } = await import('@/lib/notifications/resend');
     const { superAdminInvitationEmail } = await import('@/lib/notifications/email-templates');
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: email,
       subject: "You've been granted KopaAlert Super Admin access",
       html: superAdminInvitationEmail({
@@ -82,7 +82,11 @@ export async function createSuperAdmin({
       }),
     });
 
-    emailSent = true;
+    if (emailResult.success) {
+      emailSent = true;
+    } else {
+      console.error(`[createSuperAdmin] Email failed for ${email}: ${emailResult.error}`);
+    }
   } catch (emailErr) {
     const msg = emailErr instanceof Error ? emailErr.message : String(emailErr);
     console.error(`[createSuperAdmin] Email failed for ${email}: ${msg}`);

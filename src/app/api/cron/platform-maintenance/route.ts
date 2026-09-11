@@ -42,7 +42,7 @@ export async function GET(request: Request) {
           const { sendEmail } = await import('@/lib/notifications/resend');
           const { rejectionEmail } = await import('@/lib/notifications/email-templates');
 
-          await sendEmail({
+          const emailResult = await sendEmail({
             to: row.out_email,
             subject: 'Update on Your KopaAlert Business Registration',
             html: rejectionEmail({
@@ -53,6 +53,10 @@ export async function GET(request: Request) {
               support_phone: SUPPORT_PHONE,
             }),
           });
+
+          if (!emailResult.success) {
+            console.error(`Auto-expire rejection email failed for ${row.out_email}:`, emailResult.error);
+          }
         } catch (emailErr) {
           console.error(`Auto-expire rejection email failed for ${row.out_email}:`, emailErr);
         }

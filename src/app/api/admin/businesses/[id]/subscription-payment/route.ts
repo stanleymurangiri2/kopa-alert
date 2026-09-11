@@ -178,7 +178,7 @@ export async function POST(
           "@/lib/notifications/email-templates"
         );
 
-        await sendEmail({
+        const emailResult = await sendEmail({
           to: business.email,
           subject: `Payment Received - Invoice ${invoiceNumber}`,
           html: subscriptionInvoiceReceiptEmail({
@@ -197,7 +197,11 @@ export async function POST(
           }),
         });
 
-        emailSent = true;
+        if (emailResult.success) {
+          emailSent = true;
+        } else {
+          console.error("Subscription invoice/receipt email failed:", emailResult.error);
+        }
       } catch (emailErr) {
         console.error("Subscription invoice/receipt email failed:", emailErr);
       }

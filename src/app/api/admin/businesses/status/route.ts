@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
                   support_phone: SUPPORT_PHONE,
                 });
 
-          await sendEmail({
+          const emailResult = await sendEmail({
             to: admin.email,
             subject:
               status === "suspended"
@@ -140,7 +140,11 @@ export async function POST(request: NextRequest) {
             html,
           });
 
-          emailSent = true;
+          if (emailResult.success) {
+            emailSent = true;
+          } else {
+            console.error(`Business status email failed for ${admin.email}:`, emailResult.error);
+          }
         } catch (emailErr) {
           console.error(`Business status email failed for ${admin.email}:`, emailErr);
         }

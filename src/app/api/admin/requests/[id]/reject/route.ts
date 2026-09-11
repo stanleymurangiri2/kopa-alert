@@ -68,7 +68,7 @@ export async function POST(
       const { sendEmail } = await import("@/lib/notifications/resend");
       const { rejectionEmail } = await import("@/lib/notifications/email-templates");
 
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: requestData.email,
         subject: "Update on Your KopaAlert Business Registration",
         html: rejectionEmail({
@@ -80,7 +80,11 @@ export async function POST(
         }),
       });
 
-      emailSent = true;
+      if (emailResult.success) {
+        emailSent = true;
+      } else {
+        console.error("Rejection email failed:", emailResult.error);
+      }
     } catch (emailErr) {
       console.error("Rejection email failed:", emailErr);
     }
