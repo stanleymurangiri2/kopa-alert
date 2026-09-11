@@ -42,7 +42,14 @@ export function scoreCredit(
   const lateRatio = clamp01(features.latePaymentsCount / features.totalDebts);
   const lateOnTimeFactor = clamp01(1 - features.pctPaidOnTime);
   const unpaidFactor = clamp01(1 - features.repaymentRatio);
-  const utilizationFactor = clamp01(features.creditUtilization ?? 0);
+  // creditUtilization is null exactly when currentCreditLimit <= 0 (a
+  // frozen/zero limit) - coalescing that to 0 would score it as the best
+  // possible utilization, when a customer with any outstanding balance
+  // against a zero limit is maximally over-limit, the worst case. Only
+  // genuinely neutral (0) when there's nothing owed either.
+  const utilizationFactor = clamp01(
+    features.creditUtilization ?? (features.outstandingBalance > 0 ? 1 : 0)
+  );
   const daysLateFactor = clamp01(features.avgDaysLate / DAYS_LATE_SCORING_CAP);
 
   const weightedRisk =

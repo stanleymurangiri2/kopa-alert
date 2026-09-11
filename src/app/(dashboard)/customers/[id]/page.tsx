@@ -375,6 +375,7 @@ export default function CustomerDetailPage() {
       </div>
 
       <CreditRiskCard
+        key={customer.id}
         customerId={customer.id}
         canManage={role === 'business_admin' || role === 'super_admin'}
       />

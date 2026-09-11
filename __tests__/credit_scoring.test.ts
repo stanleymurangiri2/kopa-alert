@@ -95,11 +95,37 @@ describe('scoreCredit', () => {
     expect(result.status).toBe('OK');
   });
 
-  test('null credit utilization (zero limit) does not break scoring', () => {
-    const features = makeFeatures({ creditUtilization: null });
+  test('null credit utilization (zero limit, nothing owed) does not break scoring', () => {
+    const features = makeFeatures({ creditUtilization: null, outstandingBalance: 0 });
     const result = scoreCredit(features, config);
     expect(result.status).toBe('OK');
     expect(Number.isFinite(result.riskScore)).toBe(true);
+  });
+
+  test('null credit utilization with an outstanding balance scores as worst-case, not best-case', () => {
+    // currentCreditLimit <= 0 (frozen) while still owing money is maximally
+    // over-limit - must not be treated as 0% utilization (the safest score).
+    const overLimit = makeFeatures({
+      creditUtilization: null,
+      outstandingBalance: 3000,
+      overdueCount: 0,
+      latePaymentsCount: 0,
+      pctPaidOnTime: 1,
+      repaymentRatio: 1,
+      avgDaysLate: 0,
+    });
+    const zeroUtil = makeFeatures({
+      creditUtilization: 0,
+      outstandingBalance: 3000,
+      overdueCount: 0,
+      latePaymentsCount: 0,
+      pctPaidOnTime: 1,
+      repaymentRatio: 1,
+      avgDaysLate: 0,
+    });
+    const overLimitResult = scoreCredit(overLimit, config);
+    const zeroUtilResult = scoreCredit(zeroUtil, config);
+    expect(overLimitResult.riskScore!).toBeGreaterThan(zeroUtilResult.riskScore!);
   });
 
   test('severe overdue with freeze enabled -> recommended limit capped at outstanding balance', () => {
