@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
     const isStale =
       !existing ||
       existing.status === "FAILED" ||
+      existing.applied || // applying changes customers.credit_limit, invalidating this assessment's snapshot of it
       (latestActivityAt && new Date(latestActivityAt) > new Date(existing.created_at));
 
     const assessment = isStale
