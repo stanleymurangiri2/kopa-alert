@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getCustomerById } from '@/lib/supabase/customers';
@@ -409,8 +409,8 @@ export default function CustomerDetailPage() {
 
             <tbody>
               {debts.map((debt, i) => (
-                <>
-                  <tr key={debt.id} className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
+                <Fragment key={debt.id}>
+                  <tr className={`border-t border-border hover:bg-accent ${i % 2 === 1 ? 'bg-table-stripe' : 'bg-card'}`}>
                     <td className="px-4 py-3 text-muted-foreground">{debt.description}</td>
 
                     <td className="px-4 py-3 font-mono text-foreground">
@@ -519,7 +519,7 @@ export default function CustomerDetailPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
