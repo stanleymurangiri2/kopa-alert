@@ -12,6 +12,7 @@ import { sidebarMenus } from "@/sidebar-config";
 import ThemeToggle from "@/components/layout/ThemeToggle";
 import UserAvatar from "@/components/layout/UserAvatar";
 import GlobalSearchBar from "@/components/layout/GlobalSearchBar";
+import IdleTimeout from "@/components/auth/IdleTimeout";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export default async function AdminLayout({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen bg-background">
+        <IdleTimeout />
         <Sidebar
           title="KopaAlert"
           subtitle={profile.name ?? "Super Admin"}
