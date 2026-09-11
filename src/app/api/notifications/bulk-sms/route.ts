@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { sendBulkSMS } from "@/lib/sms/africastalking";
-import { decrementSmsBalance } from "@/lib/supabase/notifications";
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,11 +59,9 @@ export async function POST(request: NextRequest) {
 
     const { data: business } = await supabaseAdmin
       .from("businesses")
-      .select("sms_balance, business_name")
+      .select("business_name")
       .eq("id", profile.business_id)
       .single();
-
-    const balance = business?.sms_balance ?? 0;
 
     // Outbound SMS is sent from the owner's own phone number, not a
     // registered alphanumeric sender ID, so lead with the business name
@@ -73,7 +70,26 @@ export async function POST(request: NextRequest) {
       ? `${business.business_name.toUpperCase()}\n${message}`
       : message;
 
-    if (balance < customerIds.length) {
+    // Atomically check-and-reserve balance for the full recipient count
+    // rather than a plain read-then-compare: that left a window where two
+    // concurrent requests for the same business could both pass the check
+    // against the same pre-send balance and both actually send.
+    const { data: reservation, error: reservationError } = await supabaseAdmin
+      .rpc("reserve_sms_balance", {
+        p_business_id: profile.business_id,
+        p_amount: customerIds.length,
+      })
+      .single<{ reserved: boolean; new_balance: number }>();
+
+    if (reservationError || !reservation) {
+      return NextResponse.json(
+        { success: false, message: "Failed to check SMS balance." },
+        { status: 500 }
+      );
+    }
+
+    if (!reservation.reserved) {
+      const balance = reservation.new_balance;
       return NextResponse.json(
         {
           success: false,
@@ -90,6 +106,13 @@ export async function POST(request: NextRequest) {
       .in("id", customerIds);
 
     if (customersError) {
+      // Balance was already reserved for the full count - give it back
+      // since nothing was sent.
+      await supabaseAdmin.rpc("refund_sms_balance", {
+        p_business_id: profile.business_id,
+        p_amount: customerIds.length,
+      });
+
       return NextResponse.json(
         { success: false, message: customersError.message },
         { status: 500 }
@@ -99,6 +122,11 @@ export async function POST(request: NextRequest) {
     const phones = (customers ?? []).map((c) => c.phone).filter(Boolean);
 
     if (phones.length === 0) {
+      await supabaseAdmin.rpc("refund_sms_balance", {
+        p_business_id: profile.business_id,
+        p_amount: customerIds.length,
+      });
+
       return NextResponse.json(
         { success: false, message: "None of the selected customers have a valid phone number." },
         { status: 400 }
@@ -110,8 +138,14 @@ export async function POST(request: NextRequest) {
     const sentCount = result.sentCount ?? 0;
     const failedCount = result.failedCount ?? phones.length;
 
-    for (let i = 0; i < sentCount; i++) {
-      await decrementSmsBalance(profile.business_id).catch(() => {});
+    // customerIds.length was reserved upfront; give back whatever didn't
+    // actually go out (missing phone numbers, or the send itself failing).
+    const unreserved = customerIds.length - sentCount;
+    if (unreserved > 0) {
+      await supabaseAdmin.rpc("refund_sms_balance", {
+        p_business_id: profile.business_id,
+        p_amount: unreserved,
+      });
     }
 
     await supabaseAdmin.from("audit_logs").insert({

@@ -10,12 +10,13 @@ export type NotificationQueueItem = {
   recipient_phone: string;
   message_body: string;
   scheduled_for: string;
-  status: "pending" | "sent" | "failed" | "cancelled";
+  status: "pending" | "processing" | "sent" | "failed" | "cancelled";
   attempts: number;
   error_message?: string | null;
   sent_at?: string | null;
   provider_message_id?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 /**
@@ -50,31 +51,23 @@ export async function createNotification(notification: {
 }
 
 /**
- * Get pending notifications — CRON ONLY, admin client bypasses RLS
+ * Atomically claims every notification eligible to be sent this run - due
+ * pending rows, retryable failures under the attempt limit, and any row
+ * stuck in 'processing' from a crashed/timed-out previous run - by flipping
+ * them to 'processing' in a single UPDATE ... RETURNING. CRON ONLY, admin
+ * client bypasses RLS.
+ *
+ * This is what actually prevents overlapping cron runs from double-sending:
+ * a plain SELECT-then-send-then-update has a window where two runs can both
+ * see the same rows as eligible. The claim is a single atomic statement, so
+ * only one caller can ever successfully claim a given row.
  */
-export async function getPendingNotifications() {
-  return supabaseAdmin
-    .from("notification_queue")
-    .select("*")
-    .eq("status", "pending")
-    .lte("scheduled_for", new Date().toISOString())
-    .order("created_at", {
-      ascending: true,
-    });
-}
-
-/**
- * Get failed notifications still under the retry limit — CRON ONLY
- */
-export async function getRetryableNotifications(maxAttempts: number) {
-  return supabaseAdmin
-    .from("notification_queue")
-    .select("*")
-    .eq("status", "failed")
-    .lt("attempts", maxAttempts)
-    .order("created_at", {
-      ascending: true,
-    });
+export async function claimNotificationBatch(
+  maxAttempts: number
+): Promise<{ data: NotificationQueueItem[] | null; error: unknown }> {
+  return supabaseAdmin.rpc("claim_notification_batch", {
+    p_max_attempts: maxAttempts,
+  });
 }
 
 /**

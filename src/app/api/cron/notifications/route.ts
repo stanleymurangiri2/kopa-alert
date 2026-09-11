@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   generateDailyReminders,
-  getPendingNotifications,
-  getRetryableNotifications,
+  claimNotificationBatch,
   markNotificationSent,
   markNotificationFailed,
   incrementNotificationAttempt,
@@ -27,13 +26,10 @@ export async function GET(request: Request) {
 
     const generated = await generateDailyReminders();
 
-    const { data: pending, error: pendingError } = await getPendingNotifications();
-    if (pendingError) throw pendingError;
+    const { data: claimed, error: claimError } = await claimNotificationBatch(MAX_ATTEMPTS);
+    if (claimError) throw claimError;
 
-    const { data: retryable, error: retryError } = await getRetryableNotifications(MAX_ATTEMPTS);
-    if (retryError) throw retryError;
-
-    const notifications = [...(pending || []), ...(retryable || [])];
+    const notifications = claimed || [];
 
     // -------------------------------------------------------
     // Load current SMS balance for every business represented
