@@ -34,7 +34,7 @@ export default async function AdminLayout({
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
-    .select("role,name,email")
+    .select("role,name,email,must_change_password")
     .eq("id", user.id)
     .single();
 
@@ -45,6 +45,10 @@ export default async function AdminLayout({
 
   if (profile.role !== "super_admin") {
     redirect("/dashboard");
+  }
+
+  if (profile.must_change_password) {
+    redirect("/change-password");
   }
 
   const { count: pendingCount } = await supabase

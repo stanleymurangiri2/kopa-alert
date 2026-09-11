@@ -13,6 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!['business_admin', 'employee'].includes(role)) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid role.' },
+        { status: 400 }
+      );
+    }
+
     // -------------------------------------------------------
     // Verify requester via auth token, not request body
     // -------------------------------------------------------

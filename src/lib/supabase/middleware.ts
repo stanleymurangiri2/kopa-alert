@@ -65,7 +65,12 @@ export async function updateSession(
   }
 
   // Routes anyone (signed in or not) can view without being bounced away.
-  const alwaysAccessibleRoutes = ["/terms", "/privacy"];
+  // /reset-password belongs here, not in authOnlyRoutes: a recovery link
+  // can land on a browser that still has an unrelated valid session (a
+  // second tab, a shared device), and bouncing that request to /dashboard
+  // before the page's client-side verifyOtp() ever runs would silently
+  // break the reset link with no error shown.
+  const alwaysAccessibleRoutes = ["/terms", "/privacy", "/reset-password"];
 
   // Routes only relevant to signed-out visitors — a signed-in user hitting
   // one of these gets sent to their dashboard instead.
@@ -73,7 +78,6 @@ export async function updateSession(
     "/login",
     "/register",
     "/forgot-password",
-    "/reset-password",
   ];
 
   const isPublicRoute =

@@ -83,15 +83,19 @@ export async function POST(
     }
 
     /*
-     * Find the registered business first.
-     * This gives us the business_id and avoids relying only
-     * on the email address.
+     * Find the registered business by email, not business_name:
+     * business_name has no uniqueness constraint anywhere in the
+     * schema, so two businesses sharing a name could resolve to the
+     * wrong one. email is UNIQUE NOT NULL on both business_requests
+     * and businesses, and approve_business_request() copies the
+     * (trimmed) request email straight into the created business row,
+     * so this is a real, reliable join key between the two.
      */
     const { data: businessRow, error: businessError } =
       await supabase
         .from("businesses")
         .select("id, business_code, email")
-        .eq("business_name", requestData.business_name.trim())
+        .eq("email", requestData.email.trim())
         .maybeSingle();
 
     if (businessError) {
