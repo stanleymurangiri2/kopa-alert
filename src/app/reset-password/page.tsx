@@ -17,22 +17,56 @@ export default function ResetPasswordPage() {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
+    let settled = false;
+
+    function markReady() {
+      if (settled) return;
+      settled = true;
+      setSessionReady(true);
+      setVerifying(false);
+    }
+
+    function markFailed() {
+      if (settled) return;
+      settled = true;
+      setMessage('This reset link is invalid or has expired. Please request a new one.');
+      setVerifying(false);
+    }
+
     async function establishSession() {
-      // The recovery link lands here with a one-time PKCE `code` - it has
-      // to be exchanged for a real session before updateUser() will work.
-      // Without this, submitting the form fails with "Auth session missing".
+      // The admin-generated recovery link redirects here carrying its
+      // tokens in the URL hash (#access_token=...&refresh_token=...&
+      // type=recovery). @supabase/ssr's browser client - unlike the plain
+      // supabase-js client - does not auto-detect or consume this hash
+      // (confirmed: the hash is still sitting in the URL after load,
+      // untouched), so the session has to be established explicitly by
+      // pulling the tokens out and calling setSession() directly.
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (!error) {
+          markReady();
+          return;
+        }
+      }
+
+      // Fall back to a PKCE `code` query param, in case the project is
+      // ever switched to that flow instead.
       const code = new URLSearchParams(window.location.search).get('code');
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          setMessage('This reset link is invalid or has expired. Please request a new one.');
-          setVerifying(false);
+        if (!error) {
+          markReady();
           return;
         }
-        setSessionReady(true);
-        setVerifying(false);
-        return;
       }
 
       const {
@@ -40,11 +74,10 @@ export default function ResetPasswordPage() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        setSessionReady(true);
+        markReady();
       } else {
-        setMessage('This reset link is invalid or has expired. Please request a new one.');
+        markFailed();
       }
-      setVerifying(false);
     }
 
     establishSession();
