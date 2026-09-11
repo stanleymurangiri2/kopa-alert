@@ -18,6 +18,13 @@ type Business = {
   created_at: string;
 };
 
+type CreditConfig = {
+  defaultCreditLimit: number;
+  maxCreditLimit: number;
+  reductionPct: number;
+  freezeOnSevereOverdue: boolean;
+};
+
 export default function BusinessSettingsPage() {
   const supabase = createClient();
   const { showToast } = useToast();
@@ -26,9 +33,57 @@ export default function BusinessSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [creditConfig, setCreditConfig] = useState<CreditConfig | null>(null);
+  const [creditConfigLoading, setCreditConfigLoading] = useState(true);
+  const [creditConfigSaving, setCreditConfigSaving] = useState(false);
+
   useEffect(() => {
     loadBusiness();
+    loadCreditConfig();
   }, []);
+
+  async function loadCreditConfig() {
+    try {
+      const res = await fetch('/api/credit/config');
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setCreditConfig(json.config);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setCreditConfigLoading(false);
+    }
+  }
+
+  async function saveCreditConfig(e: React.FormEvent) {
+    e.preventDefault();
+    if (!creditConfig) return;
+
+    setCreditConfigSaving(true);
+
+    try {
+      const res = await fetch('/api/credit/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(creditConfig),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        showToast('error', json.message ?? 'Failed to update credit limit rules.');
+        return;
+      }
+
+      setCreditConfig(json.config);
+      showToast('success', 'Credit limit rules updated successfully.');
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Failed to update credit limit rules.');
+    } finally {
+      setCreditConfigSaving(false);
+    }
+  }
 
   async function loadBusiness() {
     try {
@@ -293,6 +348,106 @@ export default function BusinessSettingsPage() {
         </button>
 
       </form>
+
+      {!creditConfigLoading && creditConfig && (
+        <form
+          onSubmit={saveCreditConfig}
+          className="mt-6 space-y-6 rounded-lg border border-border bg-card p-6 shadow-sm"
+        >
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Credit Limit Rules</h2>
+            <p className="text-sm text-muted-foreground">
+              Configure how the credit-limit engine recommends limits for your customers.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-foreground">
+                Default Credit Limit (KES)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={100}
+                value={creditConfig.defaultCreditLimit}
+                onChange={(e) =>
+                  setCreditConfig({ ...creditConfig, defaultCreditLimit: Number(e.target.value) })
+                }
+                className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
+                required
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Used for new customers without enough repayment history yet.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground">
+                Maximum Credit Limit (KES)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={100}
+                value={creditConfig.maxCreditLimit}
+                onChange={(e) =>
+                  setCreditConfig({ ...creditConfig, maxCreditLimit: Number(e.target.value) })
+                }
+                className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-foreground">
+                Risk Reduction (%)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={creditConfig.reductionPct}
+                onChange={(e) =>
+                  setCreditConfig({ ...creditConfig, reductionPct: Number(e.target.value) })
+                }
+                className="mt-1 w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
+                required
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                How much to reduce a high-risk customer's recommended limit by.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-6">
+              <input
+                type="checkbox"
+                id="freezeOnSevereOverdue"
+                checked={creditConfig.freezeOnSevereOverdue}
+                onChange={(e) =>
+                  setCreditConfig({ ...creditConfig, freezeOnSevereOverdue: e.target.checked })
+                }
+                className="h-4 w-4 rounded border-border"
+              />
+              <label htmlFor="freezeOnSevereOverdue" className="text-sm text-foreground">
+                Restrict new credit for severely overdue customers
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={creditConfigSaving}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary py-3 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {creditConfigSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+            {creditConfigSaving ? 'Saving...' : 'Save Credit Limit Rules'}
+          </button>
+        </form>
+      )}
 
     </div>
   );

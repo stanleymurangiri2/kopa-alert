@@ -8,6 +8,7 @@ import { getDebts, addToDebt } from '@/lib/supabase/debts';
 import { useToast } from '@/components/ui/ToastProvider';
 import { Download, Loader2 } from 'lucide-react';
 import { toCsvCell } from '@/lib/utils/csv';
+import CreditRiskCard from '@/components/customers/CreditRiskCard';
 
 type Customer = {
   id: string;
@@ -372,6 +373,11 @@ export default function CustomerDetailPage() {
           </p>
         )}
       </div>
+
+      <CreditRiskCard
+        customerId={customer.id}
+        canManage={role === 'business_admin' || role === 'super_admin'}
+      />
 
       <div className="rounded-lg border border-border bg-card shadow-sm">
         <div className="flex items-center justify-between border-b border-border p-4">
