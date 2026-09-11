@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Was `ignoreBuildErrors: true` - that let broken code ship to
     // production silently. `npx tsc --noEmit` passes clean, so this is
