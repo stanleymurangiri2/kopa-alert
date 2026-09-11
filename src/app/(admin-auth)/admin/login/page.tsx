@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-border bg-card px-4 py-3 text-foreground outline-none focus:border-primary"
-              placeholder="admin@kopaalert.com"
+              placeholder="stanleymurangiri2@gmail.com"
               disabled={loading}
             />
           </div>

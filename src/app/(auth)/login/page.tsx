@@ -142,7 +142,7 @@ export default function LoginPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@business.com"
+              placeholder="stanleymurangiri2@gmail.com"
               className="w-full rounded-md border border-border bg-card px-4 py-3 text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
               disabled={loading}
             />

@@ -96,7 +96,7 @@ export default function NewDebtPage() {
 
     if (isNewCustomer && !isValidKenyanPhone(newCustomer.phone)) {
       setError(
-        "Enter the customer's real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000."
+        "Enter the customer's real Kenyan mobile number (e.g. 0740305253) - not a placeholder like 0700000000."
       );
       setSubmitting(false);
       return;
@@ -232,7 +232,7 @@ export default function NewDebtPage() {
                       setNewCustomer({ ...newCustomer, full_name: e.target.value })
                     }
                     className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
-                    placeholder="Jane Wanjiru"
+                    placeholder="Stanley Murangiri"
                   />
                 </div>
 
@@ -244,7 +244,7 @@ export default function NewDebtPage() {
                     value={newCustomer.phone}
                     onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
                     className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
-                    placeholder="0712345678 or +254712345678"
+                    placeholder="0740305253 or +254740305253"
                   />
                 </div>
 
@@ -257,7 +257,7 @@ export default function NewDebtPage() {
                     value={newCustomer.email}
                     onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
                     className="mt-1 block w-full px-3 py-2 border border-border bg-card text-foreground rounded-md text-sm focus:ring-primary focus:border-primary"
-                    placeholder="jane@example.com"
+                    placeholder="stanleymurangiri2@gmail.com"
                   />
                 </div>
               </div>

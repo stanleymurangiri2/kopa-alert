@@ -57,7 +57,7 @@ export default function BusinessRegisterPage() {
     if (!isValidKenyanPhone(formData.phone)) {
       setMessage({
         type: "error",
-        text: "Enter your real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000.",
+        text: "Enter your real Kenyan mobile number (e.g. 0740305253) - not a placeholder like 0700000000.",
       });
       return;
     }
@@ -162,7 +162,7 @@ export default function BusinessRegisterPage() {
               required
               value={formData.owner_name}
               onChange={handleChange}
-              placeholder="John Doe"
+              placeholder="Stanley Murangiri"
               className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
@@ -178,7 +178,7 @@ export default function BusinessRegisterPage() {
               required
               value={formData.phone}
               onChange={handleChange}
-              placeholder="+254712345678"
+              placeholder="+254740305253"
               className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>
@@ -194,7 +194,7 @@ export default function BusinessRegisterPage() {
               required
               value={formData.email}
               onChange={handleChange}
-              placeholder="owner@business.com"
+              placeholder="stanleymurangiri2@gmail.com"
               className="w-full rounded-lg border border-border bg-card px-3 py-2.5 text-foreground focus:border-primary focus:outline-none"
             />
           </div>

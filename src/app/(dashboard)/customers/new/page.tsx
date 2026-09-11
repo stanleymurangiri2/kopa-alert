@@ -27,7 +27,7 @@ export default function NewCustomerPage() {
     setError('');
 
     if (!isValidKenyanPhone(form.phone)) {
-      setError('Enter the customer\'s real Kenyan mobile number (e.g. 0712345678) - not a placeholder like 0700000000.');
+      setError('Enter the customer\'s real Kenyan mobile number (e.g. 0740305253) - not a placeholder like 0700000000.');
       return;
     }
 
@@ -109,7 +109,7 @@ export default function NewCustomerPage() {
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-              placeholder="Jane Wanjiru"
+              placeholder="Stanley Murangiri"
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function NewCustomerPage() {
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-              placeholder="0712345678 or +254712345678"
+              placeholder="0740305253 or +254740305253"
             />
           </div>
 
@@ -136,7 +136,7 @@ export default function NewCustomerPage() {
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full rounded-md border border-border bg-card text-foreground px-3 py-2 focus:border-primary focus:outline-none"
-              placeholder="jane@example.com"
+              placeholder="stanleymurangiri2@gmail.com"
             />
           </div>
 

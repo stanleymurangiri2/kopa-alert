@@ -26,8 +26,8 @@ type ImportRowResult = {
 };
 
 const TEMPLATE_CSV = `customer_name,customer_phone,customer_email,type,amount,description,due_date,payment_method,date
-Jane Wanjiru,0712345678,,DEBT,5000,2 bags of cement,2026-08-15,,2026-08-01
-Jane Wanjiru,0712345678,,PAYMENT,2000,Partial payment,,cash,2026-08-20
+Stanley Murangiri,0740305253,stanleymurangiri2@gmail.com,DEBT,5000,2 bags of cement,2026-08-15,,2026-08-01
+Stanley Murangiri,0740305253,stanleymurangiri2@gmail.com,PAYMENT,2000,Partial payment,,cash,2026-08-20
 `;
 
 const REQUIRED_HEADERS = [
