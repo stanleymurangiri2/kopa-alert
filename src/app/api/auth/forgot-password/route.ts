@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
         options: { redirectTo: redirectUrl },
       });
 
-    if (linkError || !linkData?.properties?.action_link) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       console.error("Generate reset link error:", linkError);
       return NextResponse.json(
         { error: "Unable to generate reset link." },
@@ -75,12 +75,22 @@ export async function POST(request: NextRequest) {
       "@/lib/notifications/email-templates"
     );
 
+    // Deliberately not using linkData.properties.action_link: that's a raw
+    // {project-ref}.supabase.co URL, which makes this the only email in the
+    // app linking off kopaalert.shop - a classic phishing signal that gets
+    // it filtered/dropped by some mail providers with no bounce or error
+    // anywhere to catch. hashed_token lets us build a same-domain link
+    // instead; /reset-password verifies it client-side via verifyOtp().
+    const resetUrl = `${redirectUrl}?token_hash=${encodeURIComponent(
+      linkData.properties.hashed_token
+    )}&type=recovery`;
+
     const emailResult = await sendEmail({
       to: userRow.email,
       subject: "Reset your KopaAlert password",
       html: passwordResetEmail({
         name: userRow.name ?? "there",
-        reset_url: linkData.properties.action_link,
+        reset_url: resetUrl,
         support_email: SUPPORT_EMAIL,
         support_phone: SUPPORT_PHONE,
       }),

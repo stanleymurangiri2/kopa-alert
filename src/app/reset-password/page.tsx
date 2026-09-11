@@ -34,8 +34,30 @@ export default function ResetPasswordPage() {
     }
 
     async function establishSession() {
-      // The admin-generated recovery link redirects here carrying its
-      // tokens in the URL hash (#access_token=...&refresh_token=...&
+      // Current links carry ?token_hash=...&type=recovery (a same-domain
+      // kopaalert.shop URL we build ourselves - see /api/auth/forgot-password)
+      // rather than redirecting through Supabase's raw {project-ref}.supabase.co
+      // verify endpoint, which was the only off-domain link in the whole app
+      // and was getting silently filtered by some mail providers. verifyOtp()
+      // exchanges it for a session directly, no redirect hop needed.
+      const searchParams = new URLSearchParams(window.location.search);
+      const tokenHash = searchParams.get('token_hash');
+      const otpType = searchParams.get('type');
+
+      if (tokenHash && otpType === 'recovery') {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: 'recovery',
+        });
+
+        if (!error) {
+          markReady();
+          return;
+        }
+      }
+
+      // Fallback for any already-sent emails still carrying the old-style
+      // link: tokens in the URL hash (#access_token=...&refresh_token=...&
       // type=recovery). @supabase/ssr's browser client - unlike the plain
       // supabase-js client - does not auto-detect or consume this hash
       // (confirmed: the hash is still sitting in the URL after load,
