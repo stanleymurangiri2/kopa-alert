@@ -9,6 +9,10 @@
       "schedule": "30 6 * * *"
     },
     {
+      "path": "/api/cron/credit-reassessment",
+      "schedule": "15 7 * * *"
+    },
+    {
       "path": "/api/cron/subscription-billing",
       "schedule": "0 7 * * *"
     },
