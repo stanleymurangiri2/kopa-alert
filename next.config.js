@@ -10,9 +10,14 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
+
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      // 'unsafe-eval' is required in dev only - Next's React Refresh/HMR
+      // runtime uses eval() to apply hot updates. Production's build
+      // doesn't need it, so it's left out there.
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self'",

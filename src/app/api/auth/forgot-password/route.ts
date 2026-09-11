@@ -4,11 +4,14 @@ import { SUPPORT_EMAIL, SUPPORT_PHONE } from "@/lib/constants/support";
 
 const COOLDOWN_MS = 60 * 1000;
 
-// Always the same response whether or not the email is registered - a
-// differential response here lets an attacker enumerate which business
-// emails have KopaAlert accounts.
-const GENERIC_MESSAGE =
-  "If an account exists for that email, a password reset link has been sent.";
+// Product decision: tell the user directly when there's no account for
+// that email, rather than a generic "if an account exists..." response.
+// This does mean the endpoint can be used to check which emails are
+// registered - the 60-second cooldown below at least stops it being used
+// to spam a target's inbox with reset emails.
+const SENT_MESSAGE = "A password reset link has been sent to your email.";
+const NOT_FOUND_MESSAGE =
+  "No KopaAlert account found for that email. Register your business to get started.";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +33,11 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!userRow) {
-      return NextResponse.json({ success: true, message: GENERIC_MESSAGE });
+      return NextResponse.json({
+        success: false,
+        notFound: true,
+        message: NOT_FOUND_MESSAGE,
+      });
     }
 
     const lastRequestAt = userRow.last_password_reset_request_at
@@ -38,9 +45,9 @@ export async function POST(request: NextRequest) {
       : 0;
 
     if (Date.now() - lastRequestAt < COOLDOWN_MS) {
-      // Within cooldown - don't send another email, but the response stays
-      // identical so this can't be used to probe account existence either.
-      return NextResponse.json({ success: true, message: GENERIC_MESSAGE });
+      // Within cooldown - don't send another email, but still report
+      // success so a user double-clicking "send" isn't shown an error.
+      return NextResponse.json({ success: true, message: SENT_MESSAGE });
     }
 
     const { data: linkData, error: linkError } =
@@ -79,7 +86,7 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    return NextResponse.json({ success: true, message: GENERIC_MESSAGE });
+    return NextResponse.json({ success: true, message: SENT_MESSAGE });
   } catch (error) {
     console.error("Forgot password error:", error);
     return NextResponse.json(
