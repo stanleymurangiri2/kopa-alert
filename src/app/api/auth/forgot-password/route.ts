@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       "@/lib/notifications/email-templates"
     );
 
-    await sendEmail({
+    const emailResult = await sendEmail({
       to: userRow.email,
       subject: "Reset your KopaAlert password",
       html: passwordResetEmail({
@@ -85,6 +85,22 @@ export async function POST(request: NextRequest) {
         support_phone: SUPPORT_PHONE,
       }),
     });
+
+    if (!emailResult.success) {
+      // sendEmail() never throws - it returns { success: false } on failure -
+      // so this must be checked explicitly. Previously wasn't: a real Resend
+      // failure (quota, rejected send, etc.) still reported success to the
+      // user with no record anywhere that the email never went out.
+      console.error("Forgot password: email send failed:", emailResult.error);
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "We generated your reset link but couldn't send the email. Please try again in a moment or contact support.",
+        },
+        { status: 502 }
+      );
+    }
 
     return NextResponse.json({ success: true, message: SENT_MESSAGE });
   } catch (error) {
