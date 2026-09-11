@@ -48,7 +48,11 @@ export default function ResetPasswordPage() {
     }
 
     establishSession();
-  }, [supabase]);
+    // Runs once on mount only - `supabase` is a fresh object every render
+    // (createClient() isn't memoized), so including it here would re-run
+    // this on every state update this effect itself causes, looping forever.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
