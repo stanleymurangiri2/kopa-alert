@@ -171,7 +171,7 @@ export function passwordResetEmail(params: {
       <h2 style="color: #2563eb;">Set a new KopaAlert password</h2>
       <p>Hi ${params.name},</p>
       <p>Someone requested to change the password on your KopaAlert account. Follow this link to continue:</p>
-      <p><a href="${params.reset_url}">${params.reset_url}</a></p>
+      <p><a href="${params.reset_url}">Set new password</a></p>
       <p>If this wasn't you, no action is needed - your password stays the same.</p>
       <hr />
       <p>Need help? Contact support:<br/>
