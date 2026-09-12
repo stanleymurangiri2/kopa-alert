@@ -20,6 +20,12 @@ type Customer = {
   rating?: string | null;
 };
 
+type BusinessInfo = {
+  business_name: string;
+  phone: string | null;
+  email: string | null;
+};
+
 type Debt = {
   customer_id: string;
   amount: number;
@@ -114,12 +120,63 @@ function exportCsv(rows: (Customer & { outstanding: number; status: CustomerStat
   URL.revokeObjectURL(url);
 }
 
+async function exportPdf(
+  business: BusinessInfo | null,
+  rows: (Customer & { outstanding: number; status: CustomerStatus })[]
+) {
+  const [{ default: jsPDF }, { autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text(business?.business_name ?? 'KopaAlert', 14, 18);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const contactLine = [business?.phone, business?.email].filter(Boolean).join('  •  ');
+  if (contactLine) {
+    doc.text(contactLine, 14, 24);
+  }
+
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Customer List', 14, 36);
+
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Generated ${new Date().toLocaleDateString()}`, 14, 43);
+
+  autoTable(doc, {
+    startY: 50,
+    head: [['Customer', 'Phone', 'Email', 'Total Debt (KES)', 'Rating', 'Status']],
+    body: rows.map((c) => [
+      c.full_name,
+      c.phone,
+      c.email ?? '-',
+      c.outstanding.toLocaleString(),
+      c.rating ?? '-',
+      c.status,
+    ]),
+    headStyles: { fillColor: [15, 76, 117] },
+    columnStyles: { 3: { halign: 'right' } },
+    styles: { fontSize: 9 },
+  });
+
+  doc.save(`customers-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
 export default function CustomersPage() {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [business, setBusiness] = useState<BusinessInfo | null>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortByRating, setSortByRating] = useState(false);
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
@@ -147,6 +204,32 @@ export default function CustomersPage() {
     ]);
     setCustomers((customerData ?? []) as Customer[]);
     setDebts((debtData ?? []) as Debt[]);
+
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('business_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.business_id) {
+        const { data: businessData } = await supabase
+          .from('businesses')
+          .select('business_name, phone, email')
+          .eq('id', profile.business_id)
+          .single();
+
+        setBusiness((businessData as BusinessInfo) ?? null);
+      }
+    }
+
     setLoading(false);
   }
 
@@ -340,6 +423,27 @@ export default function CustomersPage() {
         >
           <Download className="h-4 w-4" />
           Export CSV
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            setPdfExporting(true);
+            try {
+              await exportPdf(business, displayedCustomers);
+            } finally {
+              setPdfExporting(false);
+            }
+          }}
+          disabled={displayedCustomers.length === 0 || pdfExporting}
+          className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {pdfExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="h-4 w-4" />
+          )}
+          Export PDF
         </button>
       </div>
 
