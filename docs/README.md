@@ -15,6 +15,7 @@ KopaAlert is a Next.js web application that helps small businesses in Kenya trac
 
 | Document | Description |
 |---|---|
+| [Changelog](./CHANGELOG.md) | Dated log of notable changes, kept up to date after each meaningful piece of work. |
 | [Deployment Checklist](./deployment_checklist.md) | Steps to take the app live: Supabase migrations, RLS, and Edge Function deployment. |
 | [Maintenance & Incident Response Runbook](./maintenance_runbook.md) | Ongoing monitoring guidance and protocols for common incidents (e.g. SMS dispatch failures). |
 | [Project Documentation (PowerPoint)](./KopaAlert-Project-Documentation.pptx) | Final-year project documentation: abstract, objectives, architecture, and more. |
