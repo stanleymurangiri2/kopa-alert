@@ -101,6 +101,31 @@ const TYPE_OPTIONS = ['DEBT', 'PAYMENT'];
 const PAYMENT_METHOD_OPTIONS = ['mpesa', 'cash', 'bank_transfer', 'cheque'];
 const TEMPLATE_DATA_ROW_COUNT = 200;
 
+// The template pre-fills row 4 with this sample so the user sees a filled-in
+// example. If they upload the file without replacing or deleting it, it must
+// not be imported as a real debt - isExampleRow() below detects an unedited
+// copy of it so it can be dropped instead.
+const EXAMPLE_ROW: Record<string, string> = {
+  customer_name: 'Stanley Murangiri',
+  customer_phone: '0740305253',
+  customer_email: 'stanleymurangiri2@gmail.com',
+  type: 'DEBT',
+  amount: '5000',
+  description: '2 bags of cement',
+  due_date: '2026-08-15',
+  payment_method: '',
+  date: '2026-08-01',
+};
+
+function isExampleRow(raw: Record<string, string>): boolean {
+  return REQUIRED_HEADERS.every((key) => {
+    const value = (raw[key] ?? '').trim();
+    const expected = EXAMPLE_ROW[key];
+    if (key === 'amount') return parseFloat(value) === parseFloat(expected);
+    return value.toLowerCase() === expected.toLowerCase();
+  });
+}
+
 /**
  * A plain .csv file can't lock or freeze anything - there's no formatting or
  * protection metadata in the CSV format at all. Building the downloadable
@@ -142,20 +167,9 @@ async function buildTemplateWorkbook() {
   });
 
   const exampleRow = sheet.getRow(4);
-  const example = [
-    'Stanley Murangiri',
-    '0740305253',
-    'stanleymurangiri2@gmail.com',
-    'DEBT',
-    5000,
-    '2 bags of cement',
-    '2026-08-15',
-    '',
-    '2026-08-01',
-  ];
-  example.forEach((value, i) => {
+  REQUIRED_HEADERS.forEach((key, i) => {
     const cell = exampleRow.getCell(i + 1);
-    cell.value = value;
+    cell.value = key === 'amount' ? Number(EXAMPLE_ROW[key]) : EXAMPLE_ROW[key];
     cell.font = { italic: true, color: { argb: 'FF6B7280' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF9C3' } };
   });
@@ -356,6 +370,7 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
   const [importing, setImporting] = useState(false);
   const [results, setResults] = useState<ImportRowResult[] | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [skippedExampleCount, setSkippedExampleCount] = useState(0);
 
   const validRows = rows.filter((r) => r.errors.length === 0);
   const invalidRows = rows.filter((r) => r.errors.length > 0);
@@ -373,15 +388,22 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
       return;
     }
 
-    const dataRows = table.slice(1).map((cells, i) => {
+    const withLines = table.slice(1).map((cells, i) => {
       const raw: Record<string, string> = {};
       header.forEach((h, colIndex) => {
         raw[h] = cells[colIndex] ?? '';
       });
-      return validateRow(raw, i + 2);
+      return { raw, line: i + 2 };
     });
 
+    const skipped = withLines.filter(({ raw }) => isExampleRow(raw)).length;
+
+    const dataRows = withLines
+      .filter(({ raw }) => !isExampleRow(raw))
+      .map(({ raw, line }) => validateRow(raw, line));
+
     setRows(dataRows);
+    setSkippedExampleCount(skipped);
     setStep('preview');
   }
 
@@ -541,6 +563,12 @@ export default function ImportCsvModal({ onClose, onImported }: { onClose: () =>
 
         {step === 'preview' && (
           <div className="mt-4 flex flex-1 flex-col overflow-hidden">
+            {skippedExampleCount > 0 && (
+              <div className="mb-3 rounded-md border border-primary/30 bg-primary/5 p-2 text-xs text-muted-foreground">
+                Skipped {skippedExampleCount} template example row{skippedExampleCount === 1 ? '' : 's'} -
+                it won&apos;t be imported.
+              </div>
+            )}
             <div className="mb-3 flex items-center gap-4 text-sm">
               <span className="flex items-center gap-1 text-success">
                 <CheckCircle2 className="h-4 w-4" /> {validRows.length} valid
