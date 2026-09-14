@@ -1,6 +1,7 @@
 ﻿// Ignore TypeScript error for side-effect CSS import (no type declarations)
 // @ts-ignore
 import './globals.css';
+import type { Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/ToastProvider';
@@ -21,6 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   title: 'KopaAlert - Business Debt Reminder',
   description: 'Multi-tenant debt reminder system for small businesses',
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1a5275',
 };
 
 export default function RootLayout({

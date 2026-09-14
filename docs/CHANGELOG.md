@@ -2,6 +2,9 @@
 
 A running log of notable changes to KopaAlert, kept so progress is easy to track across sessions. Newest first.
 
+## 2026-09-14
+- Made KopaAlert installable as a PWA: added `app/manifest.ts`, home-screen icons (192/512), and a proper favicon/apple-touch-icon (there was none before). Manifest-only — no offline caching or push notifications yet.
+
 ## 2026-09-12
 - Added a PDF export to the Customer Management page's customer list, matching the branding/layout of the existing per-customer statement PDF, scoped to the logged-in business.
 - Fixed the guided Excel import: an unedited copy of the template's sample row (row 4) is now detected and skipped instead of being imported as a real debt.
